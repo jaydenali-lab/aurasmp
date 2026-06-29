@@ -44,7 +44,7 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("Talents: ", NamedTextColor.GRAY)
                     .append(Component.text(data.cards().isEmpty() ? "none"
                             : String.join(", ", data.cards().stream().map(c -> c.displayName()).toList()), NamedTextColor.AQUA)));
-            player.sendMessage(Component.text("Mantras: ", NamedTextColor.GRAY)
+            player.sendMessage(Component.text("Manifestations: ", NamedTextColor.GRAY)
                     .append(Component.text(data.abilities().isEmpty() ? "none"
                             : String.join(", ", data.abilities().stream().map(a -> a.displayName()).toList()), NamedTextColor.LIGHT_PURPLE)));
             return true;

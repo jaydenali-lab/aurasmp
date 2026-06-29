@@ -112,7 +112,7 @@ public final class SelectionGui {
 
         Session session = new Session(true);
         Inventory inv = Bukkit.createInventory(session, 27,
-                Component.text("Draft a Mantra", NamedTextColor.DARK_PURPLE));
+                Component.text("Draft a Manifestation", NamedTextColor.DARK_PURPLE));
         session.inventory = inv;
         fill(inv);
         int count = Math.min(3, pool.size());
@@ -181,7 +181,7 @@ public final class SelectionGui {
         if (!data.abilities().contains(ability)) data.abilities().add(ability);
         refreshCatalyst(player, data);
         plugin.data().save(player.getUniqueId(), data);
-        player.sendMessage(Component.text("✦ Mantra learned: ", NamedTextColor.GRAY)
+        player.sendMessage(Component.text("✦ Manifestation learned: ", NamedTextColor.GRAY)
                 .append(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE))
                 .append(Component.text(" — " + ability.description(), NamedTextColor.GRAY)));
         player.sendMessage(Component.text("Use the Ruin Catalyst to cast it.", NamedTextColor.DARK_GRAY));

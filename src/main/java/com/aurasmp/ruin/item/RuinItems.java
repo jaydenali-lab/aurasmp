@@ -57,7 +57,7 @@ public final class RuinItems {
                 line("Right-click", NamedTextColor.YELLOW, " to reset your Ruin"),
                 line("level", NamedTextColor.GRAY, " and re-draft your build."),
                 lore(""),
-                line("Warning:", NamedTextColor.RED, " consumes all cards & abilities.")));
+                line("Warning:", NamedTextColor.RED, " consumes all talents & manifestations.")));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         // Points the client at the custom model "ruin:mirror_shard" supplied by the
         // resource pack. Without the pack it renders the base material instead.
@@ -74,7 +74,7 @@ public final class RuinItems {
         meta.displayName(name("Ruin Catalyst", NamedTextColor.LIGHT_PURPLE));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(lore("Cast your learned mantras."));
+        lore.add(lore("Cast your learned manifestations."));
         lore.add(lore(""));
         Ability primary = abilities.isEmpty() ? null : abilities.get(0);
         Ability secondary = abilities.size() > 1 ? abilities.get(1) : null;

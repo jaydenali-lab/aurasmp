@@ -52,7 +52,7 @@ public final class RuinPlugin extends JavaPlugin {
             cards.recalc(player, data.get(player.getUniqueId()));
         }
 
-        getLogger().info("Ruin enabled — 20 cards, 10 abilities, max level " + PlayerData.MAX_LEVEL + ".");
+        getLogger().info("Ruin enabled — 20 talents, 10 manifestations, max level " + PlayerData.MAX_LEVEL + ".");
     }
 
     @Override

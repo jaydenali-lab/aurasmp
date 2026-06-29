@@ -69,7 +69,7 @@ public final class PlayerListener implements Listener {
             if (abilities.size() > index) {
                 plugin.abilities().tryActivate(player, abilities.get(index));
             } else {
-                player.sendActionBar(Component.text("No ability bound to that slot.", NamedTextColor.GRAY));
+                player.sendActionBar(Component.text("No manifestation bound to that slot.", NamedTextColor.GRAY));
             }
         }
     }
