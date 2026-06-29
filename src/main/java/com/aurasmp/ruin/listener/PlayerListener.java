@@ -45,6 +45,7 @@ public final class PlayerListener implements Listener {
         plugin.gui().clear(event.getPlayer().getUniqueId());
         plugin.abilities().cooldowns().clear(event.getPlayer().getUniqueId());
         plugin.abilities().clearActive(event.getPlayer().getUniqueId());
+        plugin.xpBar().cleanup(event.getPlayer().getUniqueId());
         plugin.data().unload(event.getPlayer().getUniqueId());
     }
 

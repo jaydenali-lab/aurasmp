@@ -8,8 +8,9 @@ import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Applies attribute-based cards to players as persistent {@link AttributeModifier}s,
@@ -29,11 +30,12 @@ public final class CardManager {
 
     /** Re-derive all of our attribute modifiers from the player's owned cards. */
     public void recalc(Player player, PlayerData data) {
-        // The attributes any card might touch.
-        List<Attribute> touched = List.of(
-                Attribute.MAX_HEALTH, Attribute.ARMOR, Attribute.ARMOR_TOUGHNESS,
-                Attribute.MOVEMENT_SPEED, Attribute.ATTACK_DAMAGE, Attribute.ATTACK_SPEED,
-                Attribute.KNOCKBACK_RESISTANCE, Attribute.ENTITY_INTERACTION_RANGE);
+        // Every attribute any talent touches (derived from the registry so new
+        // attribute talents work automatically).
+        Set<Attribute> touched = new HashSet<>();
+        for (Card card : Card.values()) {
+            if (card.isAttribute()) touched.add(card.attribute());
+        }
 
         // 1. Strip every modifier we previously added.
         for (Attribute attribute : touched) {

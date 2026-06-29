@@ -11,6 +11,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.SmallFireball;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.RayTraceResult;
@@ -79,6 +80,16 @@ public final class AbilityManager {
             case WITHER_TOUCH -> witherTouch(player);
             case AURA_BURST -> auraBurst(player);
             case MAGNETIZE -> magnetize(player);
+            case FIREBALL -> fireball(player);
+            case UPDRAFT -> updraft(player);
+            case GRAPPLE -> grapple(player);
+            case BERSERK -> berserk(player);
+            case SMOKE_BOMB -> smokeBomb(player);
+            case LIGHTNING_STORM -> lightningStorm(player);
+            case SANCTUARY -> sanctuary(player);
+            case PLAGUE -> plague(player);
+            case METEOR -> meteor(player);
+            case DASH -> dash(player);
         }
     }
 
@@ -185,6 +196,116 @@ public final class AbilityManager {
             target.setVelocity(pull);
             target.getWorld().spawnParticle(Particle.ENCHANT, target.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3, 0.5);
         }
+    }
+
+    private void fireball(Player player) {
+        SmallFireball fb = player.launchProjectile(SmallFireball.class,
+                player.getEyeLocation().getDirection().multiply(1.4));
+        fb.setIsIncendiary(false); // no block grief; still ignites the target it hits
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1f, 1f);
+    }
+
+    private void updraft(Player player) {
+        player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 5, 1, 0.2, 1, 0);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDER_DRAGON_FLAP, 1f, 1.2f);
+        for (LivingEntity target : nearbyEnemies(player, 6.0)) {
+            target.setVelocity(target.getVelocity().setY(1.3));
+            target.getWorld().spawnParticle(Particle.CLOUD, target.getLocation(), 10, 0.2, 0.1, 0.2, 0.05);
+        }
+    }
+
+    private void grapple(Player player) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult hit = world.rayTraceBlocks(eye, eye.getDirection(), 25.0);
+        Location target = hit != null
+                ? hit.getHitPosition().toLocation(world)
+                : eye.add(eye.getDirection().multiply(25));
+        Vector dir = target.toVector().subtract(player.getLocation().toVector());
+        if (dir.lengthSquared() < 0.01) return;
+        player.setVelocity(dir.normalize().multiply(1.6).add(new Vector(0, 0.3, 0)));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 40, 0));
+        world.playSound(player.getLocation(), Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 1f, 0.8f);
+    }
+
+    private void berserk(Player player) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 120, 1));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 120, 0));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 120, 0));
+        player.getWorld().spawnParticle(Particle.ANGRY_VILLAGER, player.getLocation().add(0, 2, 0), 8, 0.4, 0.4, 0.4, 0);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_RAVAGER_ROAR, 1f, 1.2f);
+    }
+
+    private void smokeBomb(Player player) {
+        Location center = player.getLocation();
+        center.getWorld().spawnParticle(Particle.LARGE_SMOKE, center.clone().add(0, 1, 0), 60, 2, 1, 2, 0.02);
+        center.getWorld().playSound(center, Sound.ENTITY_TNT_PRIMED, 1f, 1.4f);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 60, 0));
+        for (LivingEntity target : nearbyEnemies(player, 6.0)) {
+            target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 0));
+            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 1));
+        }
+    }
+
+    private void lightningStorm(Player player) {
+        World world = player.getWorld();
+        int struck = 0;
+        for (LivingEntity target : nearbyEnemies(player, 8.0)) {
+            world.strikeLightningEffect(target.getLocation());
+            target.damage(6.0, player);
+            if (++struck >= 3) break;
+        }
+        if (struck == 0) world.strikeLightningEffect(player.getLocation());
+        world.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1f, 1f);
+    }
+
+    private void sanctuary(Player player) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 100, 0));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 100, 1));
+        player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.02);
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1f, 1.4f);
+    }
+
+    private void plague(Player player) {
+        player.getWorld().spawnParticle(Particle.ITEM_SLIME, player.getLocation().add(0, 1, 0), 30, 3, 0.5, 3, 0);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITCH_THROW, 1f, 0.8f);
+        for (LivingEntity target : nearbyEnemies(player, 6.0)) {
+            target.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 120, 1));
+            target.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, 120, 0));
+        }
+    }
+
+    private void meteor(Player player) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult hit = world.rayTraceBlocks(eye, eye.getDirection(), 30.0);
+        Location target = hit != null
+                ? hit.getHitPosition().toLocation(world)
+                : eye.add(eye.getDirection().multiply(20));
+        world.spawnParticle(Particle.FLAME, target, 30, 1, 0.1, 1, 0.01);
+        world.playSound(target, Sound.ENTITY_BLAZE_SHOOT, 1f, 0.6f);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            world.strikeLightningEffect(target);
+            world.spawnParticle(Particle.EXPLOSION_EMITTER, target, 1, 0, 0, 0, 0);
+            world.spawnParticle(Particle.FLAME, target, 60, 2, 1, 2, 0.05);
+            world.playSound(target, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.8f);
+            for (Entity entity : world.getNearbyEntities(target, 4, 4, 4)) {
+                if (entity instanceof LivingEntity le && !entity.equals(player)) {
+                    le.damage(8.0, player);
+                    le.setFireTicks(60);
+                }
+            }
+        }, 20L);
+    }
+
+    private void dash(Player player) {
+        Vector dir = player.getEyeLocation().getDirection();
+        dir.setY(Math.max(0.15, dir.getY() * 0.3));
+        player.setVelocity(dir.normalize().multiply(1.5));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 1));
+        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 15, 0.2, 0.1, 0.2, 0.05);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1f, 1.5f);
     }
 
     // ---- helpers ----

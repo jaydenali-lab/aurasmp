@@ -43,14 +43,48 @@ public enum Card {
     // ---- Flag cards (10) — logic in CombatListener ----
     LIFESTEAL("Lifesteal", Material.GHAST_TEAR, "Heal 10% of melee damage you deal."),
     LEECH("Leech", Material.GLISTERING_MELON_SLICE, "Heal 1 heart on every melee kill."),
-    THORNS("Thorns", Material.CACTUS, "Reflect 30% of melee damage to attackers."),
+    GHOST("Ghost", Material.PHANTOM_MEMBRANE, "15% chance when hit to fully vanish (armor too) + Speed II for 3s."),
     BERSERKER("Berserker", Material.BLAZE_POWDER, "+30% damage while below 30% health."),
     EXECUTIONER("Executioner", Material.IRON_AXE, "+50% damage to targets below 20% health."),
     FEATHER("Feather", Material.FEATHER, "Immune to fall damage."),
     ADRENALINE("Adrenaline", Material.SUGAR, "Speed II + Regen I for 4s after a kill."),
     SHARPSHOOTER("Sharpshooter", Material.BOW, "+25% projectile damage."),
     JUGGERNAUT("Juggernaut", Material.NETHERITE_CHESTPLATE, "Take 15% less damage from all sources."),
-    SCAVENGER("Scavenger", Material.EXPERIENCE_BOTTLE, "+50% Ruin XP from kills.");
+    SCAVENGER("Scavenger", Material.EXPERIENCE_BOTTLE, "+50% Ruin XP from kills."),
+
+    // ==== Expansion: 20 more talents ====
+
+    // Attribute (6)
+    COLOSSUS("Colossus", Material.NETHERITE_BLOCK, "Grow larger — more presence and reach.",
+            Attribute.SCALE, AttributeModifier.Operation.ADD_NUMBER, 0.12),
+    GREMLIN("Gremlin", Material.POISONOUS_POTATO, "Shrink — a smaller, harder-to-hit target.",
+            Attribute.SCALE, AttributeModifier.Operation.ADD_NUMBER, -0.12),
+    SURE_FOOTED("Sure-Footed", Material.LEATHER_BOOTS, "Step up full blocks without jumping.",
+            Attribute.STEP_HEIGHT, AttributeModifier.Operation.ADD_NUMBER, 0.6),
+    SOFT_LANDING("Soft Landing", Material.SLIME_BALL, "Take 50% less fall damage.",
+            Attribute.FALL_DAMAGE_MULTIPLIER, AttributeModifier.Operation.ADD_NUMBER, -0.5),
+    DEEP_LUNGS("Deep Lungs", Material.PUFFERFISH, "Hold your breath far longer underwater.",
+            Attribute.OXYGEN_BONUS, AttributeModifier.Operation.ADD_NUMBER, 4.0),
+    LUCKY("Lucky", Material.EMERALD, "+3 Luck — better loot rolls.",
+            Attribute.LUCK, AttributeModifier.Operation.ADD_NUMBER, 3.0),
+
+    // Aura effects (7) — kept refreshed by TalentAura
+    NIGHT_OWL("Night Owl", Material.GOLDEN_CARROT, "Permanent Night Vision."),
+    LEAPER("Leaper", Material.SLIME_BLOCK, "Permanent Jump Boost."),
+    HASTE("Haste", Material.GOLDEN_PICKAXE, "Permanent Haste."),
+    AQUATIC("Aquatic", Material.HEART_OF_THE_SEA, "Breathe underwater freely."),
+    FIRE_WALKER("Fire Walker", Material.MAGMA_CREAM, "Permanent Fire Resistance."),
+    REGENERATOR("Regenerator", Material.GOLDEN_APPLE, "Constantly regenerate health."),
+    BARRIER("Barrier", Material.SHIELD, "A constant 2-heart absorption shield."),
+
+    // Combat triggers (7) — resolved in CombatListener
+    IGNITE("Ignite", Material.FLINT_AND_STEEL, "Melee hits set the target on fire."),
+    VENOM("Venom", Material.SPIDER_EYE, "Melee hits apply Poison."),
+    FROSTBITE("Frostbite", Material.PACKED_ICE, "Melee hits slow the target."),
+    CLEAVE("Cleave", Material.DIAMOND_AXE, "Melee hits splash 30% damage to nearby enemies."),
+    CRIT("Crit", Material.QUARTZ, "25% chance for melee hits to deal +50%."),
+    BLOODLUST("Bloodlust", Material.REDSTONE_BLOCK, "Strength I for 5s after a kill."),
+    RETRIBUTION("Retribution", Material.NETHERITE_SCRAP, "After being hit, your next melee hit deals +4.");
 
     private final String displayName;
     private final Material icon;

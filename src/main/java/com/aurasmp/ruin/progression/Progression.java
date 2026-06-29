@@ -86,6 +86,8 @@ public final class Progression {
             player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
             plugin.gui().openNextIfIdle(player);
         }
+        // Pop the XP boss bar (auto-hides after 5s) on every gain.
+        plugin.xpBar().show(player, data);
         return gained;
     }
 

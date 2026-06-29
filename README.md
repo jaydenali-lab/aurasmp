@@ -32,7 +32,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500`.
 
-## The 20 Talents (passive)
+## The 40 Talents (passive)
 
 **Attribute talents (10)** — applied as persistent attribute modifiers:
 
@@ -55,7 +55,7 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500`.
 |--------|--------|
 | Lifesteal | Heal 10% of melee damage you deal |
 | Leech | Heal 1 heart on every melee kill |
-| Thorns | Reflect 30% of melee damage to attackers |
+| Ghost | 15% chance when hit to fully vanish (armor too) + Speed II for 3s |
 | Berserker | +30% damage while below 30% health |
 | Executioner | +50% damage to targets below 20% health |
 | Feather | Immune to fall damage |
@@ -63,8 +63,46 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500`.
 | Sharpshooter | +25% projectile damage |
 | Juggernaut | Take 15% less damage from all sources |
 | Scavenger | +50% Ruin XP from kills |
+| Ghost | 15% chance when hit to fully vanish (armor too) + Speed II for 3s |
 
-## The 10 Manifestations (active)
+**Expansion — attribute (6):**
+
+| Talent | Effect |
+|--------|--------|
+| Colossus | Grow larger (more presence/reach) |
+| Gremlin | Shrink into a smaller, harder-to-hit target |
+| Sure-Footed | Step up full blocks without jumping |
+| Soft Landing | Take 50% less fall damage |
+| Deep Lungs | Hold your breath far longer underwater |
+| Lucky | +3 Luck (better loot rolls) |
+
+**Expansion — aura (7):** kept refreshed automatically.
+
+| Talent | Effect |
+|--------|--------|
+| Night Owl | Permanent Night Vision |
+| Leaper | Permanent Jump Boost |
+| Haste | Permanent Haste |
+| Aquatic | Breathe underwater freely |
+| Fire Walker | Permanent Fire Resistance |
+| Regenerator | Constantly regenerate health |
+| Barrier | A constant 2-heart absorption shield |
+
+**Expansion — combat triggers (7):**
+
+| Talent | Effect |
+|--------|--------|
+| Ignite | Melee hits set the target on fire |
+| Venom | Melee hits apply Poison |
+| Frostbite | Melee hits slow the target |
+| Cleave | Melee hits splash 30% damage to nearby enemies |
+| Crit | 25% chance for melee hits to deal +50% |
+| Bloodlust | Strength I for 5s after a kill |
+| Retribution | After being hit, your next melee hit deals +4 |
+
+(Note: the original **Thorns** was replaced by **Ghost**.)
+
+## The 20 Manifestations (active)
 
 Cast via the Ruin Catalyst — each on its own cooldown:
 
@@ -80,6 +118,16 @@ Cast via the Ruin Catalyst — each on its own cooldown:
 | Wither Touch | Wither II to nearby enemies for 6s | 16s |
 | Aura Burst | AoE blast around you (no block damage) | 20s |
 | Magnetize | Pull nearby enemies toward you | 13s |
+| Fireball | Hurl a fireball that ignites foes on impact | 11s |
+| Updraft | Fling nearby enemies into the air | 13s |
+| Grapple | Yank yourself toward where you look | 8s |
+| Berserk | Strength II + Speed + Resistance for 6s | 30s |
+| Smoke Bomb | Blind nearby foes; turn invisible for 3s | 22s |
+| Lightning Storm | Strike up to 3 nearby enemies with lightning | 18s |
+| Sanctuary | Regen + Resistance + Absorption for 5s | 28s |
+| Plague | Poison II + Nausea to nearby enemies for 6s | 16s |
+| Meteor | Call down a meteor where you look after 1s | 20s |
+| Dash | Dash forward with a burst of speed | 7s |
 
 ## HUD & custom icons
 
@@ -100,6 +148,13 @@ The icons are custom glyphs from the **`ruin:icons`** resource-pack font
 manifestation, plus a Ruin sigil used in place of the old `✦` emoji. **They only
 render with the resource pack applied;** without it you'll see blank boxes in the
 HUD text (the rest still works).
+
+### XP boss bar
+
+On every kill that grants XP, a per-player **boss bar** pops up at the top of the
+screen showing your progress to the next level (`Level 4 — 320 / 900 XP`). It
+**auto-hides 5 seconds** after your last XP gain; a kill streak keeps refreshing
+it. It's per-player (client-side), so other players don't see yours.
 
 ## Commands
 
