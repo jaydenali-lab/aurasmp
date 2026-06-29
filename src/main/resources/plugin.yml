@@ -1,0 +1,23 @@
+name: Ruin
+version: 1.0.0
+main: com.aurasmp.ruin.RuinPlugin
+api-version: '1.21'
+author: AuraSMP
+description: Kill-to-level progression with card drafting and abilities.
+commands:
+  ruin:
+    description: Ruin progression commands.
+    usage: |
+      /ruin level - show your level, talents and mantras
+      /ruin level add <amount> [player] - add levels (admin/testing)
+      /ruin xp <amount> [player] - grant XP (admin/testing)
+      /ruin give <mirror|catalyst> [player] - admin give
+      /ruin reset [player] - reset progression
+    permission: ruin.use
+permissions:
+  ruin.use:
+    description: Use the /ruin command.
+    default: true
+  ruin.admin:
+    description: Admin Ruin commands (give, reset, xp for others).
+    default: op
