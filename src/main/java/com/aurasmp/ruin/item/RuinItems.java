@@ -59,6 +59,9 @@ public final class RuinItems {
                 lore(""),
                 line("Warning:", NamedTextColor.RED, " consumes all cards & abilities.")));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        // Points the client at the custom model "ruin:mirror_shard" supplied by the
+        // resource pack. Without the pack it renders the base material instead.
+        meta.setItemModel(new NamespacedKey(plugin, MIRROR_SHARD));
         meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, MIRROR_SHARD);
         item.setItemMeta(meta);
         return item;
@@ -82,6 +85,7 @@ public final class RuinItems {
 
         meta.lore(lore);
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        meta.setItemModel(new NamespacedKey(plugin, CATALYST));
         meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, CATALYST);
         item.setItemMeta(meta);
         return item;
