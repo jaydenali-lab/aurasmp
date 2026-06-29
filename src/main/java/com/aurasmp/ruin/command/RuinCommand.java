@@ -3,6 +3,7 @@ package com.aurasmp.ruin.command;
 import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.data.PlayerData;
 import com.aurasmp.ruin.item.RuinItems;
+import com.aurasmp.ruin.util.Glyphs;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -38,9 +39,9 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             PlayerData data = plugin.data().get(player.getUniqueId());
-            player.sendMessage(Component.text("✦ Ruin — Level " + data.level()
+            player.sendMessage(Glyphs.sigil().append(Component.text(" Ruin — Level " + data.level()
                     + (data.isMaxLevel() ? " (MAX)" : "  " + data.xp() + "/" + plugin.progression().threshold(data.level())),
-                    NamedTextColor.LIGHT_PURPLE));
+                    NamedTextColor.LIGHT_PURPLE)));
             player.sendMessage(Component.text("Talents: ", NamedTextColor.GRAY)
                     .append(Component.text(data.cards().isEmpty() ? "none"
                             : String.join(", ", data.cards().stream().map(c -> c.displayName()).toList()), NamedTextColor.AQUA)));

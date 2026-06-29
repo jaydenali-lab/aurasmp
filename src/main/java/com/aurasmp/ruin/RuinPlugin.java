@@ -6,6 +6,7 @@ import com.aurasmp.ruin.command.RuinCommand;
 import com.aurasmp.ruin.data.DataStore;
 import com.aurasmp.ruin.data.PlayerData;
 import com.aurasmp.ruin.gui.SelectionGui;
+import com.aurasmp.ruin.hud.ActionBarHud;
 import com.aurasmp.ruin.item.RuinItems;
 import com.aurasmp.ruin.listener.CombatListener;
 import com.aurasmp.ruin.listener.GuiListener;
@@ -24,6 +25,7 @@ public final class RuinPlugin extends JavaPlugin {
     private Progression progression;
     private SelectionGui gui;
     private RuinItems items;
+    private ActionBarHud hud;
 
     @Override
     public void onEnable() {
@@ -33,8 +35,10 @@ public final class RuinPlugin extends JavaPlugin {
         this.progression = new Progression(this);
         this.gui = new SelectionGui(this);
         this.items = new RuinItems(this);
+        this.hud = new ActionBarHud(this);
 
         items.registerRecipes();
+        hud.start();
 
         getServer().getPluginManager().registerEvents(new CombatListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
@@ -57,6 +61,7 @@ public final class RuinPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (hud != null) hud.stop();
         if (data != null) data.saveAll();
     }
 
@@ -66,6 +71,7 @@ public final class RuinPlugin extends JavaPlugin {
         playerData.reset();
         cards.recalc(player, playerData);
         abilities.cooldowns().clear(player.getUniqueId());
+        abilities.clearActive(player.getUniqueId());
         gui.clear(player.getUniqueId());
         gui.refreshCatalyst(player, playerData); // no abilities -> removes any Catalyst
         data.save(player.getUniqueId(), playerData);

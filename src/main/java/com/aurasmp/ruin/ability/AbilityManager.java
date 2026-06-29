@@ -2,8 +2,6 @@ package com.aurasmp.ruin.ability;
 
 import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.util.Cooldowns;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -18,13 +16,19 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-/** Runs ability effects and enforces per-ability cooldowns. */
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/** Runs ability effects, enforces per-ability cooldowns and tracks ACTIVE windows. */
 public final class AbilityManager {
 
     private static final double RADIUS = 5.0;
 
     private final RuinPlugin plugin;
     private final Cooldowns cooldowns = new Cooldowns();
+    // Per-player, per-ability "self-buff active until" timestamps (for the HUD).
+    private final Map<UUID, Map<Ability, Long>> activeUntil = new HashMap<>();
 
     public AbilityManager(RuinPlugin plugin) {
         this.plugin = plugin;
@@ -32,17 +36,35 @@ public final class AbilityManager {
 
     public Cooldowns cooldowns() { return cooldowns; }
 
-    /** Checks cooldown, runs the ability, and gives the player feedback. */
+    public boolean isActive(UUID id, Ability ability) {
+        return activeRemainingMillis(id, ability) > 0;
+    }
+
+    public long activeRemainingMillis(UUID id, Ability ability) {
+        Map<Ability, Long> m = activeUntil.get(id);
+        if (m == null) return 0;
+        Long until = m.get(ability);
+        return until == null ? 0 : Math.max(0, until - System.currentTimeMillis());
+    }
+
+    public void clearActive(UUID id) {
+        activeUntil.remove(id);
+    }
+
+    /** Checks cooldown, runs the ability, and records its ACTIVE window. */
     public void tryActivate(Player player, Ability ability) {
-        String key = ability.name();
-        if (!cooldowns.isReady(player.getUniqueId(), key)) {
-            long secs = (cooldowns.remainingMillis(player.getUniqueId(), key) + 999) / 1000;
-            player.sendActionBar(Component.text(ability.displayName() + " — " + secs + "s", NamedTextColor.RED));
+        UUID id = player.getUniqueId();
+        if (!cooldowns.isReady(id, ability.name())) {
+            // Feedback lives in the HUD; a soft "denied" note marks the failed cast.
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
             return;
         }
         activate(player, ability);
-        cooldowns.set(player.getUniqueId(), key, ability.cooldownMillis());
-        player.sendActionBar(Component.text("✦ " + ability.displayName(), NamedTextColor.LIGHT_PURPLE));
+        cooldowns.set(id, ability.name(), ability.cooldownMillis());
+        if (ability.hasActiveState()) {
+            activeUntil.computeIfAbsent(id, k -> new HashMap<>())
+                    .put(ability, System.currentTimeMillis() + ability.activeDurationMillis());
+        }
     }
 
     private void activate(Player player, Ability ability) {

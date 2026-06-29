@@ -28,6 +28,11 @@ tasks.processResources {
     filteringCharset = "UTF-8"
 }
 
+tasks.withType<JavaCompile> {
+    // Source contains private-use glyph chars (ruin:icons font) — read them as UTF-8.
+    options.encoding = "UTF-8"
+}
+
 tasks.named<Jar>("jar") {
     archiveBaseName.set("Ruin")
     archiveClassifier.set("")

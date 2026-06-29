@@ -62,7 +62,6 @@ public final class Progression {
     /** Award XP and resolve any level-ups. Returns the number of levels gained. */
     public int award(Player player, PlayerData data, int amount) {
         if (data.isMaxLevel()) {
-            actionBarMaxed(player);
             return 0;
         }
         if (data.hasCard(Card.SCAVENGER)) {
@@ -86,8 +85,6 @@ public final class Progression {
                     Component.text("Ruin grows within you", NamedTextColor.GRAY)));
             player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
             plugin.gui().openNextIfIdle(player);
-        } else {
-            actionBarProgress(player, data);
         }
         return gained;
     }
@@ -111,19 +108,5 @@ public final class Progression {
             plugin.gui().openNextIfIdle(player);
         }
         return gained;
-    }
-
-    public void actionBarProgress(Player player, PlayerData data) {
-        if (data.isMaxLevel()) {
-            actionBarMaxed(player);
-            return;
-        }
-        player.sendActionBar(Component.text(
-                "✦ Ruin  Lv " + data.level() + "  " + data.xp() + "/" + threshold(data.level()),
-                NamedTextColor.LIGHT_PURPLE));
-    }
-
-    private void actionBarMaxed(Player player) {
-        player.sendActionBar(Component.text("✦ Ruin  Lv " + PlayerData.MAX_LEVEL + "  (MAX)", NamedTextColor.GOLD));
     }
 }

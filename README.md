@@ -81,6 +81,26 @@ Cast via the Ruin Catalyst — each on its own cooldown:
 | Aura Burst | AoE blast around you (no block damage) | 20s |
 | Magnetize | Pull nearby enemies toward you | 13s |
 
+## HUD & custom icons
+
+A live HUD sits **on top of the hotbar** (the action bar), refreshed twice a second:
+
+```
+[sigil] Lv4 320/900   [icon] Blink READY   [icon] Vanish ACTIVE 3s
+```
+
+For each learned Manifestation it shows a **custom icon**, the **name**, and the status:
+
+- **READY** (green) — castable now
+- **Ns** (red) — seconds left on cooldown
+- **ACTIVE Ns** (gold) — its self-buff is currently running (Vanish, Leap, Bloodthirst)
+
+The icons are custom glyphs from the **`ruin:icons`** resource-pack font
+(`assets/ruin/font/icons.json` + `assets/ruin/textures/font/*.png`) — one per
+manifestation, plus a Ruin sigil used in place of the old `✦` emoji. **They only
+render with the resource pack applied;** without it you'll see blank boxes in the
+HUD text (the rest still works).
+
 ## Commands
 
 `/ruin` (alias for `/ruin level`)

@@ -44,6 +44,7 @@ public final class PlayerListener implements Listener {
     public void onQuit(PlayerQuitEvent event) {
         plugin.gui().clear(event.getPlayer().getUniqueId());
         plugin.abilities().cooldowns().clear(event.getPlayer().getUniqueId());
+        plugin.abilities().clearActive(event.getPlayer().getUniqueId());
         plugin.data().unload(event.getPlayer().getUniqueId());
     }
 
@@ -69,7 +70,7 @@ public final class PlayerListener implements Listener {
             if (abilities.size() > index) {
                 plugin.abilities().tryActivate(player, abilities.get(index));
             } else {
-                player.sendActionBar(Component.text("No manifestation bound to that slot.", NamedTextColor.GRAY));
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
             }
         }
     }

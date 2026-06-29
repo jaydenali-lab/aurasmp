@@ -4,6 +4,7 @@ import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.ability.Ability;
 import com.aurasmp.ruin.card.Card;
 import com.aurasmp.ruin.data.PlayerData;
+import com.aurasmp.ruin.util.Glyphs;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -171,7 +172,8 @@ public final class SelectionGui {
         data.cards().add(card);
         plugin.cards().recalc(player, data);
         plugin.data().save(player.getUniqueId(), data);
-        player.sendMessage(Component.text("✦ Talent gained: ", NamedTextColor.GRAY)
+        player.sendMessage(Glyphs.sigil()
+                .append(Component.text(" Talent gained: ", NamedTextColor.GRAY))
                 .append(Component.text(card.displayName(), NamedTextColor.AQUA))
                 .append(Component.text(" — " + card.description(), NamedTextColor.GRAY)));
     }
@@ -181,7 +183,8 @@ public final class SelectionGui {
         if (!data.abilities().contains(ability)) data.abilities().add(ability);
         refreshCatalyst(player, data);
         plugin.data().save(player.getUniqueId(), data);
-        player.sendMessage(Component.text("✦ Manifestation learned: ", NamedTextColor.GRAY)
+        player.sendMessage(Glyphs.of(ability.glyph())
+                .append(Component.text(" Manifestation learned: ", NamedTextColor.GRAY))
                 .append(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE))
                 .append(Component.text(" — " + ability.description(), NamedTextColor.GRAY)));
         player.sendMessage(Component.text("Use the Ruin Catalyst to cast it.", NamedTextColor.DARK_GRAY));
