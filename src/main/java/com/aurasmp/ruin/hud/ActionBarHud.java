@@ -10,6 +10,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -42,22 +43,20 @@ public final class ActionBarHud {
     }
 
     private Component build(Player player, PlayerData data) {
+        List<Ability> abilities = data.abilities();
+        if (abilities.isEmpty()) return Component.empty(); // no manifestations -> blank bar
+
         UUID id = player.getUniqueId();
-
-        // Level + XP segment.
-        Component line = Glyphs.sigil()
-                .append(text(" Lv" + data.level() + " ", NamedTextColor.LIGHT_PURPLE));
-        if (data.isMaxLevel()) {
-            line = line.append(text("MAX", NamedTextColor.GOLD));
-        } else {
-            line = line.append(text(data.xp() + "/" + plugin.progression().threshold(data.level()),
-                    NamedTextColor.DARK_GRAY));
-        }
-
-        // One entry per learned Manifestation.
-        for (Ability ability : data.abilities()) {
-            line = line.append(text("   ", NamedTextColor.DARK_GRAY))
-                    .append(Glyphs.of(ability.glyph()))
+        Component line = Component.empty();
+        for (int i = 0; i < abilities.size(); i++) {
+            if (i > 0) {
+                // " §8|§r " separator between entries
+                line = line.append(text(" ", NamedTextColor.DARK_GRAY))
+                        .append(text("|", NamedTextColor.DARK_GRAY))
+                        .append(text(" ", NamedTextColor.DARK_GRAY));
+            }
+            Ability ability = abilities.get(i);
+            line = line.append(Glyphs.of(ability.glyph()))
                     .append(text(" " + ability.displayName() + " ", NamedTextColor.WHITE))
                     .append(status(id, ability));
         }
@@ -66,8 +65,7 @@ public final class ActionBarHud {
 
     private Component status(UUID id, Ability ability) {
         if (plugin.abilities().isActive(id, ability)) {
-            long secs = (plugin.abilities().activeRemainingMillis(id, ability) + 999) / 1000;
-            return text("ACTIVE " + secs + "s", NamedTextColor.GOLD);
+            return text("ACTIVE", NamedTextColor.YELLOW);
         }
         long cd = plugin.abilities().cooldowns().remainingMillis(id, ability.name());
         if (cd > 0) {

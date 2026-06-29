@@ -33,19 +33,18 @@ public final class XpBossBar {
     /** Show/refresh the bar for the player's current level + XP. */
     public void show(Player player, PlayerData data) {
         UUID id = player.getUniqueId();
+        // Pink + solid = the classic Ender Dragon health bar look.
         BossBar bar = bars.computeIfAbsent(id,
-                k -> Bukkit.createBossBar("", BarColor.PURPLE, BarStyle.SEGMENTED_10));
+                k -> Bukkit.createBossBar("", BarColor.PINK, BarStyle.SOLID));
 
         if (data.isMaxLevel()) {
             bar.setTitle("Ruin — Level MAX");
-            bar.setColor(BarColor.YELLOW);
             bar.setProgress(1.0);
         } else {
             int threshold = plugin.progression().threshold(data.level());
             double progress = threshold <= 0 ? 1.0
                     : Math.max(0.0, Math.min(1.0, (double) data.xp() / threshold));
             bar.setTitle("Ruin — Level " + data.level() + "    " + data.xp() + " / " + threshold + " XP");
-            bar.setColor(BarColor.PURPLE);
             bar.setProgress(progress);
         }
 

@@ -131,17 +131,19 @@ Cast via the Ruin Catalyst — each on its own cooldown:
 
 ## HUD & custom icons
 
-A live HUD sits **on top of the hotbar** (the action bar), refreshed twice a second:
+A live HUD sits **on top of the hotbar** (the action bar), refreshed twice a
+second. Each learned Manifestation shows as `{icon} Name {status}`, entries
+joined by a dark-grey pipe:
 
 ```
-[sigil] Lv4 320/900   [icon] Blink READY   [icon] Vanish ACTIVE 3s
+[icon] Blink READY  |  [icon] Vanish ACTIVE
 ```
-
-For each learned Manifestation it shows a **custom icon**, the **name**, and the status:
 
 - **READY** (green) — castable now
 - **Ns** (red) — seconds left on cooldown
-- **ACTIVE Ns** (gold) — its self-buff is currently running (Vanish, Leap, Bloodthirst)
+- **ACTIVE** (yellow) — its self-buff is currently running (Vanish, Leap, Bloodthirst)
+
+Level/XP isn't shown here — that's what the XP boss bar is for.
 
 The icons are custom glyphs from the **`ruin:icons`** resource-pack font
 (`assets/ruin/font/icons.json` + `assets/ruin/textures/font/*.png`) — one per
@@ -151,10 +153,11 @@ HUD text (the rest still works).
 
 ### XP boss bar
 
-On every kill that grants XP, a per-player **boss bar** pops up at the top of the
-screen showing your progress to the next level (`Level 4 — 320 / 900 XP`). It
-**auto-hides 5 seconds** after your last XP gain; a kill streak keeps refreshing
-it. It's per-player (client-side), so other players don't see yours.
+On every kill that grants XP, a per-player **boss bar** — styled like the Ender
+Dragon's health bar (pink, solid) — pops up at the top of the screen showing your
+progress to the next level (`Level 4 — 320 / 900 XP`). It **auto-hides 5 seconds**
+after your last XP gain; a kill streak keeps refreshing it. It's per-player
+(client-side), so other players don't see yours.
 
 ## Commands
 
