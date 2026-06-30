@@ -7,7 +7,10 @@ import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.AbstractArrow;
@@ -375,16 +378,27 @@ public final class AbilityManager {
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
         Vector dir = eye.getDirection();
-        RayTraceResult res = world.rayTraceEntities(eye, dir, 6.0, 1.0,
+        RayTraceResult res = world.rayTraceEntities(eye, dir, 6.0, 1.2,
                 e -> e instanceof LivingEntity && !e.equals(player));
         world.playSound(player.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1f, 0.8f);
-        if (res != null && res.getHitEntity() instanceof LivingEntity target) {
-            player.setVelocity(dir.clone().multiply(1.2));
-            target.setFireTicks(80);
-            target.setVelocity(new Vector(0, -1.2, 0));
-            world.spawnParticle(Particle.FLAME, target.getLocation().add(0, 1, 0), 40, 0.4, 0.6, 0.4, 0.04);
-            dealDamage(target, player, 5.2);
+        if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) {
+            player.setVelocity(dir.clone().multiply(0.9).setY(0.25)); // whiff: short lunge
+            return;
         }
+        // Seize: lunge in, hoist the target into the air, then slam them down.
+        player.setVelocity(dir.clone().multiply(0.6).setY(0.2));
+        target.setFireTicks(100);
+        target.setVelocity(new Vector(0, 1.15, 0));
+        world.spawnParticle(Particle.FLAME, target.getLocation().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 0.03);
+        world.playSound(target.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1f, 1.3f);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (target.isDead() || !target.isValid()) return;
+            target.setVelocity(new Vector(0, -2.2, 0)); // slam down
+            world.spawnParticle(Particle.FLAME, target.getLocation().add(0, 1, 0), 45, 0.4, 0.4, 0.4, 0.05);
+            world.spawnParticle(Particle.LAVA, target.getLocation(), 8, 0.3, 0.2, 0.3, 0);
+            world.playSound(target.getLocation(), Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.1f);
+            dealDamage(target, player, 5.2);
+        }, 13L);
     }
 
     private void wildfire(Player player) {
@@ -402,11 +416,36 @@ public final class AbilityManager {
     }
 
     private void frostdrawSpikes(Player player) {
-        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 1f, 0.7f);
-        for (LivingEntity target : cone(player, 5.0, 0.4)) {
-            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
-            target.getWorld().spawnParticle(Particle.SNOWFLAKE, target.getLocation().add(0, 1, 0), 30, 0.3, 1, 0.3, 0.02);
-            dealDamage(target, player, 0.96); // applies Slow -> 1/5
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult hit = world.rayTraceBlocks(eye, eye.getDirection(), 10.0);
+        Location base = hit != null ? hit.getHitPosition().toLocation(world) : eye.add(eye.getDirection().multiply(7));
+        Block ground = base.getBlock();
+        world.playSound(base, Sound.BLOCK_GLASS_BREAK, 1f, 0.7f);
+        world.spawnParticle(Particle.SNOWFLAKE, base, 50, 1.5, 1, 1.5, 0.03);
+
+        // Raise temporary ice spikes (only into empty space) and restore them after 5s.
+        java.util.List<BlockState> changed = new java.util.ArrayList<>();
+        int[][] pattern = {{0, 0, 3}, {1, 0, 2}, {-1, 0, 2}, {0, 1, 2}, {0, -1, 2}, {1, 1, 1}, {-1, -1, 1}};
+        for (int[] p : pattern) {
+            for (int h = 0; h < p[2]; h++) {
+                Block b = world.getBlockAt(ground.getX() + p[0], ground.getY() + h, ground.getZ() + p[1]);
+                if (b.isPassable()) {
+                    changed.add(b.getState());
+                    b.setType(Material.PACKED_ICE, false);
+                }
+            }
+        }
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            for (BlockState st : changed) st.update(true, false);
+        }, 100L);
+
+        // Impale + chill enemies caught in the spikes.
+        for (Entity entity : world.getNearbyEntities(base, 3, 3, 3)) {
+            if (entity instanceof LivingEntity le && !entity.equals(player)) {
+                le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
+                dealDamage(le, player, 0.96); // applies Slow -> 1/5
+            }
         }
     }
 
