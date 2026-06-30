@@ -36,13 +36,13 @@ public final class XpBossBar {
                 k -> Bukkit.createBossBar("", BarColor.PINK, BarStyle.SOLID));
 
         if (data.isMaxLevel()) {
-            bar.setTitle("Ruin — Level MAX");
+            bar.setTitle("Level MAX");
             bar.setProgress(1.0);
         } else {
             int threshold = plugin.progression().threshold(data.level());
             double progress = threshold <= 0 ? 1.0
                     : Math.max(0.0, Math.min(1.0, (double) data.xp() / threshold));
-            bar.setTitle("Ruin — Level " + data.level() + "    " + data.xp() + " / " + threshold + " XP");
+            bar.setTitle("Level " + data.level() + "    " + data.xp() + " / " + threshold + " XP");
             bar.setProgress(progress);
         }
 
