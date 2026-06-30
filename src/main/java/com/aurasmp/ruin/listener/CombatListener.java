@@ -112,6 +112,10 @@ public final class CombatListener implements Listener {
                 damage *= 1.50;
                 attacker.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 12, 0.3, 0.3, 0.3, 0.1);
             }
+            // Unyielding Inferno: bonus damage to burning targets.
+            if (!projectile && data.hasCard(Card.UNYIELDING_INFERNO) && victim.getFireTicks() > 0) {
+                damage += 4.0;
+            }
             event.setDamage(damage);
 
             if (!projectile && data.hasCard(Card.LIFESTEAL)) heal(attacker, damage * 0.10);
@@ -129,6 +133,19 @@ public final class CombatListener implements Listener {
                         if (!v.isDead() && v.isValid()) v.setHealth(Math.max(0.0, v.getHealth() - 4.0));
                     });
                     attacker.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, victim.getLocation().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0);
+                }
+                if (data.hasCard(Card.UNYIELDING_INFERNO) && victim.getFireTicks() > 0) {
+                    victim.setFireTicks(Math.max(victim.getFireTicks(), 100));
+                    attacker.getWorld().spawnParticle(Particle.FLAME, victim.getLocation().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0.02);
+                }
+                // Spine Cutter: a back hit (facings aligned) deals bonus true damage.
+                if (data.hasCard(Card.SPINE_CUTTER)
+                        && attacker.getLocation().getDirection().dot(victim.getLocation().getDirection()) > 0.4) {
+                    LivingEntity v = victim;
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (!v.isDead() && v.isValid()) v.setHealth(Math.max(0.0, v.getHealth() - 4.0));
+                    });
+                    attacker.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3, 0.1);
                 }
             }
         }
@@ -171,7 +188,16 @@ public final class CombatListener implements Listener {
 
         PlayerData data = plugin.data().get(player.getUniqueId());
 
-        if (data.hasCard(Card.FEATHER) && event.getCause() == EntityDamageEvent.DamageCause.FALL) {
+        // Risky Moves: chance to fully negate an incoming hit.
+        if (data.hasCard(Card.RISKY_MOVES) && ThreadLocalRandom.current().nextDouble() < 0.20) {
+            event.setCancelled(true);
+            player.getWorld().spawnParticle(Particle.SWEEP_ATTACK, player.getLocation().add(0, 1, 0), 3, 0.4, 0.4, 0.4, 0);
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.8f, 1.4f);
+            return;
+        }
+        if ((data.hasCard(Card.FEATHER)
+                || (data.hasCard(Card.KICK_OFF) && event.getDamage() <= 6.0))
+                && event.getCause() == EntityDamageEvent.DamageCause.FALL) {
             event.setCancelled(true);
             return;
         }

@@ -128,6 +128,14 @@ public final class AbilityManager {
             case PLAGUE -> plague(player);
             case METEOR -> meteor(player);
             case DASH -> dash(player);
+            case FLAME_GRAB -> flameGrab(player);
+            case WILDFIRE -> wildfire(player);
+            case FROSTDRAW_SPIKES -> frostdrawSpikes(player);
+            case TUNDRA -> tundra(player);
+            case SHOCK_SWORD -> shockSword(player);
+            case GALVANIZE -> galvanize(player);
+            case WIND_SLAM -> windSlam(player);
+            case GALE_STEP -> galeStep(player);
         }
     }
 
@@ -359,6 +367,115 @@ public final class AbilityManager {
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 1));
         player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 15, 0.2, 0.1, 0.2, 0.05);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 1f, 1.5f);
+    }
+
+    // ==== Deepwoken mantras ====
+
+    private void flameGrab(Player player) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        Vector dir = eye.getDirection();
+        RayTraceResult res = world.rayTraceEntities(eye, dir, 6.0, 1.0,
+                e -> e instanceof LivingEntity && !e.equals(player));
+        world.playSound(player.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1f, 0.8f);
+        if (res != null && res.getHitEntity() instanceof LivingEntity target) {
+            player.setVelocity(dir.clone().multiply(1.2));
+            target.setFireTicks(80);
+            target.setVelocity(new Vector(0, -1.2, 0));
+            world.spawnParticle(Particle.FLAME, target.getLocation().add(0, 1, 0), 40, 0.4, 0.6, 0.4, 0.04);
+            dealTrueDamage(target, player, 5.2);
+        }
+    }
+
+    private void wildfire(Player player) {
+        Location loc = player.getLocation();
+        Vector dir = player.getEyeLocation().getDirection();
+        loc.getWorld().playSound(loc, Sound.ITEM_FIRECHARGE_USE, 1f, 0.7f);
+        for (double d = 1; d <= 6; d += 1) {
+            loc.getWorld().spawnParticle(Particle.FLAME, loc.clone().add(dir.clone().multiply(d)).add(0, 0.5, 0),
+                    12, 0.6, 0.3, 0.6, 0.03);
+        }
+        for (LivingEntity target : cone(player, 6.0, 0.3)) {
+            target.setFireTicks(100);
+            dealTrueDamage(target, player, 6.0);
+        }
+    }
+
+    private void frostdrawSpikes(Player player) {
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 1f, 0.7f);
+        for (LivingEntity target : cone(player, 5.0, 0.4)) {
+            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
+            target.getWorld().spawnParticle(Particle.SNOWFLAKE, target.getLocation().add(0, 1, 0), 30, 0.3, 1, 0.3, 0.02);
+            dealTrueDamage(target, player, 0.96); // applies Slow -> 1/5
+        }
+    }
+
+    private void tundra(Player player) {
+        Location loc = player.getLocation();
+        loc.getWorld().spawnParticle(Particle.SNOWFLAKE, loc.clone().add(0, 1, 0), 120, 4, 0.5, 4, 0.03);
+        loc.getWorld().playSound(loc, Sound.BLOCK_POWDER_SNOW_PLACE, 1f, 0.8f);
+        for (LivingEntity target : nearbyEnemies(player, 8.0)) {
+            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 120, 3));
+            target.addPotionEffect(new PotionEffect(PotionEffectType.MINING_FATIGUE, 120, 1));
+            target.setFreezeTicks(140);
+            dealTrueDamage(target, player, 1.44); // applies Slow -> 1/5
+        }
+    }
+
+    private void shockSword(Player player) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult res = world.rayTraceEntities(eye, eye.getDirection(), 5.0, 1.0,
+                e -> e instanceof LivingEntity && !e.equals(player));
+        if (res != null && res.getHitEntity() instanceof LivingEntity target) {
+            world.strikeLightningEffect(target.getLocation());
+            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 3));
+            world.spawnParticle(Particle.ELECTRIC_SPARK, target.getLocation().add(0, 1, 0), 25, 0.3, 0.5, 0.3, 0.1);
+            dealTrueDamage(target, player, 0.88); // applies Slow -> 1/5
+        }
+        world.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.6f, 1.6f);
+    }
+
+    private void galvanize(Player player) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 120, 2));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 120, 0));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 120, 0));
+        player.getWorld().spawnParticle(Particle.ELECTRIC_SPARK, player.getLocation().add(0, 1, 0), 30, 0.5, 1, 0.5, 0.1);
+        player.getWorld().playSound(player.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_3, 1f, 1.4f);
+    }
+
+    private void windSlam(Player player) {
+        Location center = player.getLocation();
+        center.getWorld().spawnParticle(Particle.GUST, center, 6, 1, 0.2, 1, 0);
+        center.getWorld().playSound(center, Sound.ENTITY_BREEZE_SHOOT, 1f, 0.9f);
+        for (LivingEntity target : nearbyEnemies(player, 6.0)) {
+            Vector push = target.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.6).setY(0.7);
+            target.setVelocity(push);
+            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));
+            dealTrueDamage(target, player, 1.04); // applies Slow -> 1/5
+        }
+    }
+
+    private void galeStep(Player player) {
+        Vector dir = player.getEyeLocation().getDirection();
+        dir.setY(Math.max(0.2, dir.getY() * 0.4));
+        player.setVelocity(dir.normalize().multiply(1.8));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 1));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 40, 0));
+        player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 4, 0.3, 0.2, 0.3, 0);
+        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 15, 0.2, 0.1, 0.2, 0.05);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1f, 1.3f);
+    }
+
+    /** Enemies within {@code radius} that fall inside the look-direction cone (dot > minDot). */
+    private java.util.List<LivingEntity> cone(Player player, double radius, double minDot) {
+        Vector dir = player.getEyeLocation().getDirection();
+        java.util.List<LivingEntity> out = new java.util.ArrayList<>();
+        for (LivingEntity le : nearbyEnemies(player, radius)) {
+            Vector to = le.getLocation().toVector().subtract(player.getLocation().toVector());
+            if (to.lengthSquared() < 0.01 || dir.dot(to.normalize()) > minDot) out.add(le);
+        }
+        return out;
     }
 
     // ---- helpers ----

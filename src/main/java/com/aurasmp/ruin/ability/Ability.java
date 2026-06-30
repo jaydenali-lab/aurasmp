@@ -35,7 +35,17 @@ public enum Ability {
     SANCTUARY("Sanctuary", Material.TOTEM_OF_UNDYING, "Regen + Resistance + Absorption for 5s.", 28_000, 0xE011, 5_000),
     PLAGUE("Plague", Material.FERMENTED_SPIDER_EYE, "Poison II + Nausea to nearby enemies for 6s.", 16_000, 0xE012, 0),
     METEOR("Meteor", Material.MAGMA_BLOCK, "Call down a meteor where you look after 1s.", 20_000, 0xE013, 0),
-    DASH("Dash", Material.SUGAR, "Dash forward with a burst of speed.", 7_000, 0xE014, 0);
+    DASH("Dash", Material.SUGAR, "Dash forward with a burst of speed.", 7_000, 0xE014, 0),
+
+    // ==== Deepwoken mantras (8) ====
+    FLAME_GRAB("Flame Grab", Material.BLAZE_ROD, "Lunge, seize a foe in flame and slam them.", 13_000, 0xE015, 0),
+    WILDFIRE("Wildfire", Material.FIRE_CHARGE, "Erupt a cone of fire that ignites enemies.", 15_000, 0xE016, 0),
+    FROSTDRAW_SPIKES("Frostdraw Spikes", Material.PACKED_ICE, "Ice spikes impale and chill foes ahead.", 12_000, 0xE017, 0),
+    TUNDRA("Tundra", Material.BLUE_ICE, "Freeze a wide zone, slowing all within.", 18_000, 0xE018, 0),
+    SHOCK_SWORD("Shock Sword", Material.LIGHTNING_ROD, "A lightning slash that stuns.", 11_000, 0xE019, 0),
+    GALVANIZE("Galvanize", Material.COPPER_INGOT, "Electrify: Haste, Speed & Strength for 6s.", 24_000, 0xE01A, 6_000),
+    WIND_SLAM("Wind Slam", Material.BREEZE_ROD, "Blast wind, launching nearby foes back.", 13_000, 0xE01B, 0),
+    GALE_STEP("Gale Step", Material.FEATHER, "Blink-dash on a burst of wind.", 8_000, 0xE01C, 0);
 
     private final String displayName;
     private final Material icon;

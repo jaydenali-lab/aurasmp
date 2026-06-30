@@ -42,6 +42,15 @@ public final class TalentAura {
             apply(player, data, Card.FIRE_WALKER, PotionEffectType.FIRE_RESISTANCE, 0);
             apply(player, data, Card.REGENERATOR, PotionEffectType.REGENERATION, 0);
             apply(player, data, Card.BARRIER, PotionEffectType.ABSORPTION, 0);
+
+            // Conditioned Runner (Deepwoken): regen while sprinting and hurt.
+            if (data.hasCard(Card.CONDITIONED_RUNNER) && player.isSprinting() && healthRatio(player) < 0.75) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, DURATION_TICKS, 0, true, false, false));
+            }
+            // Pack Leader (Deepwoken): resistance while an ally fights beside you.
+            if (data.hasCard(Card.PACK_LEADER) && hasAllyNear(player)) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, DURATION_TICKS, 0, true, false, false));
+            }
         }
     }
 
@@ -49,5 +58,18 @@ public final class TalentAura {
         if (!data.hasCard(talent)) return;
         // ambient, hidden particles, hidden icon — a clean passive buff.
         player.addPotionEffect(new PotionEffect(type, DURATION_TICKS, amplifier, true, false, false));
+    }
+
+    private double healthRatio(Player player) {
+        var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
+        double max = attr != null ? attr.getValue() : 20.0;
+        return max <= 0 ? 1.0 : player.getHealth() / max;
+    }
+
+    private boolean hasAllyNear(Player player) {
+        for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 8, 8)) {
+            if (entity instanceof Player) return true;
+        }
+        return false;
     }
 }

@@ -34,7 +34,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
-## The 37 Talents (passive)
+## The 47 Talents (passive)
 
 **Attribute talents (10)** — applied as persistent attribute modifiers:
 
@@ -99,9 +99,24 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Bloodlust | Strength I for 5s after a kill |
 | Retribution | Every 3 hits taken, your next melee hit deals +2 hearts of true damage |
 
+**Deepwoken talents (10):**
+
+| Talent | Effect |
+|--------|--------|
+| Steady Feet | +50% knockback resistance |
+| Thresher's Reach | +1.5 blocks of attack reach |
+| Quickdraw | +20% attack speed |
+| Endurance Runner | +8% movement speed |
+| Kick Off | +6% speed and no short-fall damage |
+| Conditioned Runner | Regenerate while sprinting hurt |
+| Pack Leader | Resistance while an ally is near |
+| Unyielding Inferno | +2 hearts to hits on burning foes |
+| Spine Cutter | Backstabs deal +2 hearts of true damage |
+| Risky Moves | 20% chance to fully negate an incoming hit |
+
 (Note: the original **Thorns** was replaced by **Ghost**.)
 
-## The 20 Manifestations (active)
+## The 28 Manifestations (active)
 
 Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
 deal true damage** (ignores armour/resistance), scaled to cooldown (≈ cooldown ÷ 5
@@ -130,6 +145,16 @@ dropped** and is **restored when you respawn**.
 | Plague | Poison II + Nausea to nearby enemies for 6s | 16s |
 | Meteor | Call down a meteor where you look after 1s | 20s |
 | Dash | Dash forward with a burst of speed | 7s |
+| Flame Grab | Lunge, seize a foe in flame and slam them | 13s |
+| Wildfire | Erupt a cone of fire that ignites enemies | 15s |
+| Frostdraw Spikes | Ice spikes impale and chill foes ahead | 12s |
+| Tundra | Freeze a wide zone, slowing all within | 18s |
+| Shock Sword | A lightning slash that stuns | 11s |
+| Galvanize | Haste + Speed + Strength for 6s | 24s |
+| Wind Slam | Blast wind, launching nearby foes back | 13s |
+| Gale Step | Blink-dash on a burst of wind | 8s |
+
+*The last eight are real Deepwoken mantras.*
 
 ## HUD & custom icons
 
