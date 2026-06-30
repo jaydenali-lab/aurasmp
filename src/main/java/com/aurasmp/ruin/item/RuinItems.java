@@ -57,7 +57,7 @@ public final class RuinItems {
                 line("Right-click", NamedTextColor.YELLOW, " to reset your Ruin"),
                 line("level", NamedTextColor.GRAY, " and re-draft your build."),
                 lore(""),
-                line("Warning:", NamedTextColor.RED, " consumes all talents & manifestations.")));
+                line("Warning:", NamedTextColor.RED, " wipes your build.")));
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         // Points the client at the custom model "ruin:mirror_shard" supplied by the
         // resource pack. Without the pack it renders the base material instead.
