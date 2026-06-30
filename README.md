@@ -119,7 +119,7 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 ## The 28 Manifestations (active)
 
 Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
-deal true damage** (ignores armour/resistance), scaled to cooldown (≈ cooldown ÷ 5
+deal normal damage** (reduced by armour), scaled to cooldown (≈ cooldown ÷ 5
 hearts); ones that also apply a debuff deal 1/5 of that. The **Catalyst can't be
 dropped** and is **restored when you respawn**.
 

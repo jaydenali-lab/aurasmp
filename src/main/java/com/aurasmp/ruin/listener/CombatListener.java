@@ -72,7 +72,7 @@ public final class CombatListener implements Listener {
         for (org.bukkit.entity.Entity entity : world.getNearbyEntities(loc, 2.5, 2.5, 2.5)) {
             if (entity instanceof LivingEntity le && !entity.equals(shooter)) {
                 le.setFireTicks(60);
-                plugin.abilities().dealTrueDamage(le, shooter, 4.4); // 11s cd -> ~2.2 hearts
+                plugin.abilities().dealDamage(le, shooter, 4.4); // 11s cd -> ~2.2 hearts
             }
         }
         event.getEntity().remove();
