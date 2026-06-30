@@ -37,6 +37,8 @@ public final class AbilityManager {
     private final Map<UUID, Map<Ability, Long>> activeUntil = new HashMap<>();
     // Players currently dealing ability damage — lets the combat listener skip melee talents.
     private final java.util.Set<UUID> abilityDamaging = new java.util.HashSet<>();
+    // Players who shouldn't take fall damage for a window (Gale Step).
+    private final Map<UUID, Long> noFallUntil = new HashMap<>();
     private final NamespacedKey fireballKey;
 
     public AbilityManager(RuinPlugin plugin) {
@@ -47,6 +49,11 @@ public final class AbilityManager {
     public Cooldowns cooldowns() { return cooldowns; }
 
     public boolean isAbilityDamage(UUID id) { return abilityDamaging.contains(id); }
+
+    public boolean hasNoFall(UUID id) {
+        Long until = noFallUntil.get(id);
+        return until != null && System.currentTimeMillis() < until;
+    }
 
     public boolean isRuinFireball(Entity entity) {
         return entity != null
@@ -438,14 +445,37 @@ public final class AbilityManager {
     }
 
     private void windSlam(Player player) {
+        // Mace-style: leap up to wind up, then slam down on landing.
+        Vector v = player.getVelocity();
+        player.setVelocity(new Vector(v.getX(), 1.0, v.getZ()));
+        player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 4, 0.3, 0.2, 0.3, 0);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1f, 0.9f);
+        new BukkitRunnable() {
+            int ticks = 0;
+            boolean airborne = false;
+
+            @Override
+            public void run() {
+                ticks++;
+                if (!player.isOnline()) { cancel(); return; }
+                if (!airborne && !player.isOnGround()) airborne = true;
+                if ((airborne && player.isOnGround()) || ticks > 60) {
+                    windSlamImpact(player);
+                    cancel();
+                }
+            }
+        }.runTaskTimer(plugin, 4L, 1L);
+    }
+
+    private void windSlamImpact(Player player) {
         Location center = player.getLocation();
-        center.getWorld().spawnParticle(Particle.GUST, center, 6, 1, 0.2, 1, 0);
-        center.getWorld().playSound(center, Sound.ENTITY_BREEZE_SHOOT, 1f, 0.9f);
-        for (LivingEntity target : nearbyEnemies(player, 6.0)) {
-            Vector push = target.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.6).setY(0.7);
+        center.getWorld().spawnParticle(Particle.GUST_EMITTER_LARGE, center, 1, 0, 0, 0, 0);
+        center.getWorld().spawnParticle(Particle.EXPLOSION, center, 3, 1, 0.2, 1, 0);
+        center.getWorld().playSound(center, Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1f, 0.8f);
+        for (LivingEntity target : nearbyEnemies(player, 5.0)) {
+            Vector push = target.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.5).setY(0.65);
             target.setVelocity(push);
-            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 1));
-            dealDamage(target, player, 1.04); // applies Slow -> 1/5
+            dealDamage(target, player, 5.2); // 13s cd -> full
         }
     }
 
@@ -454,7 +484,8 @@ public final class AbilityManager {
         dir.setY(Math.max(0.2, dir.getY() * 0.4));
         player.setVelocity(dir.normalize().multiply(1.8));
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 1));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 40, 0));
+        // No fall damage after the step (like a wind charge), for 8s.
+        noFallUntil.put(player.getUniqueId(), System.currentTimeMillis() + 8_000);
         player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 4, 0.3, 0.2, 0.3, 0);
         player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 15, 0.2, 0.1, 0.2, 0.05);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1f, 1.3f);

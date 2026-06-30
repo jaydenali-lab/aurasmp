@@ -44,8 +44,8 @@ public enum Ability {
     TUNDRA("Tundra", Material.BLUE_ICE, "Freeze a wide zone, slowing all within.", 18_000, 0xE018, 0),
     SHOCK_SWORD("Shock Sword", Material.LIGHTNING_ROD, "A lightning slash that stuns.", 11_000, 0xE019, 0),
     GALVANIZE("Galvanize", Material.COPPER_INGOT, "Electrify: Haste, Speed & Strength for 6s.", 24_000, 0xE01A, 6_000),
-    WIND_SLAM("Wind Slam", Material.BREEZE_ROD, "Blast wind, launching nearby foes back.", 13_000, 0xE01B, 0),
-    GALE_STEP("Gale Step", Material.FEATHER, "Blink-dash on a burst of wind.", 8_000, 0xE01C, 0);
+    WIND_SLAM("Wind Slam", Material.BREEZE_ROD, "Leap up and slam down, blasting foes back.", 13_000, 0xE01B, 0),
+    GALE_STEP("Gale Step", Material.FEATHER, "Blink-dash on wind; no fall damage after.", 8_000, 0xE01C, 0);
 
     private final String displayName;
     private final Material icon;

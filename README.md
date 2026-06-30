@@ -151,8 +151,8 @@ dropped** and is **restored when you respawn**.
 | Tundra | Freeze a wide zone, slowing all within | 18s |
 | Shock Sword | A lightning slash that stuns | 11s |
 | Galvanize | Haste + Speed + Strength for 6s | 24s |
-| Wind Slam | Blast wind, launching nearby foes back | 13s |
-| Gale Step | Blink-dash on a burst of wind | 8s |
+| Wind Slam | Leap up and slam down, blasting foes back | 13s |
+| Gale Step | Blink-dash on wind; no fall damage after | 8s |
 
 *The last eight are real Deepwoken mantras.*
 
@@ -239,5 +239,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.3.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.4.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

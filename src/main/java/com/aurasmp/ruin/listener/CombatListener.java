@@ -196,9 +196,10 @@ public final class CombatListener implements Listener {
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.8f, 1.4f);
             return;
         }
-        if ((data.hasCard(Card.FEATHER)
-                || (data.hasCard(Card.KICK_OFF) && event.getDamage() <= 6.0))
-                && event.getCause() == EntityDamageEvent.DamageCause.FALL) {
+        if (event.getCause() == EntityDamageEvent.DamageCause.FALL
+                && (data.hasCard(Card.FEATHER)
+                    || (data.hasCard(Card.KICK_OFF) && event.getDamage() <= 6.0)
+                    || plugin.abilities().hasNoFall(player.getUniqueId()))) {
             event.setCancelled(true);
             return;
         }
