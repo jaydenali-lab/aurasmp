@@ -73,8 +73,8 @@ public final class Progression {
             data.setXp(data.xp() - threshold(data.level()));
             data.setLevel(data.level() + 1);
             gained++;
-            // Level 3 and 6 grant abilities, every other level grants a card.
-            boolean ability = data.level() % 3 == 0;
+            // Every 5th level (5 and 10) grants a manifestation; the rest grant talents.
+            boolean ability = data.level() % 5 == 0;
             plugin.gui().queue(player, ability);
         }
 
@@ -97,7 +97,7 @@ public final class Progression {
             data.setLevel(data.level() + 1);
             data.setXp(0);
             gained++;
-            boolean ability = data.level() % 3 == 0;
+            boolean ability = data.level() % 5 == 0;
             plugin.gui().queue(player, ability);
         }
         if (gained > 0) {

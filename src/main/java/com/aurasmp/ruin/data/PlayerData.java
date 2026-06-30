@@ -11,7 +11,7 @@ import java.util.Set;
 /** Mutable per-player progression state. */
 public final class PlayerData {
 
-    public static final int MAX_LEVEL = 6;
+    public static final int MAX_LEVEL = 10;
     public static final int MAX_ABILITIES = 2;
 
     private int level = 1;

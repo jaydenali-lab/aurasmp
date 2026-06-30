@@ -9,9 +9,9 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 - **Earn XP by killing.** Weak/passive mobs give little, hostile mobs give more, strong
   mobs and bosses give a lot, and **players give the most**.
 - **Level up to draft.** Each level-up opens a draft menu with 3 random options — pick one.
-  - Levels **1–6** (max level is **6**).
+  - Levels **1–10** (max level is **10**).
   - Most levels offer a **Talent** (passive).
-  - **Every 3rd level (3 and 6)** offers a **Manifestation** (active cast) instead.
+  - **Every 5th level (5 and 10)** offers a **Manifestation** (active cast) instead.
   - If you gain several levels at once, the drafts open **one after another**.
 - **Cast Manifestations** with the **Ruin Catalyst** (given when you learn your first one):
   - Right-click = first manifestation
@@ -30,7 +30,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 | Passive | Cow, Pig, Horse… | 2 |
 | Weak | Chicken, Rabbit, Bat, Fish… | 1 |
 
-Level thresholds: `100 → 250 → 500 → 900 → 1500`.
+Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
 ## The 40 Talents (passive)
 
@@ -197,7 +197,7 @@ xp:                 # XP per kill by victim category
   common: 8
   passive: 2
   weak: 1
-thresholds: [100, 250, 500, 900, 1500]   # XP to advance each level (1->2 … 5->6)
+thresholds: [100, 250, 500, 900, 1500, 2300, 3300, 4500, 6000]   # 1->2 … 9->10
 ghost:
   chance: 0.15      # Ghost talent vanish chance (0.0–1.0)
 scavenger:

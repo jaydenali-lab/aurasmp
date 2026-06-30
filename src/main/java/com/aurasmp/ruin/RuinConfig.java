@@ -7,7 +7,7 @@ import java.util.List;
 /** Typed view over config.yml, reloadable at runtime via {@code /ruin reload}. */
 public final class RuinConfig {
 
-    private static final int[] DEFAULT_THRESHOLDS = {100, 250, 500, 900, 1500};
+    private static final int[] DEFAULT_THRESHOLDS = {100, 250, 500, 900, 1500, 2300, 3300, 4500, 6000};
 
     private final RuinPlugin plugin;
 

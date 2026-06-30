@@ -10,9 +10,9 @@ xp:
   passive: 2      # Cow, Pig, Horse, ...
   weak: 1         # Chicken, Rabbit, Bat, fish, ...
 
-# XP needed to advance FROM each level. Five entries = levels 1->2 ... 5->6.
-# (Max level is 6, so there are five steps.)
-thresholds: [100, 250, 500, 900, 1500]
+# XP needed to advance FROM each level. Nine entries = levels 1->2 ... 9->10.
+# (Max level is 10, so there are nine steps.)
+thresholds: [100, 250, 500, 900, 1500, 2300, 3300, 4500, 6000]
 
 # Ghost talent: chance (0.0 - 1.0) when hit to fully vanish + Speed II for 3s.
 ghost:
