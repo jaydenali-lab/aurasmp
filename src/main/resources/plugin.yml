@@ -1,5 +1,5 @@
 name: Ruin
-version: 1.5.0
+version: 1.6.0
 main: com.aurasmp.ruin.RuinPlugin
 api-version: '1.21'
 author: AuraSMP
@@ -8,7 +8,7 @@ commands:
   ruin:
     description: Ruin progression commands.
     usage: |
-      /ruin build - open your build menu (talents + manifestations)
+      /ruin build [player] - open your build menu (admin can edit others)
       /ruin level give <player> <amount> - give a player levels (admin)
       /ruin level add <amount> [player] - add levels (admin)
       /ruin xp <amount> [player] - grant XP (admin)

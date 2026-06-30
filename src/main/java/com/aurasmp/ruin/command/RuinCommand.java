@@ -42,7 +42,14 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("Only players have a build.");
                 return true;
             }
-            plugin.buildGui().open(player);
+            // The admin can open another player's build to edit it.
+            java.util.UUID target = player.getUniqueId();
+            if (args.length >= 2 && args[0].equalsIgnoreCase("build")
+                    && com.aurasmp.ruin.gui.BuildGui.isAdmin(player)) {
+                Player other = Bukkit.getPlayerExact(args[1]);
+                if (other != null) target = other.getUniqueId();
+            }
+            plugin.buildGui().open(player, target);
             return true;
         }
 

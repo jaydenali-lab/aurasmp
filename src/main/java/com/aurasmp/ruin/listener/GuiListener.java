@@ -21,10 +21,38 @@ public final class GuiListener implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
-        if (holder instanceof com.aurasmp.ruin.gui.BuildGui.Holder) {
-            event.setCancelled(true); // read-only build viewer
+
+        // Build viewer — read-only, except the admin who edits via clicks.
+        if (holder instanceof com.aurasmp.ruin.gui.BuildGui.Holder build) {
+            event.setCancelled(true);
+            if (!(event.getWhoClicked() instanceof Player p)) return;
+            if (!build.editable() || !com.aurasmp.ruin.gui.BuildGui.isAdmin(p)) return; // silent for everyone else
+            if (event.getClickedInventory() == null
+                    || !event.getClickedInventory().equals(event.getInventory())) return;
+            int slot = event.getSlot();
+            if (build.talentAt(slot) != null) {
+                plugin.pickerGui().openTalent(p, build.target(), build.talentAt(slot));
+            } else if (build.abilityAt(slot) != null) {
+                plugin.pickerGui().openAbility(p, build.target(), build.abilityAt(slot));
+            } else if (build.isAddTalent(slot)) {
+                plugin.pickerGui().openTalent(p, build.target(), null);
+            } else if (build.isAddAbility(slot)) {
+                plugin.pickerGui().openAbility(p, build.target(), null);
+            }
             return;
         }
+
+        // Admin picker — choose a talent/manifestation to set.
+        if (holder instanceof com.aurasmp.ruin.gui.PickerGui.Holder picker) {
+            event.setCancelled(true);
+            if (!(event.getWhoClicked() instanceof Player p)) return;
+            if (!com.aurasmp.ruin.gui.BuildGui.isAdmin(p)) return;
+            if (event.getClickedInventory() == null
+                    || !event.getClickedInventory().equals(event.getInventory())) return;
+            plugin.pickerGui().handlePick(p, picker, event.getSlot());
+            return;
+        }
+
         if (!(holder instanceof SelectionGui.Session session)) return;
 
         event.setCancelled(true); // draft menus are never editable

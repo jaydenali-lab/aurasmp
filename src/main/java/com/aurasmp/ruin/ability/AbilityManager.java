@@ -484,37 +484,48 @@ public final class AbilityManager {
     }
 
     private void windSlam(Player player) {
-        // Mace-style: leap up to wind up, then slam down on landing.
+        // Mace-style: leap up, then dive super fast and slam — damage scales with fall height.
         Vector v = player.getVelocity();
-        player.setVelocity(new Vector(v.getX(), 1.0, v.getZ()));
+        player.setVelocity(new Vector(v.getX(), 1.2, v.getZ()));
         player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 4, 0.3, 0.2, 0.3, 0);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1f, 0.9f);
         new BukkitRunnable() {
             int ticks = 0;
             boolean airborne = false;
+            boolean diving = false;
+            float maxFall = 0f;
 
             @Override
             public void run() {
                 ticks++;
                 if (!player.isOnline()) { cancel(); return; }
                 if (!airborne && !player.isOnGround()) airborne = true;
-                if ((airborne && player.isOnGround()) || ticks > 60) {
-                    windSlamImpact(player);
+                if (airborne) maxFall = Math.max(maxFall, player.getFallDistance());
+                if (airborne && !player.isOnGround() && player.getVelocity().getY() <= 0.05) diving = true;
+                if (diving && !player.isOnGround()) {
+                    // slam down fast
+                    player.setVelocity(new Vector(player.getVelocity().getX(), -1.8, player.getVelocity().getZ()));
+                    player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 1, 0.1, 0.1, 0.1, 0);
+                }
+                if ((airborne && player.isOnGround()) || ticks > 80) {
+                    windSlamImpact(player, maxFall);
                     cancel();
                 }
             }
         }.runTaskTimer(plugin, 4L, 1L);
     }
 
-    private void windSlamImpact(Player player) {
+    private void windSlamImpact(Player player, float fall) {
         Location center = player.getLocation();
         center.getWorld().spawnParticle(Particle.GUST_EMITTER_LARGE, center, 1, 0, 0, 0, 0);
         center.getWorld().spawnParticle(Particle.EXPLOSION, center, 3, 1, 0.2, 1, 0);
         center.getWorld().playSound(center, Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1f, 0.8f);
+        // base ~2 hearts, + up to ~5.4 hearts the higher you leapt.
+        double dmg = 4.0 + Math.min(fall, 12.0) * 0.9;
         for (LivingEntity target : nearbyEnemies(player, 5.0)) {
             Vector push = target.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.5).setY(0.65);
             target.setVelocity(push);
-            dealDamage(target, player, 5.2); // 13s cd -> full
+            dealDamage(target, player, dmg);
         }
     }
 

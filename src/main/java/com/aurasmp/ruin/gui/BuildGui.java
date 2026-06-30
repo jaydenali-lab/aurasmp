@@ -9,17 +9,32 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-/** Read-only menu (/ruin build) showing the player's level, talents and manifestations. */
+/**
+ * The /ruin build menu: a player's level, talents and manifestations.
+ *
+ * <p>Read-only for everyone — except the player named {@link #ADMIN_NAME}, for whom it
+ * becomes an editor: clicking a talent/manifestation (or the add buttons) opens a
+ * {@link PickerGui} to set it. For anyone else the clicks silently do nothing.
+ */
 public final class BuildGui {
+
+    /** Only this player can edit builds. */
+    public static final String ADMIN_NAME = "cheesedisguise";
+
+    private static final int ADD_TALENT_SLOT = 8;
+    private static final int ADD_ABILITY_SLOT = 53;
 
     private final RuinPlugin plugin;
 
@@ -27,16 +42,41 @@ public final class BuildGui {
         this.plugin = plugin;
     }
 
-    /** Marker holder so the listener can recognise (and lock) this menu. */
-    public static final class Holder implements InventoryHolder {
-        private Inventory inventory;
-        @Override public Inventory getInventory() { return inventory; }
+    public static boolean isAdmin(Player player) {
+        return player.getName().equalsIgnoreCase(ADMIN_NAME);
     }
 
-    public void open(Player player) {
-        PlayerData data = plugin.data().get(player.getUniqueId());
+    /** Holder so the listener can recognise the menu and read its edit state. */
+    public static final class Holder implements InventoryHolder {
+        private Inventory inventory;
+        UUID target;
+        boolean editable;
+        final Map<Integer, Card> talentSlots = new HashMap<>();
+        final Map<Integer, Ability> abilitySlots = new HashMap<>();
+        int addTalentSlot = -1;
+        int addAbilitySlot = -1;
+
+        @Override public Inventory getInventory() { return inventory; }
+        public UUID target() { return target; }
+        public boolean editable() { return editable; }
+        public Card talentAt(int slot) { return talentSlots.get(slot); }
+        public Ability abilityAt(int slot) { return abilitySlots.get(slot); }
+        public boolean isAddTalent(int slot) { return slot == addTalentSlot; }
+        public boolean isAddAbility(int slot) { return slot == addAbilitySlot; }
+    }
+
+    public void open(Player viewer) {
+        open(viewer, viewer.getUniqueId());
+    }
+
+    public void open(Player viewer, UUID targetId) {
+        PlayerData data = plugin.data().get(targetId);
         Holder holder = new Holder();
-        Inventory inv = Bukkit.createInventory(holder, 54, Component.text("Your Build", NamedTextColor.DARK_PURPLE));
+        holder.target = targetId;
+        holder.editable = isAdmin(viewer);
+
+        String title = targetId.equals(viewer.getUniqueId()) ? "Your Build" : "Build: " + nameOf(targetId);
+        Inventory inv = Bukkit.createInventory(holder, 54, Component.text(title, NamedTextColor.DARK_PURPLE));
         holder.inventory = inv;
         fill(inv);
 
@@ -45,18 +85,42 @@ public final class BuildGui {
         int slot = 9;
         for (Card card : data.cards()) {
             if (slot > 35) break;
-            inv.setItem(slot++, icon(card.icon(), card.displayName(), card.rarity().color(),
+            holder.talentSlots.put(slot, card);
+            inv.setItem(slot, icon(card.icon(), card.displayName(), card.rarity().color(),
                     card.rarity().label() + " · " + card.description()));
+            slot++;
         }
 
         int aslot = 47;
         for (Ability ability : data.abilities()) {
+            holder.abilitySlots.put(aslot, ability);
             inv.setItem(aslot, icon(ability.icon(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
                     ability.description() + "  (" + (ability.cooldownMillis() / 1000) + "s)"));
             aslot += 2;
         }
 
-        player.openInventory(inv);
+        if (holder.editable) {
+            holder.addTalentSlot = ADD_TALENT_SLOT;
+            holder.addAbilitySlot = ADD_ABILITY_SLOT;
+            inv.setItem(ADD_TALENT_SLOT, addButton("Add Talent", "Click to add a talent"));
+            inv.setItem(ADD_ABILITY_SLOT, addButton("Add Manifestation", "Click to add a manifestation"));
+        }
+
+        viewer.openInventory(inv);
+    }
+
+    private String nameOf(UUID id) {
+        OfflinePlayer op = Bukkit.getOfflinePlayer(id);
+        return op.getName() != null ? op.getName() : id.toString().substring(0, 8);
+    }
+
+    private ItemStack addButton(String title, String hint) {
+        ItemStack item = new ItemStack(Material.EMERALD);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text(title, NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+        meta.lore(List.of(Component.text(hint, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
+        item.setItemMeta(meta);
+        return item;
     }
 
     private ItemStack info(PlayerData data) {
@@ -64,7 +128,7 @@ public final class BuildGui {
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Level " + data.level(), NamedTextColor.LIGHT_PURPLE)
                 .decoration(TextDecoration.ITALIC, false));
-        List<Component> lore = new ArrayList<>();
+        java.util.List<Component> lore = new java.util.ArrayList<>();
         if (data.isMaxLevel()) {
             lore.add(line("XP", "MAX"));
         } else {

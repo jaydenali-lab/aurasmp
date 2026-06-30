@@ -7,6 +7,7 @@ import com.aurasmp.ruin.command.RuinCommand;
 import com.aurasmp.ruin.data.DataStore;
 import com.aurasmp.ruin.data.PlayerData;
 import com.aurasmp.ruin.gui.BuildGui;
+import com.aurasmp.ruin.gui.PickerGui;
 import com.aurasmp.ruin.gui.SelectionGui;
 import com.aurasmp.ruin.hud.ActionBarHud;
 import com.aurasmp.ruin.hud.XpBossBar;
@@ -29,6 +30,7 @@ public final class RuinPlugin extends JavaPlugin {
     private Progression progression;
     private SelectionGui gui;
     private BuildGui buildGui;
+    private PickerGui pickerGui;
     private RuinItems items;
     private ActionBarHud hud;
     private XpBossBar xpBar;
@@ -43,6 +45,7 @@ public final class RuinPlugin extends JavaPlugin {
         this.progression = new Progression(this);
         this.gui = new SelectionGui(this);
         this.buildGui = new BuildGui(this);
+        this.pickerGui = new PickerGui(this);
         this.items = new RuinItems(this);
         this.hud = new ActionBarHud(this);
         this.xpBar = new XpBossBar(this);
@@ -98,6 +101,7 @@ public final class RuinPlugin extends JavaPlugin {
     public Progression progression() { return progression; }
     public SelectionGui gui() { return gui; }
     public BuildGui buildGui() { return buildGui; }
+    public PickerGui pickerGui() { return pickerGui; }
     public RuinItems items() { return items; }
     public XpBossBar xpBar() { return xpBar; }
 }
