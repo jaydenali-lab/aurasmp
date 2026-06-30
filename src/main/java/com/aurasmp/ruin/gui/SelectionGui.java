@@ -3,6 +3,7 @@ package com.aurasmp.ruin.gui;
 import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.ability.Ability;
 import com.aurasmp.ruin.card.Card;
+import com.aurasmp.ruin.card.Rarity;
 import com.aurasmp.ruin.data.PlayerData;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -24,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /** Builds and drives the level-up draft menu (5 talents / 4 manifestations, pick one). */
 public final class SelectionGui {
@@ -86,19 +88,17 @@ public final class SelectionGui {
             if (!data.hasCard(card)) pool.add(card);
         }
         if (pool.isEmpty()) return null;
-        Collections.shuffle(pool);
+        List<Card> chosen = weightedPick(pool, CARD_SLOTS.length);
 
         Session session = new Session(false);
         Inventory inv = Bukkit.createInventory(session, 27,
                 Component.text("Choose a Talent", NamedTextColor.DARK_AQUA));
         session.inventory = inv;
         fill(inv);
-        int count = Math.min(CARD_SLOTS.length, pool.size());
-        for (int i = 0; i < count; i++) {
-            Card card = pool.get(i);
+        for (int i = 0; i < chosen.size(); i++) {
+            Card card = chosen.get(i);
             session.cardSlots.put(CARD_SLOTS[i], card);
-            NamedTextColor color = card.isAttribute() ? NamedTextColor.AQUA : NamedTextColor.GREEN;
-            inv.setItem(CARD_SLOTS[i], icon(card.icon(), card.displayName(), color, card.description()));
+            inv.setItem(CARD_SLOTS[i], cardIcon(card));
         }
         placeReroll(inv, data);
         return session;
@@ -233,6 +233,41 @@ public final class SelectionGui {
                 left > 0 ? NamedTextColor.YELLOW : NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false)));
         item.setItemMeta(meta);
         inv.setItem(REROLL_SLOT, item);
+    }
+
+    private ItemStack cardIcon(Card card) {
+        ItemStack item = new ItemStack(card.icon());
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text(card.displayName(), card.rarity().color()).decoration(TextDecoration.ITALIC, false));
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text(card.rarity().label(), card.rarity().color()).decoration(TextDecoration.ITALIC, false));
+        for (String line : wrap(card.description(), 32)) {
+            lore.add(Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        }
+        lore.add(Component.text(""));
+        lore.add(Component.text("Click to pick", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Pick {@code count} distinct cards from the pool, weighted by rarity (rarer = less likely). */
+    private List<Card> weightedPick(List<Card> pool, int count) {
+        List<Card> src = new ArrayList<>(pool);
+        List<Card> out = new ArrayList<>();
+        while (!src.isEmpty() && out.size() < count) {
+            int total = 0;
+            for (Card c : src) total += c.rarity().weight();
+            int r = ThreadLocalRandom.current().nextInt(total);
+            Card picked = src.get(src.size() - 1);
+            for (Card c : src) {
+                r -= c.rarity().weight();
+                if (r < 0) { picked = c; break; }
+            }
+            out.add(picked);
+            src.remove(picked);
+        }
+        return out;
     }
 
     private void fill(Inventory inv) {

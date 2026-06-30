@@ -45,8 +45,8 @@ public final class BuildGui {
         int slot = 9;
         for (Card card : data.cards()) {
             if (slot > 35) break;
-            NamedTextColor color = card.isAttribute() ? NamedTextColor.AQUA : NamedTextColor.GREEN;
-            inv.setItem(slot++, icon(card.icon(), card.displayName(), color, card.description()));
+            inv.setItem(slot++, icon(card.icon(), card.displayName(), card.rarity().color(),
+                    card.rarity().label() + " · " + card.description()));
         }
 
         int aslot = 47;

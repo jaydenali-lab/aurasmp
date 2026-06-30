@@ -125,4 +125,23 @@ public enum Card {
     public Attribute attribute() { return attribute; }
     public AttributeModifier.Operation operation() { return operation; }
     public double amount() { return amount; }
+
+    // ---- Rarity tiers (everything not listed is COMMON) ----
+    private static final java.util.EnumMap<Card, Rarity> RARITY = new java.util.EnumMap<>(Card.class);
+    static {
+        for (Card c : new Card[]{ONSLAUGHT, EXECUTIONER, JUGGERNAUT, GHOST, RISKY_MOVES}) {
+            RARITY.put(c, Rarity.LEGENDARY);
+        }
+        for (Card c : new Card[]{ENDURANCE, LIFESTEAL, REGENERATOR, BARRIER, CLEAVE, RETRIBUTION,
+                THRESHERS_REACH, UNYIELDING_INFERNO, SPINE_CUTTER}) {
+            RARITY.put(c, Rarity.EPIC);
+        }
+        for (Card c : new Card[]{VITALITY, BULWARK, SWIFTNESS, STEADFAST, REACH, LEECH, BERSERKER,
+                ADRENALINE, HASTE, FIRE_WALKER, VENOM, CRIT, BLOODLUST, STEADY_FEET, QUICKDRAW,
+                KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER}) {
+            RARITY.put(c, Rarity.RARE);
+        }
+    }
+
+    public Rarity rarity() { return RARITY.getOrDefault(this, Rarity.COMMON); }
 }
