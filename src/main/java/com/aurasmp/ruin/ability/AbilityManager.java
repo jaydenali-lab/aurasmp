@@ -8,10 +8,13 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.AbstractArrow;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.SmallFireball;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.RayTraceResult;
@@ -215,17 +218,30 @@ public final class AbilityManager {
     }
 
     private void grapple(Player player) {
-        World world = player.getWorld();
-        Location eye = player.getEyeLocation();
-        RayTraceResult hit = world.rayTraceBlocks(eye, eye.getDirection(), 25.0);
-        Location target = hit != null
-                ? hit.getHitPosition().toLocation(world)
-                : eye.add(eye.getDirection().multiply(25));
-        Vector dir = target.toVector().subtract(player.getLocation().toVector());
-        if (dir.lengthSquared() < 0.01) return;
-        player.setVelocity(dir.normalize().multiply(1.6).add(new Vector(0, 0.3, 0)));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 40, 0));
-        world.playSound(player.getLocation(), Sound.ENTITY_FISHING_BOBBER_RETRIEVE, 1f, 0.8f);
+        // Fire an arrow and ride it through the air until it lands.
+        Arrow arrow = player.launchProjectile(Arrow.class, player.getEyeLocation().getDirection().multiply(2.5));
+        arrow.setShooter(player);
+        arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
+        arrow.setDamage(0.0); // harmless — you're riding it
+        arrow.addPassenger(player);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 0.8f);
+
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                ticks++;
+                boolean landed = !arrow.isValid() || arrow.isDead()
+                        || arrow.isInBlock() || arrow.isOnGround() || ticks > 120;
+                if (landed) {
+                    arrow.eject();
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 60, 0));
+                    if (arrow.isValid()) arrow.remove();
+                    cancel();
+                }
+            }
+        }.runTaskTimer(plugin, 2L, 1L);
     }
 
     private void berserk(Player player) {

@@ -28,7 +28,7 @@ public enum Ability {
     // ==== Expansion: 10 more manifestations ====
     FIREBALL("Fireball", Material.MAGMA_CREAM, "Hurl a fireball that explodes on impact.", 11_000, 0xE00B, 0),
     UPDRAFT("Updraft", Material.FEATHER, "Fling nearby enemies into the air.", 13_000, 0xE00C, 0),
-    GRAPPLE("Grapple", Material.FISHING_ROD, "Yank yourself toward where you look.", 8_000, 0xE00D, 0),
+    GRAPPLE("Grapple", Material.FISHING_ROD, "Fire an arrow and ride it through the air.", 8_000, 0xE00D, 0),
     BERSERK("Berserk", Material.NETHERITE_AXE, "Strength II + Speed + Resistance for 6s.", 30_000, 0xE00E, 6_000),
     SMOKE_BOMB("Smoke Bomb", Material.GUNPOWDER, "Blind nearby foes; turn invisible for 3s.", 22_000, 0xE00F, 3_000),
     LIGHTNING_STORM("Lightning Storm", Material.TRIDENT, "Strike up to 3 nearby enemies with lightning.", 18_000, 0xE010, 0),
