@@ -143,8 +143,8 @@ public final class CombatListener implements Listener {
         if (data.hasCard(Card.JUGGERNAUT)) {
             event.setDamage(event.getDamage() * 0.85);
         }
-        // Ghost: when hit, a 15% chance to fully vanish (armor too) + Speed II for 3s.
-        if (data.hasCard(Card.GHOST) && ThreadLocalRandom.current().nextDouble() < 0.15) {
+        // Ghost: when hit, a chance to fully vanish (armor too) + Speed II for 3s.
+        if (data.hasCard(Card.GHOST) && ThreadLocalRandom.current().nextDouble() < plugin.config().ghostChance()) {
             applyGhost(player, 60);
         }
         // Retribution: buffer a bonus that the player's next melee hit will spend.

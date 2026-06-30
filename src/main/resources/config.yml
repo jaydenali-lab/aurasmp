@@ -1,0 +1,28 @@
+# Ruin configuration.
+# Edit, then run /ruin reload (or restart the server) to apply.
+
+# XP awarded per kill, by victim category.
+xp:
+  player: 50      # killing another player
+  boss: 150       # Ender Dragon, Wither, Warden, Elder Guardian
+  strong: 20      # Enderman, Ravager, Blaze, Iron Golem, Piglin Brute, ...
+  common: 8       # Zombie, Skeleton, Creeper, Spider, ... (and anything uncategorised)
+  passive: 2      # Cow, Pig, Horse, ...
+  weak: 1         # Chicken, Rabbit, Bat, fish, ...
+
+# XP needed to advance FROM each level. Five entries = levels 1->2 ... 5->6.
+# (Max level is 6, so there are five steps.)
+thresholds: [100, 250, 500, 900, 1500]
+
+# Ghost talent: chance (0.0 - 1.0) when hit to fully vanish + Speed II for 3s.
+ghost:
+  chance: 0.15
+
+# Scavenger talent: XP multiplier on kills.
+scavenger:
+  multiplier: 1.5
+
+# XP boss bar (Ender Dragon style): seconds it stays before auto-hiding
+# after your most recent XP gain.
+boss-bar:
+  hide-seconds: 5

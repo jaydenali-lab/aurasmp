@@ -55,9 +55,19 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
             case "give" -> handleGive(sender, args);
             case "reset" -> handleReset(sender, args);
             case "xp" -> handleXp(sender, args);
-            default -> sender.sendMessage(Component.text("Usage: /ruin <level|give|reset|xp>", NamedTextColor.RED));
+            case "reload" -> handleReload(sender);
+            default -> sender.sendMessage(Component.text("Usage: /ruin <level|give|reset|xp|reload>", NamedTextColor.RED));
         }
         return true;
+    }
+
+    private void handleReload(CommandSender sender) {
+        if (!sender.hasPermission("ruin.admin")) {
+            sender.sendMessage(Component.text("No permission.", NamedTextColor.RED));
+            return;
+        }
+        plugin.config().reload();
+        sender.sendMessage(Component.text("Ruin config reloaded.", NamedTextColor.GREEN));
     }
 
     private void handleLevelAdd(CommandSender sender, String[] args) {
@@ -169,7 +179,7 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            for (String s : List.of("level", "give", "reset", "xp")) {
+            for (String s : List.of("level", "give", "reset", "xp", "reload")) {
                 if (s.startsWith(args[0].toLowerCase())) out.add(s);
             }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {

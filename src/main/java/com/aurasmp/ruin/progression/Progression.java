@@ -1,5 +1,6 @@
 package com.aurasmp.ruin.progression;
 
+import com.aurasmp.ruin.RuinConfig;
 import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.card.Card;
 import com.aurasmp.ruin.data.PlayerData;
@@ -12,9 +13,6 @@ import java.util.Set;
 
 /** XP values, level thresholds and the level-up pipeline. */
 public final class Progression {
-
-    /** XP required to advance FROM level (index+1). Five steps: 1→2 … 5→6. */
-    private static final int[] THRESHOLDS = {100, 250, 500, 900, 1500};
 
     private static final Set<EntityType> WEAK = Set.of(
             EntityType.CHICKEN, EntityType.RABBIT, EntityType.BAT, EntityType.COD, EntityType.SALMON,
@@ -46,17 +44,18 @@ public final class Progression {
 
     /** Base XP for killing a given entity type (players handled separately). */
     public int xpFor(EntityType type) {
-        if (type == EntityType.PLAYER) return 50;
-        if (BOSS.contains(type)) return 150;
-        if (STRONG.contains(type)) return 20;
-        if (WEAK.contains(type)) return 1;
-        if (PASSIVE.contains(type)) return 2;
-        return 8; // common hostiles (zombie, skeleton, creeper, spider, …)
+        RuinConfig config = plugin.config();
+        if (type == EntityType.PLAYER) return config.xpPlayer();
+        if (BOSS.contains(type)) return config.xpBoss();
+        if (STRONG.contains(type)) return config.xpStrong();
+        if (WEAK.contains(type)) return config.xpWeak();
+        if (PASSIVE.contains(type)) return config.xpPassive();
+        return config.xpCommon(); // common hostiles (zombie, skeleton, creeper, …) + uncategorised
     }
 
     public int threshold(int level) {
         if (level < 1 || level >= PlayerData.MAX_LEVEL) return -1;
-        return THRESHOLDS[level - 1];
+        return plugin.config().threshold(level);
     }
 
     /** Award XP and resolve any level-ups. Returns the number of levels gained. */
@@ -65,12 +64,12 @@ public final class Progression {
             return 0;
         }
         if (data.hasCard(Card.SCAVENGER)) {
-            amount = (int) Math.round(amount * 1.5);
+            amount = (int) Math.round(amount * plugin.config().scavengerMultiplier());
         }
         data.addXp(amount);
 
         int gained = 0;
-        while (!data.isMaxLevel() && data.xp() >= threshold(data.level())) {
+        while (!data.isMaxLevel() && threshold(data.level()) > 0 && data.xp() >= threshold(data.level())) {
             data.setXp(data.xp() - threshold(data.level()));
             data.setLevel(data.level() + 1);
             gained++;

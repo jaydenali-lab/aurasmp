@@ -184,6 +184,28 @@ A E A      N = Nether Star
 To use **your own** recipe, edit that method — the only requirement is that the crafted
 result is `RuinItems#mirrorShard()` (it carries the identifying NBT tag).
 
+## Configuration
+
+`config.yml` is generated on first run. Edit it and run **`/ruin reload`** (or
+restart) to apply — no recompile needed:
+
+```yaml
+xp:                 # XP per kill by victim category
+  player: 50
+  boss: 150
+  strong: 20
+  common: 8
+  passive: 2
+  weak: 1
+thresholds: [100, 250, 500, 900, 1500]   # XP to advance each level (1->2 … 5->6)
+ghost:
+  chance: 0.15      # Ghost talent vanish chance (0.0–1.0)
+scavenger:
+  multiplier: 1.5   # Scavenger talent XP multiplier
+boss-bar:
+  hide-seconds: 5   # how long the XP boss bar stays after a gain
+```
+
 ## Building
 
 ```bash

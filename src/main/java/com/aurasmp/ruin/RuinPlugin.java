@@ -21,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 /** Entry point. Owns the managers and wires up listeners + commands. */
 public final class RuinPlugin extends JavaPlugin {
 
+    private RuinConfig config;
     private DataStore data;
     private CardManager cards;
     private AbilityManager abilities;
@@ -33,6 +34,7 @@ public final class RuinPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        this.config = new RuinConfig(this);
         this.data = new DataStore(this);
         this.cards = new CardManager(this);
         this.abilities = new AbilityManager(this);
@@ -86,6 +88,7 @@ public final class RuinPlugin extends JavaPlugin {
         data.save(player.getUniqueId(), playerData);
     }
 
+    public RuinConfig config() { return config; }
     public DataStore data() { return data; }
     public CardManager cards() { return cards; }
     public AbilityManager abilities() { return abilities; }

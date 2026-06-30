@@ -20,8 +20,6 @@ import java.util.UUID;
  */
 public final class XpBossBar {
 
-    private static final long HIDE_TICKS = 100L; // 5 seconds
-
     private final RuinPlugin plugin;
     private final Map<UUID, BossBar> bars = new HashMap<>();
     private final Map<UUID, BukkitTask> hideTasks = new HashMap<>();
@@ -53,7 +51,8 @@ public final class XpBossBar {
 
         BukkitTask prev = hideTasks.remove(id);
         if (prev != null) prev.cancel();
-        hideTasks.put(id, plugin.getServer().getScheduler().runTaskLater(plugin, () -> hide(id), HIDE_TICKS));
+        long hideTicks = plugin.config().bossBarHideTicks();
+        hideTasks.put(id, plugin.getServer().getScheduler().runTaskLater(plugin, () -> hide(id), hideTicks));
     }
 
     private void hide(UUID id) {

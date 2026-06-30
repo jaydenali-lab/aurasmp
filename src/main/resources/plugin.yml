@@ -13,6 +13,7 @@ commands:
       /ruin xp <amount> [player] - grant XP (admin/testing)
       /ruin give <mirror|catalyst> [player] - admin give
       /ruin reset [player] - reset progression
+      /ruin reload - reload config.yml (admin)
     permission: ruin.use
 permissions:
   ruin.use:
