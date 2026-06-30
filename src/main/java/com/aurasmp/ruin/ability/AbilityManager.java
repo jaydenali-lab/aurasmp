@@ -223,6 +223,7 @@ public final class AbilityManager {
         arrow.setShooter(player);
         arrow.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
         arrow.setDamage(0.0); // harmless — you're riding it
+        arrow.setInvisible(true);
         arrow.addPassenger(player);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ARROW_SHOOT, 1f, 0.8f);
 
