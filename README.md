@@ -120,7 +120,7 @@ Cast via the Ruin Catalyst — each on its own cooldown:
 | Magnetize | Pull nearby enemies toward you | 13s |
 | Fireball | Hurl a fireball that ignites foes on impact | 11s |
 | Updraft | Fling nearby enemies into the air | 13s |
-| Grapple | Fire an arrow and ride it through the air | 8s |
+| Launch | Fire an arrow and ride it through the air | 8s |
 | Berserk | Strength II + Speed + Resistance for 6s | 30s |
 | Smoke Bomb | Blind nearby foes; turn invisible for 3s | 22s |
 | Lightning Storm | Strike up to 3 nearby enemies with lightning | 18s |

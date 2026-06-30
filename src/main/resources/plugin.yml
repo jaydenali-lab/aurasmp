@@ -9,9 +9,10 @@ commands:
     description: Ruin progression commands.
     usage: |
       /ruin level - show your level, talents and manifestations
-      /ruin level add <amount> [player] - add levels (admin/testing)
-      /ruin xp <amount> [player] - grant XP (admin/testing)
-      /ruin give <mirror|catalyst> [player] - admin give
+      /ruin level give <player> <amount> - give a player levels (admin)
+      /ruin level add <amount> [player] - add levels (admin)
+      /ruin xp <amount> [player] - grant XP (admin)
+      /ruin give <mirror|catalyst> [player] [amount] - admin give
       /ruin reset [player] - reset progression
       /ruin reload - reload config.yml (admin)
     permission: ruin.use

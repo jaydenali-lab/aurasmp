@@ -34,6 +34,11 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
                 handleLevelAdd(sender, args);
                 return true;
             }
+            // /ruin level give <player> <amount> — give a player levels
+            if (args.length >= 2 && args[1].equalsIgnoreCase("give")) {
+                handleLevelGive(sender, args);
+                return true;
+            }
             if (!(sender instanceof Player player)) {
                 sender.sendMessage("Only players have a Ruin level.");
                 return true;
@@ -96,13 +101,39 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
                 + " — drafts will open in sequence.", NamedTextColor.GREEN));
     }
 
+    private void handleLevelGive(CommandSender sender, String[] args) {
+        if (!sender.hasPermission("ruin.admin")) {
+            sender.sendMessage(Component.text("No permission.", NamedTextColor.RED));
+            return;
+        }
+        if (args.length < 4) {
+            sender.sendMessage(Component.text("Usage: /ruin level give <player> <amount>", NamedTextColor.RED));
+            return;
+        }
+        Player target = Bukkit.getPlayerExact(args[2]);
+        if (target == null) {
+            sender.sendMessage(Component.text("Player not found.", NamedTextColor.RED));
+            return;
+        }
+        int amount;
+        try {
+            amount = Integer.parseInt(args[3]);
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Amount must be a number.", NamedTextColor.RED));
+            return;
+        }
+        int gained = plugin.progression().awardLevels(target, plugin.data().get(target.getUniqueId()), amount);
+        sender.sendMessage(Component.text("Gave " + gained + " level(s) to " + target.getName()
+                + " — drafts will open in sequence.", NamedTextColor.GREEN));
+    }
+
     private void handleGive(CommandSender sender, String[] args) {
         if (!sender.hasPermission("ruin.admin")) {
             sender.sendMessage(Component.text("No permission.", NamedTextColor.RED));
             return;
         }
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /ruin give <mirror|catalyst> [player]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /ruin give <mirror|catalyst> [player] [amount]", NamedTextColor.RED));
             return;
         }
         Player target = resolveTarget(sender, args, 2);
@@ -119,8 +150,19 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Unknown item. Use: mirror | catalyst", NamedTextColor.RED));
             return;
         }
+        // Optional amount: /ruin give mirror <player> <amount>
+        int amount = 1;
+        if (args.length >= 4) {
+            try {
+                amount = Math.max(1, Math.min(64, Integer.parseInt(args[3])));
+            } catch (NumberFormatException e) {
+                sender.sendMessage(Component.text("Amount must be a number.", NamedTextColor.RED));
+                return;
+            }
+        }
+        item.setAmount(amount);
         target.getInventory().addItem(item);
-        sender.sendMessage(Component.text("Gave " + args[1] + " to " + target.getName() + ".", NamedTextColor.GREEN));
+        sender.sendMessage(Component.text("Gave " + amount + "x " + args[1] + " to " + target.getName() + ".", NamedTextColor.GREEN));
     }
 
     private void handleReset(CommandSender sender, String[] args) {
@@ -187,8 +229,15 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
                 if (s.startsWith(args[1].toLowerCase())) out.add(s);
             }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("level")) {
-            if ("add".startsWith(args[1].toLowerCase())) out.add("add");
+            for (String s : List.of("add", "give")) {
+                if (s.startsWith(args[1].toLowerCase())) out.add(s);
+            }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("reset")) {
+            for (Player p : Bukkit.getOnlinePlayers()) out.add(p.getName());
+        } else if (args.length == 3
+                && (args[0].equalsIgnoreCase("give")
+                    || (args[0].equalsIgnoreCase("level") && args[1].equalsIgnoreCase("give")))) {
+            // player slot for: /ruin give <type> <player> and /ruin level give <player>
             for (Player p : Bukkit.getOnlinePlayers()) out.add(p.getName());
         }
         return out;
