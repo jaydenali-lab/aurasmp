@@ -157,7 +157,7 @@ public final class AbilityManager {
         for (LivingEntity target : nearbyEnemies(player)) {
             Vector push = target.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.4).setY(0.5);
             target.setVelocity(push);
-            dealTrueDamage(target, player, 6.0);
+            dealTrueDamage(target, player, 4.8); // 12s cd -> 2.4 hearts
         }
     }
 
@@ -184,7 +184,7 @@ public final class AbilityManager {
                 : eye.add(eye.getDirection().multiply(20));
         world.strikeLightningEffect(strike);
         if (result != null && result.getHitEntity() instanceof LivingEntity target) {
-            dealTrueDamage(target, player, 6.0);
+            dealTrueDamage(target, player, 5.6); // 14s cd -> 2.8 hearts
         }
         world.playSound(strike, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1f, 1.2f);
     }
@@ -203,7 +203,7 @@ public final class AbilityManager {
         center.getWorld().playSound(center, Sound.BLOCK_GLASS_BREAK, 1f, 0.8f);
         for (LivingEntity target : nearbyEnemies(player)) {
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 3));
-            dealTrueDamage(target, player, 6.0);
+            dealTrueDamage(target, player, 1.2); // applies Slow -> 1/5 damage
         }
     }
 
@@ -305,7 +305,7 @@ public final class AbilityManager {
         int struck = 0;
         for (LivingEntity target : nearbyEnemies(player, 8.0)) {
             world.strikeLightningEffect(target.getLocation());
-            dealTrueDamage(target, player, 6.0);
+            dealTrueDamage(target, player, 7.2); // 18s cd -> 3.6 hearts
             if (++struck >= 3) break;
         }
         if (struck == 0) world.strikeLightningEffect(player.getLocation());

@@ -72,7 +72,7 @@ public final class CombatListener implements Listener {
         for (org.bukkit.entity.Entity entity : world.getNearbyEntities(loc, 2.5, 2.5, 2.5)) {
             if (entity instanceof LivingEntity le && !entity.equals(shooter)) {
                 le.setFireTicks(60);
-                plugin.abilities().dealTrueDamage(le, shooter, 6.0);
+                plugin.abilities().dealTrueDamage(le, shooter, 4.4); // 11s cd -> ~2.2 hearts
             }
         }
         event.getEntity().remove();
@@ -162,6 +162,13 @@ public final class CombatListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDamaged(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
+
+        // Invincible while a draft menu is open (you're forced to pick).
+        if (plugin.gui().hasOpen(player)) {
+            event.setCancelled(true);
+            return;
+        }
+
         PlayerData data = plugin.data().get(player.getUniqueId());
 
         if (data.hasCard(Card.FEATHER) && event.getCause() == EntityDamageEvent.DamageCause.FALL) {

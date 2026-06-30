@@ -21,6 +21,10 @@ public final class GuiListener implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
+        if (holder instanceof com.aurasmp.ruin.gui.BuildGui.Holder) {
+            event.setCancelled(true); // read-only build viewer
+            return;
+        }
         if (!(holder instanceof SelectionGui.Session session)) return;
 
         event.setCancelled(true); // draft menus are never editable

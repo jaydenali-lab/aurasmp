@@ -8,7 +8,7 @@ commands:
   ruin:
     description: Ruin progression commands.
     usage: |
-      /ruin level - show your level, talents and manifestations
+      /ruin build - open your build menu (talents + manifestations)
       /ruin level give <player> <amount> - give a player levels (admin)
       /ruin level add <amount> [player] - add levels (admin)
       /ruin xp <amount> [player] - grant XP (admin)

@@ -10,9 +10,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
@@ -76,13 +79,39 @@ public final class PlayerListener implements Listener {
         }
     }
 
+    @EventHandler
+    public void onDrop(PlayerDropItemEvent event) {
+        // The Catalyst can't be dropped.
+        if (plugin.items().isCatalyst(event.getItemDrop().getItemStack())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onDeath(PlayerDeathEvent event) {
+        // Don't drop the Catalyst on death — it's restored on respawn instead.
+        event.getDrops().removeIf(item -> plugin.items().isCatalyst(item));
+    }
+
+    @EventHandler
+    public void onRespawn(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) return;
+            PlayerData data = plugin.data().get(player.getUniqueId());
+            if (!data.abilities().isEmpty() && !hasCatalyst(player)) {
+                player.getInventory().addItem(plugin.items().catalyst(data.abilities()));
+            }
+        });
+    }
+
     private void useMirrorShard(Player player, ItemStack item) {
         plugin.resetPlayer(player);
         item.setAmount(item.getAmount() - 1);
         player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_BREAK, 1f, 0.7f);
         player.showTitle(net.kyori.adventure.title.Title.title(
-                Component.text("Reflected", NamedTextColor.AQUA),
-                Component.text("Your Ruin has been reset", NamedTextColor.GRAY)));
+                Component.text("Reset", NamedTextColor.AQUA),
+                Component.text("Build wiped", NamedTextColor.GRAY)));
     }
 
     private boolean hasCatalyst(Player player) {

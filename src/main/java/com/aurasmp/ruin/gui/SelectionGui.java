@@ -4,12 +4,12 @@ import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.ability.Ability;
 import com.aurasmp.ruin.card.Card;
 import com.aurasmp.ruin.data.PlayerData;
-import com.aurasmp.ruin.util.Glyphs;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -25,10 +25,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-/** Builds and drives the level-up draft menu (3 random options, pick one). */
+/** Builds and drives the level-up draft menu (5 talents / 4 manifestations, pick one). */
 public final class SelectionGui {
 
-    private static final int[] OPTION_SLOTS = {11, 13, 15};
+    private static final int[] CARD_SLOTS = {11, 12, 13, 14, 15};   // 5 talent options
+    private static final int[] ABILITY_SLOTS = {10, 12, 14, 16};    // 4 manifestation options
+    private static final int REROLL_SLOT = 22;
 
     private final RuinPlugin plugin;
     private final Map<UUID, Deque<Boolean>> pending = new HashMap<>();   // true = ability pick
@@ -75,7 +77,7 @@ public final class SelectionGui {
         }
         open.put(player.getUniqueId(), session);
         player.openInventory(session.inventory);
-        player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1.2f);
+        player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1.2f);
     }
 
     private Session buildCardMenu(PlayerData data) {
@@ -88,17 +90,17 @@ public final class SelectionGui {
 
         Session session = new Session(false);
         Inventory inv = Bukkit.createInventory(session, 27,
-                Component.text("Draft a Talent", NamedTextColor.DARK_AQUA));
+                Component.text("Choose a Talent", NamedTextColor.DARK_AQUA));
         session.inventory = inv;
         fill(inv);
-        int count = Math.min(3, pool.size());
+        int count = Math.min(CARD_SLOTS.length, pool.size());
         for (int i = 0; i < count; i++) {
             Card card = pool.get(i);
-            int slot = OPTION_SLOTS[i];
-            session.cardSlots.put(slot, card);
+            session.cardSlots.put(CARD_SLOTS[i], card);
             NamedTextColor color = card.isAttribute() ? NamedTextColor.AQUA : NamedTextColor.GREEN;
-            inv.setItem(slot, icon(card.icon(), card.displayName(), color, card.description()));
+            inv.setItem(CARD_SLOTS[i], icon(card.icon(), card.displayName(), color, card.description()));
         }
+        placeReroll(inv, data);
         return session;
     }
 
@@ -113,23 +115,27 @@ public final class SelectionGui {
 
         Session session = new Session(true);
         Inventory inv = Bukkit.createInventory(session, 27,
-                Component.text("Draft a Manifestation", NamedTextColor.DARK_PURPLE));
+                Component.text("Choose a Manifestation", NamedTextColor.DARK_PURPLE));
         session.inventory = inv;
         fill(inv);
-        int count = Math.min(3, pool.size());
+        int count = Math.min(ABILITY_SLOTS.length, pool.size());
         for (int i = 0; i < count; i++) {
             Ability ability = pool.get(i);
-            int slot = OPTION_SLOTS[i];
-            session.abilitySlots.put(slot, ability);
-            inv.setItem(slot, icon(ability.icon(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
-                    ability.description() + "  (CD " + (ability.cooldownMillis() / 1000) + "s)"));
+            session.abilitySlots.put(ABILITY_SLOTS[i], ability);
+            inv.setItem(ABILITY_SLOTS[i], icon(ability.icon(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
+                    ability.description() + "  (" + (ability.cooldownMillis() / 1000) + "s)"));
         }
+        placeReroll(inv, data);
         return session;
     }
 
     /** Handle a click in one of our menus. Returns true if the event was ours. */
     public boolean handleClick(Player player, Session session, int slot) {
         if (!open.containsValue(session)) return true; // stale menu, just swallow
+        if (slot == REROLL_SLOT) {
+            handleReroll(player, session);
+            return true;
+        }
         if (session.ability) {
             Ability picked = session.abilitySlots.get(slot);
             if (picked == null) return true;
@@ -146,6 +152,25 @@ public final class SelectionGui {
         player.closeInventory();
         plugin.getServer().getScheduler().runTask(plugin, () -> openNextIfIdle(player));
         return true;
+    }
+
+    private void handleReroll(Player player, Session session) {
+        PlayerData data = plugin.data().get(player.getUniqueId());
+        if (data.rerolls() <= 0) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+            return;
+        }
+        data.setRerolls(data.rerolls() - 1);
+        plugin.data().save(player.getUniqueId(), data);
+        player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.4f);
+        // Rebuild a fresh roll of the same type next tick.
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) return;
+            Session fresh = session.ability ? buildAbilityMenu(data) : buildCardMenu(data);
+            if (fresh == null) return;
+            open.put(player.getUniqueId(), fresh);
+            player.openInventory(fresh.inventory);
+        });
     }
 
     /** If a menu is closed without a choice, re-open it next tick (picks are mandatory). */
@@ -172,10 +197,8 @@ public final class SelectionGui {
         data.cards().add(card);
         plugin.cards().recalc(player, data);
         plugin.data().save(player.getUniqueId(), data);
-        player.sendMessage(Glyphs.sigil()
-                .append(Component.text(" Talent gained: ", NamedTextColor.GRAY))
-                .append(Component.text(card.displayName(), NamedTextColor.AQUA))
-                .append(Component.text(" — " + card.description(), NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("You picked ", NamedTextColor.GRAY)
+                .append(Component.text(card.displayName(), NamedTextColor.AQUA)));
     }
 
     private void applyAbility(Player player, Ability ability) {
@@ -183,11 +206,8 @@ public final class SelectionGui {
         if (!data.abilities().contains(ability)) data.abilities().add(ability);
         refreshCatalyst(player, data);
         plugin.data().save(player.getUniqueId(), data);
-        player.sendMessage(Glyphs.of(ability.glyph())
-                .append(Component.text(" Manifestation learned: ", NamedTextColor.GRAY))
-                .append(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE))
-                .append(Component.text(" — " + ability.description(), NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("Use the Ruin Catalyst to cast it.", NamedTextColor.DARK_GRAY));
+        player.sendMessage(Component.text("You picked ", NamedTextColor.GRAY)
+                .append(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE)));
     }
 
     /** Removes any existing Catalysts and gives a fresh one reflecting current bindings. */
@@ -201,6 +221,18 @@ public final class SelectionGui {
         if (!data.abilities().isEmpty()) {
             player.getInventory().addItem(plugin.items().catalyst(data.abilities()));
         }
+    }
+
+    private void placeReroll(Inventory inv, PlayerData data) {
+        int left = data.rerolls();
+        ItemStack item = new ItemStack(left > 0 ? Material.ENDER_EYE : Material.BARRIER);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("Reroll  " + left + "/" + PlayerData.DEFAULT_REROLLS,
+                left > 0 ? NamedTextColor.GREEN : NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+        meta.lore(List.of(Component.text(left > 0 ? "Click to reroll" : "None left",
+                left > 0 ? NamedTextColor.YELLOW : NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false)));
+        item.setItemMeta(meta);
+        inv.setItem(REROLL_SLOT, item);
     }
 
     private void fill(Inventory inv) {
@@ -219,8 +251,6 @@ public final class SelectionGui {
         for (String line : wrap(description, 32)) {
             lore.add(Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         }
-        lore.add(Component.text(""));
-        lore.add(Component.text("Click to choose", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;

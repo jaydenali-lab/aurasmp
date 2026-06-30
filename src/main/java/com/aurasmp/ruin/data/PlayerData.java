@@ -13,9 +13,11 @@ public final class PlayerData {
 
     public static final int MAX_LEVEL = 10;
     public static final int MAX_ABILITIES = 2;
+    public static final int DEFAULT_REROLLS = 5;
 
     private int level = 1;
     private int xp = 0;
+    private int rerolls = DEFAULT_REROLLS;
     private final Set<Card> cards = EnumSet.noneOf(Card.class);
     private final List<Ability> abilities = new ArrayList<>(MAX_ABILITIES);
 
@@ -25,6 +27,9 @@ public final class PlayerData {
     public int xp() { return xp; }
     public void setXp(int xp) { this.xp = xp; }
     public void addXp(int amount) { this.xp += amount; }
+
+    public int rerolls() { return rerolls; }
+    public void setRerolls(int rerolls) { this.rerolls = rerolls; }
 
     public Set<Card> cards() { return cards; }
     public boolean hasCard(Card card) { return cards.contains(card); }
@@ -38,6 +43,7 @@ public final class PlayerData {
     public void reset() {
         level = 1;
         xp = 0;
+        rerolls = DEFAULT_REROLLS;
         cards.clear();
         abilities.clear();
     }

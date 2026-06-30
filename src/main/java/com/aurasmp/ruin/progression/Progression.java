@@ -81,7 +81,7 @@ public final class Progression {
         if (gained > 0) {
             player.showTitle(net.kyori.adventure.title.Title.title(
                     Component.text("Level " + data.level(), NamedTextColor.LIGHT_PURPLE),
-                    Component.text("Ruin grows within you", NamedTextColor.GRAY)));
+                    Component.text("Choose a talent", NamedTextColor.GRAY)));
             player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
             plugin.gui().openNextIfIdle(player);
         }
@@ -103,7 +103,7 @@ public final class Progression {
         if (gained > 0) {
             player.showTitle(net.kyori.adventure.title.Title.title(
                     Component.text("Level " + data.level(), NamedTextColor.LIGHT_PURPLE),
-                    Component.text("Ruin grows within you", NamedTextColor.GRAY)));
+                    Component.text("Choose a talent", NamedTextColor.GRAY)));
             player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
             // Drafts open one after another (the GUI advances to the next on each pick).
             plugin.gui().openNextIfIdle(player);

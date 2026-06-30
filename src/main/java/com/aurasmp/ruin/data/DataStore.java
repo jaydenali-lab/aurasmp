@@ -45,6 +45,7 @@ public final class DataStore {
 
         data.setLevel(Math.max(1, cfg.getInt(base + ".level", 1)));
         data.setXp(Math.max(0, cfg.getInt(base + ".xp", 0)));
+        data.setRerolls(Math.max(0, cfg.getInt(base + ".rerolls", PlayerData.DEFAULT_REROLLS)));
 
         for (String name : cfg.getStringList(base + ".cards")) {
             try {

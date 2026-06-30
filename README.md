@@ -8,7 +8,9 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 - **Earn XP by killing.** Weak/passive mobs give little, hostile mobs give more, strong
   mobs and bosses give a lot, and **players give the most**.
-- **Level up to draft.** Each level-up opens a draft menu with 3 random options — pick one.
+- **Level up to draft.** Each level-up opens a draft menu — **5 talents** or **4
+  manifestations** to choose from. You're **invincible while it's open**, and you
+  get **5 rerolls per build** (resets on a Mirror Shard wipe).
   - Levels **1–10** (max level is **10**).
   - Most levels offer a **Talent** (passive).
   - **Every 5th level (5 and 10)** offers a **Manifestation** (active cast) instead.
@@ -102,7 +104,9 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 ## The 20 Manifestations (active)
 
 Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
-deal true damage** (ignores armour/resistance) and hit for **at least 3 hearts**:
+deal true damage** (ignores armour/resistance), scaled to cooldown (≈ cooldown ÷ 5
+hearts); ones that also apply a debuff deal 1/5 of that. The **Catalyst can't be
+dropped** and is **restored when you respawn**.
 
 | Manifestation | Effect | Cooldown |
 |---------------|--------|----------|
@@ -163,7 +167,7 @@ after your last XP gain; a kill streak keeps refreshing it. It's per-player
 
 | Command | Permission | Description |
 |---------|-----------|-------------|
-| `/ruin level` | `ruin.use` | Show your level, XP, talents and manifestations |
+| `/ruin build` | `ruin.use` | Open your build menu (level, talents, manifestations, rerolls) |
 | `/ruin level add <amount> [player]` | `ruin.admin` | Add levels (drafts open in sequence) |
 | `/ruin xp <amount> [player]` | `ruin.admin` | Grant raw XP |
 | `/ruin give <mirror\|catalyst> [player]` | `ruin.admin` | Give a custom item |

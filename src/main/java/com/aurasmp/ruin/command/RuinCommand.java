@@ -1,9 +1,7 @@
 package com.aurasmp.ruin.command;
 
 import com.aurasmp.ruin.RuinPlugin;
-import com.aurasmp.ruin.data.PlayerData;
 import com.aurasmp.ruin.item.RuinItems;
-import com.aurasmp.ruin.util.Glyphs;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -28,31 +26,23 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (args.length == 0 || args[0].equalsIgnoreCase("level")) {
-            // /ruin level add <n> [player] — op testing shortcut
-            if (args.length >= 2 && args[1].equalsIgnoreCase("add")) {
+        if (args.length == 0
+                || args[0].equalsIgnoreCase("build")
+                || args[0].equalsIgnoreCase("level")) {
+            // Admin level subcommands still live under "level".
+            if (args.length >= 2 && args[0].equalsIgnoreCase("level") && args[1].equalsIgnoreCase("add")) {
                 handleLevelAdd(sender, args);
                 return true;
             }
-            // /ruin level give <player> <amount> — give a player levels
-            if (args.length >= 2 && args[1].equalsIgnoreCase("give")) {
+            if (args.length >= 2 && args[0].equalsIgnoreCase("level") && args[1].equalsIgnoreCase("give")) {
                 handleLevelGive(sender, args);
                 return true;
             }
             if (!(sender instanceof Player player)) {
-                sender.sendMessage("Only players have a Ruin level.");
+                sender.sendMessage("Only players have a build.");
                 return true;
             }
-            PlayerData data = plugin.data().get(player.getUniqueId());
-            player.sendMessage(Glyphs.sigil().append(Component.text(" Ruin — Level " + data.level()
-                    + (data.isMaxLevel() ? " (MAX)" : "  " + data.xp() + "/" + plugin.progression().threshold(data.level())),
-                    NamedTextColor.LIGHT_PURPLE)));
-            player.sendMessage(Component.text("Talents: ", NamedTextColor.GRAY)
-                    .append(Component.text(data.cards().isEmpty() ? "none"
-                            : String.join(", ", data.cards().stream().map(c -> c.displayName()).toList()), NamedTextColor.AQUA)));
-            player.sendMessage(Component.text("Manifestations: ", NamedTextColor.GRAY)
-                    .append(Component.text(data.abilities().isEmpty() ? "none"
-                            : String.join(", ", data.abilities().stream().map(a -> a.displayName()).toList()), NamedTextColor.LIGHT_PURPLE)));
+            plugin.buildGui().open(player);
             return true;
         }
 
@@ -61,7 +51,7 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
             case "reset" -> handleReset(sender, args);
             case "xp" -> handleXp(sender, args);
             case "reload" -> handleReload(sender);
-            default -> sender.sendMessage(Component.text("Usage: /ruin <level|give|reset|xp|reload>", NamedTextColor.RED));
+            default -> sender.sendMessage(Component.text("Usage: /ruin <build|give|reset|xp|reload>", NamedTextColor.RED));
         }
         return true;
     }
@@ -221,7 +211,7 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            for (String s : List.of("level", "give", "reset", "xp", "reload")) {
+            for (String s : List.of("build", "give", "reset", "xp", "reload")) {
                 if (s.startsWith(args[0].toLowerCase())) out.add(s);
             }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
