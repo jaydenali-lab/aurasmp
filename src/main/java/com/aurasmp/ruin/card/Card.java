@@ -29,12 +29,12 @@ public enum Card {
             Attribute.ARMOR_TOUGHNESS, AttributeModifier.Operation.ADD_NUMBER, 4.0),
     SWIFTNESS("Swiftness", Material.SUGAR, "+15% movement speed.",
             Attribute.MOVEMENT_SPEED, AttributeModifier.Operation.ADD_SCALAR, 0.15),
-    BRUTALITY("Brutality", Material.IRON_SWORD, "+20% melee damage.",
+    BRUTALITY("Brutality", Material.IRON_SWORD, "+10% melee damage.",
+            Attribute.ATTACK_DAMAGE, AttributeModifier.Operation.ADD_SCALAR, 0.10),
+    ONSLAUGHT("Onslaught", Material.DIAMOND_SWORD, "+20% melee damage.",
             Attribute.ATTACK_DAMAGE, AttributeModifier.Operation.ADD_SCALAR, 0.20),
-    ONSLAUGHT("Onslaught", Material.DIAMOND_SWORD, "+35% melee damage.",
-            Attribute.ATTACK_DAMAGE, AttributeModifier.Operation.ADD_SCALAR, 0.35),
-    FRENZY("Frenzy", Material.GOLDEN_SWORD, "+25% attack speed.",
-            Attribute.ATTACK_SPEED, AttributeModifier.Operation.ADD_SCALAR, 0.25),
+    FRENZY("Frenzy", Material.GOLDEN_SWORD, "+10% attack speed.",
+            Attribute.ATTACK_SPEED, AttributeModifier.Operation.ADD_SCALAR, 0.10),
     STEADFAST("Steadfast", Material.NETHERITE_INGOT, "+40% knockback resistance.",
             Attribute.KNOCKBACK_RESISTANCE, AttributeModifier.Operation.ADD_NUMBER, 0.4),
     REACH("Reach", Material.FISHING_ROD, "+1 block of attack reach.",
@@ -54,15 +54,9 @@ public enum Card {
 
     // ==== Expansion: 20 more talents ====
 
-    // Attribute (6)
-    COLOSSUS("Colossus", Material.NETHERITE_BLOCK, "Grow larger — more presence and reach.",
-            Attribute.SCALE, AttributeModifier.Operation.ADD_NUMBER, 0.12),
-    GREMLIN("Gremlin", Material.POISONOUS_POTATO, "Shrink — a smaller, harder-to-hit target.",
-            Attribute.SCALE, AttributeModifier.Operation.ADD_NUMBER, -0.12),
+    // Attribute (3)
     SURE_FOOTED("Sure-Footed", Material.LEATHER_BOOTS, "Step up full blocks without jumping.",
             Attribute.STEP_HEIGHT, AttributeModifier.Operation.ADD_NUMBER, 0.6),
-    SOFT_LANDING("Soft Landing", Material.SLIME_BALL, "Take 50% less fall damage.",
-            Attribute.FALL_DAMAGE_MULTIPLIER, AttributeModifier.Operation.ADD_NUMBER, -0.5),
     DEEP_LUNGS("Deep Lungs", Material.PUFFERFISH, "Hold your breath far longer underwater.",
             Attribute.OXYGEN_BONUS, AttributeModifier.Operation.ADD_NUMBER, 4.0),
     LUCKY("Lucky", Material.EMERALD, "+3 Luck — better loot rolls.",
@@ -84,7 +78,7 @@ public enum Card {
     CLEAVE("Cleave", Material.DIAMOND_AXE, "Melee hits splash 30% damage to nearby enemies."),
     CRIT("Crit", Material.QUARTZ, "25% chance for melee hits to deal +50%."),
     BLOODLUST("Bloodlust", Material.REDSTONE_BLOCK, "Strength I for 5s after a kill."),
-    RETRIBUTION("Retribution", Material.NETHERITE_SCRAP, "After being hit, your next melee hit deals +4.");
+    RETRIBUTION("Retribution", Material.NETHERITE_SCRAP, "Every 3 hits taken, your next melee hit deals +2 hearts of true damage.");
 
     private final String displayName;
     private final Material icon;

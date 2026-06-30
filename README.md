@@ -32,7 +32,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
-## The 40 Talents (passive)
+## The 37 Talents (passive)
 
 **Attribute talents (10)** — applied as persistent attribute modifiers:
 
@@ -43,9 +43,9 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Bulwark | +3 armor |
 | Tough Skin | +4 armor toughness |
 | Swiftness | +15% movement speed |
-| Brutality | +20% melee damage |
-| Onslaught | +35% melee damage |
-| Frenzy | +25% attack speed |
+| Brutality | +10% melee damage |
+| Onslaught | +20% melee damage |
+| Frenzy | +10% attack speed |
 | Steadfast | +40% knockback resistance |
 | Reach | +1 block of attack reach |
 
@@ -65,14 +65,11 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Scavenger | +50% Ruin XP from kills |
 | Ghost | 15% chance when hit to fully vanish (armor too) + Speed II for 3s |
 
-**Expansion — attribute (6):**
+**Expansion — attribute (3):**
 
 | Talent | Effect |
 |--------|--------|
-| Colossus | Grow larger (more presence/reach) |
-| Gremlin | Shrink into a smaller, harder-to-hit target |
 | Sure-Footed | Step up full blocks without jumping |
-| Soft Landing | Take 50% less fall damage |
 | Deep Lungs | Hold your breath far longer underwater |
 | Lucky | +3 Luck (better loot rolls) |
 
@@ -98,13 +95,14 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Cleave | Melee hits splash 30% damage to nearby enemies |
 | Crit | 25% chance for melee hits to deal +50% |
 | Bloodlust | Strength I for 5s after a kill |
-| Retribution | After being hit, your next melee hit deals +4 |
+| Retribution | Every 3 hits taken, your next melee hit deals +2 hearts of true damage |
 
 (Note: the original **Thorns** was replaced by **Ghost**.)
 
 ## The 20 Manifestations (active)
 
-Cast via the Ruin Catalyst — each on its own cooldown:
+Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
+deal true damage** (ignores armour/resistance) and hit for **at least 3 hearts**:
 
 | Manifestation | Effect | Cooldown |
 |---------------|--------|----------|

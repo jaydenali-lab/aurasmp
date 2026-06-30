@@ -4,9 +4,11 @@ import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.util.Cooldowns;
 import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.AbstractArrow;
 import org.bukkit.entity.Arrow;
@@ -33,12 +35,45 @@ public final class AbilityManager {
     private final Cooldowns cooldowns = new Cooldowns();
     // Per-player, per-ability "self-buff active until" timestamps (for the HUD).
     private final Map<UUID, Map<Ability, Long>> activeUntil = new HashMap<>();
+    // Players currently dealing ability damage — lets the combat listener skip melee talents.
+    private final java.util.Set<UUID> abilityDamaging = new java.util.HashSet<>();
+    private final NamespacedKey fireballKey;
 
     public AbilityManager(RuinPlugin plugin) {
         this.plugin = plugin;
+        this.fireballKey = new NamespacedKey(plugin, "fireball");
     }
 
     public Cooldowns cooldowns() { return cooldowns; }
+
+    public boolean isAbilityDamage(UUID id) { return abilityDamaging.contains(id); }
+
+    public boolean isRuinFireball(Entity entity) {
+        return entity != null
+                && entity.getPersistentDataContainer().has(fireballKey, PersistentDataType.BYTE);
+    }
+
+    /**
+     * Deals TRUE damage that still credits the source: a real hit (for the hurt flash,
+     * knockback and kill credit) topped up past whatever armour/resistance absorbed,
+     * so the full amount always lands.
+     */
+    public void dealTrueDamage(LivingEntity victim, Player source, double amount) {
+        if (victim.isDead() || amount <= 0) return;
+        UUID id = source.getUniqueId();
+        abilityDamaging.add(id);
+        try {
+            double before = victim.getHealth();
+            victim.damage(amount, source);
+            double dealt = before - victim.getHealth();
+            double remainder = amount - dealt;
+            if (remainder > 0 && !victim.isDead()) {
+                victim.setHealth(Math.max(0.0, victim.getHealth() - remainder));
+            }
+        } finally {
+            abilityDamaging.remove(id);
+        }
+    }
 
     public boolean isActive(UUID id, Ability ability) {
         return activeRemainingMillis(id, ability) > 0;
@@ -120,9 +155,9 @@ public final class AbilityManager {
         center.getWorld().spawnParticle(Particle.EXPLOSION, center, 6, RADIUS / 2, 0.3, RADIUS / 2, 0);
         center.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.4f);
         for (LivingEntity target : nearbyEnemies(player)) {
-            target.damage(6.0, player);
             Vector push = target.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.4).setY(0.5);
             target.setVelocity(push);
+            dealTrueDamage(target, player, 6.0);
         }
     }
 
@@ -149,7 +184,7 @@ public final class AbilityManager {
                 : eye.add(eye.getDirection().multiply(20));
         world.strikeLightningEffect(strike);
         if (result != null && result.getHitEntity() instanceof LivingEntity target) {
-            target.damage(6.0, player);
+            dealTrueDamage(target, player, 6.0);
         }
         world.playSound(strike, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 1f, 1.2f);
     }
@@ -167,8 +202,8 @@ public final class AbilityManager {
         center.getWorld().spawnParticle(Particle.SNOWFLAKE, center.clone().add(0, 1, 0), 60, RADIUS / 2, 0.6, RADIUS / 2, 0.02);
         center.getWorld().playSound(center, Sound.BLOCK_GLASS_BREAK, 1f, 0.8f);
         for (LivingEntity target : nearbyEnemies(player)) {
-            target.damage(3.0, player);
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 3));
+            dealTrueDamage(target, player, 6.0);
         }
     }
 
@@ -187,7 +222,7 @@ public final class AbilityManager {
         center.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, center, 1, 0, 0, 0, 0);
         center.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.9f);
         for (LivingEntity target : nearbyEnemies(player)) {
-            target.damage(8.0, player);
+            dealTrueDamage(target, player, 8.0);
         }
     }
 
@@ -204,7 +239,8 @@ public final class AbilityManager {
     private void fireball(Player player) {
         SmallFireball fb = player.launchProjectile(SmallFireball.class,
                 player.getEyeLocation().getDirection().multiply(1.4));
-        fb.setIsIncendiary(false); // no block grief; still ignites the target it hits
+        fb.setIsIncendiary(false); // no block grief
+        fb.getPersistentDataContainer().set(fireballKey, PersistentDataType.BYTE, (byte) 1);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1f, 1f);
     }
 
@@ -269,7 +305,7 @@ public final class AbilityManager {
         int struck = 0;
         for (LivingEntity target : nearbyEnemies(player, 8.0)) {
             world.strikeLightningEffect(target.getLocation());
-            target.damage(6.0, player);
+            dealTrueDamage(target, player, 6.0);
             if (++struck >= 3) break;
         }
         if (struck == 0) world.strikeLightningEffect(player.getLocation());
@@ -309,8 +345,8 @@ public final class AbilityManager {
             world.playSound(target, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.8f);
             for (Entity entity : world.getNearbyEntities(target, 4, 4, 4)) {
                 if (entity instanceof LivingEntity le && !entity.equals(player)) {
-                    le.damage(8.0, player);
                     le.setFireTicks(60);
+                    dealTrueDamage(le, player, 8.0);
                 }
             }
         }, 20L);

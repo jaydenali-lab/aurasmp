@@ -3,9 +3,11 @@ package com.aurasmp.ruin.listener;
 import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.card.Card;
 import com.aurasmp.ruin.data.PlayerData;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
+import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -18,6 +20,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -53,10 +56,38 @@ public final class CombatListener implements Listener {
         }
     }
 
+    /** Ruin fireball impact: true AoE damage + fire, no block grief. */
+    @EventHandler(ignoreCancelled = true)
+    public void onFireball(ProjectileHitEvent event) {
+        if (!plugin.abilities().isRuinFireball(event.getEntity())) return;
+        if (!(event.getEntity().getShooter() instanceof Player shooter)) {
+            event.getEntity().remove();
+            return;
+        }
+        Location loc = event.getEntity().getLocation();
+        World world = loc.getWorld();
+        world.spawnParticle(Particle.EXPLOSION, loc, 1, 0, 0, 0, 0);
+        world.spawnParticle(Particle.FLAME, loc, 25, 1, 1, 1, 0.03);
+        world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.3f);
+        for (org.bukkit.entity.Entity entity : world.getNearbyEntities(loc, 2.5, 2.5, 2.5)) {
+            if (entity instanceof LivingEntity le && !entity.equals(shooter)) {
+                le.setFireTicks(60);
+                plugin.abilities().dealTrueDamage(le, shooter, 6.0);
+            }
+        }
+        event.getEntity().remove();
+    }
+
     /** Attacker-side multipliers + lifesteal + thorns. */
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onAttack(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof LivingEntity victim)) return;
+
+        // Ruin fireball: damage is handled as true AoE in onFireball — cancel the vanilla hit.
+        if (plugin.abilities().isRuinFireball(event.getDamager())) {
+            event.setCancelled(true);
+            return;
+        }
 
         boolean projectile = false;
         Player attacker = null;
@@ -69,6 +100,9 @@ public final class CombatListener implements Listener {
 
         if (attacker != null && !attacker.equals(victim)) {
             UUID aid = attacker.getUniqueId();
+            // Ability true-damage routes back through here — don't layer melee talents on it.
+            if (plugin.abilities().isAbilityDamage(aid)) return;
+
             PlayerData data = plugin.data().get(aid);
             double damage = event.getDamage();
             if (data.hasCard(Card.BERSERKER) && healthRatio(attacker) < 0.30) damage *= 1.30;
@@ -77,9 +111,6 @@ public final class CombatListener implements Listener {
             if (!projectile && data.hasCard(Card.CRIT) && ThreadLocalRandom.current().nextDouble() < 0.25) {
                 damage *= 1.50;
                 attacker.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 12, 0.3, 0.3, 0.3, 0.1);
-            }
-            if (!projectile && data.hasCard(Card.RETRIBUTION) && consumeRetribution(aid)) {
-                damage += 4.0;
             }
             event.setDamage(damage);
 
@@ -90,27 +121,24 @@ public final class CombatListener implements Listener {
                 if (data.hasCard(Card.VENOM)) victim.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 60, 0));
                 if (data.hasCard(Card.FROSTBITE)) victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0));
                 if (data.hasCard(Card.CLEAVE)) cleave(attacker, victim, damage);
+                // Retribution: spend the armed counter (every 3 hits taken) as +2 hearts of TRUE
+                // damage. Applied next tick on top of this hit so it ignores armour/i-frames.
+                if (data.hasCard(Card.RETRIBUTION) && retributionArmed.remove(aid)) {
+                    LivingEntity v = victim;
+                    plugin.getServer().getScheduler().runTask(plugin, () -> {
+                        if (!v.isDead() && v.isValid()) v.setHealth(Math.max(0.0, v.getHealth() - 4.0));
+                    });
+                    attacker.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, victim.getLocation().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0);
+                }
             }
         }
     }
 
-    // Retribution: buffered for 5s after taking a hit, consumed by the next melee hit.
-    private final java.util.Map<UUID, Long> retributionUntil = new java.util.HashMap<>();
+    // Retribution: count hits taken; every 3rd arms a true-damage bonus for the next melee hit.
+    private final java.util.Map<UUID, Integer> retributionHits = new java.util.HashMap<>();
+    private final java.util.Set<UUID> retributionArmed = new java.util.HashSet<>();
     // Guard so Cleave's splash hits don't recursively trigger more cleaves.
     private final java.util.Set<UUID> cleaving = new java.util.HashSet<>();
-
-    private void armRetribution(UUID id) {
-        retributionUntil.put(id, System.currentTimeMillis() + 5_000);
-    }
-
-    private boolean consumeRetribution(UUID id) {
-        Long until = retributionUntil.get(id);
-        if (until != null && System.currentTimeMillis() < until) {
-            retributionUntil.remove(id);
-            return true;
-        }
-        return false;
-    }
 
     private void cleave(Player attacker, LivingEntity origin, double damage) {
         UUID id = attacker.getUniqueId();
@@ -147,9 +175,13 @@ public final class CombatListener implements Listener {
         if (data.hasCard(Card.GHOST) && ThreadLocalRandom.current().nextDouble() < plugin.config().ghostChance()) {
             applyGhost(player, 60);
         }
-        // Retribution: buffer a bonus that the player's next melee hit will spend.
+        // Retribution: every 3rd hit taken arms a true-damage bonus for the next melee hit.
         if (data.hasCard(Card.RETRIBUTION)) {
-            armRetribution(player.getUniqueId());
+            int hits = retributionHits.merge(player.getUniqueId(), 1, Integer::sum);
+            if (hits >= 3) {
+                retributionArmed.add(player.getUniqueId());
+                retributionHits.put(player.getUniqueId(), 0);
+            }
         }
     }
 
