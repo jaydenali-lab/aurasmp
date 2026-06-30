@@ -97,7 +97,7 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Cleave | Melee hits splash 30% damage to nearby enemies |
 | Crit | 25% chance for melee hits to deal +50% |
 | Bloodlust | Strength I for 5s after a kill |
-| Retribution | Every 3 hits taken, your next melee hit deals +2 hearts of true damage |
+| Retribution | Every 5 hits taken, your next melee hit deals +1.5 hearts of true damage |
 
 **Deepwoken talents (10):**
 
@@ -111,7 +111,7 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Conditioned Runner | Regenerate while sprinting hurt |
 | Pack Leader | Resistance while an ally is near |
 | Unyielding Inferno | +2 hearts to hits on burning foes |
-| Spine Cutter | Backstabs deal +2 hearts of true damage |
+| Spine Cutter | Backstabs deal +3 damage |
 | Risky Moves | 20% chance to fully negate an incoming hit |
 
 (Note: the original **Thorns** was replaced by **Ghost**.)

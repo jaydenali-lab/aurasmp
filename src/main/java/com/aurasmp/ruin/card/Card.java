@@ -78,7 +78,7 @@ public enum Card {
     CLEAVE("Cleave", Material.DIAMOND_AXE, "Melee hits splash 30% damage to nearby enemies."),
     CRIT("Crit", Material.QUARTZ, "25% chance for melee hits to deal +50%."),
     BLOODLUST("Bloodlust", Material.REDSTONE_BLOCK, "Strength I for 5s after a kill."),
-    RETRIBUTION("Retribution", Material.NETHERITE_SCRAP, "Every 3 hits taken, your next melee hit deals +2 hearts of true damage."),
+    RETRIBUTION("Retribution", Material.NETHERITE_SCRAP, "Every 5 hits taken, your next melee hit deals +1.5 hearts of true damage."),
 
     // ==== Deepwoken talents (10) ====
     STEADY_FEET("Steady Feet", Material.NETHERITE_BOOTS, "+50% knockback resistance; hard to push.",
@@ -94,7 +94,7 @@ public enum Card {
     CONDITIONED_RUNNER("Conditioned Runner", Material.GOLDEN_BOOTS, "Regenerate while sprinting hurt."),
     PACK_LEADER("Pack Leader", Material.WOLF_ARMOR, "Resistance while an ally fights beside you."),
     UNYIELDING_INFERNO("Unyielding Inferno", Material.BLAZE_POWDER, "+2 hearts to hits on burning foes."),
-    SPINE_CUTTER("Spine Cutter", Material.NETHERITE_SWORD, "Backstabs deal +2 hearts of true damage."),
+    SPINE_CUTTER("Spine Cutter", Material.NETHERITE_SWORD, "Backstabs deal +3 damage."),
     RISKY_MOVES("Risky Moves", Material.PHANTOM_MEMBRANE, "20% chance to fully negate an incoming hit.");
 
     private final String displayName;

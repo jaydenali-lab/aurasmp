@@ -130,7 +130,7 @@ public final class CombatListener implements Listener {
                 if (data.hasCard(Card.RETRIBUTION) && retributionArmed.remove(aid)) {
                     LivingEntity v = victim;
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        if (!v.isDead() && v.isValid()) v.setHealth(Math.max(0.0, v.getHealth() - 4.0));
+                        if (!v.isDead() && v.isValid()) v.setHealth(Math.max(0.0, v.getHealth() - 3.0));
                     });
                     attacker.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, victim.getLocation().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0);
                 }
@@ -138,12 +138,13 @@ public final class CombatListener implements Listener {
                     victim.setFireTicks(Math.max(victim.getFireTicks(), 100));
                     attacker.getWorld().spawnParticle(Particle.FLAME, victim.getLocation().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0.02);
                 }
-                // Spine Cutter: a back hit (facings aligned) deals bonus true damage.
+                // Spine Cutter: a back hit (facings aligned) deals +3 normal damage next tick.
                 if (data.hasCard(Card.SPINE_CUTTER)
                         && attacker.getLocation().getDirection().dot(victim.getLocation().getDirection()) > 0.4) {
                     LivingEntity v = victim;
+                    Player atk = attacker;
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        if (!v.isDead() && v.isValid()) v.setHealth(Math.max(0.0, v.getHealth() - 4.0));
+                        if (!v.isDead() && v.isValid()) plugin.abilities().dealDamage(v, atk, 3.0);
                     });
                     attacker.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3, 0.1);
                 }
@@ -208,10 +209,10 @@ public final class CombatListener implements Listener {
         if (data.hasCard(Card.GHOST) && ThreadLocalRandom.current().nextDouble() < plugin.config().ghostChance()) {
             applyGhost(player, 60);
         }
-        // Retribution: every 3rd hit taken arms a true-damage bonus for the next melee hit.
+        // Retribution: every 5th hit taken arms a true-damage bonus for the next melee hit.
         if (data.hasCard(Card.RETRIBUTION)) {
             int hits = retributionHits.merge(player.getUniqueId(), 1, Integer::sum);
-            if (hits >= 3) {
+            if (hits >= 5) {
                 retributionArmed.add(player.getUniqueId());
                 retributionHits.put(player.getUniqueId(), 0);
             }
