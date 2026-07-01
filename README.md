@@ -159,7 +159,7 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Wildfire | Erupt a cone of fire that ignites enemies | 15s |
 | Frostdraw Spikes | Ice spikes impale and chill foes ahead | 12s |
 | Tundra | Freeze a wide zone, slowing all within | 18s |
-| Shock Sword | An electric arc slash that slows | 11s |
+| Shock Sword | A sweeping arc slash that slows | 11s |
 | Galvanize | Haste + Speed + Strength for 6s | 24s |
 | Wind Slam | Leap up and slam down, blasting foes back | 13s |
 | Gale Step | Blink-dash on wind; no fall damage after | 8s |
@@ -252,5 +252,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.8.1.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.8.2.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

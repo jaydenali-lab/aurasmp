@@ -498,7 +498,7 @@ public final class AbilityManager {
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
         Vector dir = eye.getDirection();
-        // Draw an arcing slash of electric particles sweeping across the swing.
+        // Draw an arcing slash made of cloud particles sweeping across the swing.
         Vector right = new Vector(-dir.getZ(), 0, dir.getX());
         if (right.lengthSquared() < 0.01) right = new Vector(1, 0, 0);
         right.normalize();
@@ -513,10 +513,10 @@ public final class AbilityManager {
                         .add(dir.clone().multiply(d))
                         .add(right.clone().multiply(side * (d / reach)))
                         .add(up.clone().multiply(lift * (d / reach)));
-                world.spawnParticle(Particle.ELECTRIC_SPARK, p, 1, 0.02, 0.02, 0.02, 0);
+                world.spawnParticle(Particle.CLOUD, p, 1, 0.02, 0.02, 0.02, 0);
             }
         }
-        world.spawnParticle(Particle.WAX_OFF, eye.clone().add(dir.clone().multiply(2.5)), 12, 0.4, 0.4, 0.4, 0.05);
+        world.spawnParticle(Particle.CLOUD, eye.clone().add(dir.clone().multiply(2.5)), 12, 0.4, 0.4, 0.4, 0.02);
         world.playSound(player.getLocation(), Sound.ITEM_TRIDENT_THROW, 1f, 1.6f);
         world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 0.8f);
 
@@ -676,7 +676,7 @@ public final class AbilityManager {
         player.setVelocity(eye.getDirection().clone().setY(0.05).normalize().multiply(1.4)); // dash in
         world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 1.2f);
         if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) return;
-        // Multi-slash: 4 hits totalling 6 damage, with slash particles on each.
+        // Multi-slash: 4 hits totalling 6 damage, a cloud-particle slash on each.
         new BukkitRunnable() {
             int slashes = 0;
 
@@ -687,11 +687,21 @@ public final class AbilityManager {
                 target.setNoDamageTicks(0); // bypass i-frames so every slash lands
                 dealDamage(target, player, 1.5);
                 Location at = target.getLocation().add(0, 1, 0);
-                world.spawnParticle(Particle.SWEEP_ATTACK, at, 1, 0.3, 0.3, 0.3, 0);
-                world.spawnParticle(Particle.CRIT, at, 8, 0.3, 0.3, 0.3, 0.2);
+                cloudSlash(world, at, slashes); // alternating diagonal cloud slash
                 world.playSound(at, Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.8f, 1.3f + slashes * 0.1f);
             }
         }.runTaskTimer(plugin, 2L, 3L);
+    }
+
+    /** Draws a short diagonal slash of cloud particles through {@code center}; angle alternates. */
+    private void cloudSlash(World world, Location center, int index) {
+        // Alternate the slash angle each hit so it reads as a flurry.
+        double angle = (index % 2 == 0) ? Math.PI / 4 : -Math.PI / 4;
+        Vector axis = new Vector(Math.cos(angle), Math.sin(angle), 0);
+        for (double s = -1.0; s <= 1.0; s += 0.15) {
+            Location p = center.clone().add(axis.clone().multiply(s * 1.2));
+            world.spawnParticle(Particle.CLOUD, p, 1, 0.03, 0.03, 0.03, 0);
+        }
     }
 
     /** Enemies within {@code radius} that fall inside the look-direction cone (dot > minDot). */
