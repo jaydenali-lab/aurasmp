@@ -83,6 +83,27 @@ public final class AbilityManager {
         }
     }
 
+    /**
+     * Deals true (armour-bypassing) damage from an ability. Triggers the hurt
+     * flash/knockback, then next tick corrects the victim's health so exactly
+     * {@code amount} is lost regardless of armour.
+     */
+    public void dealTrueDamage(LivingEntity victim, Player source, double amount) {
+        if (victim.isDead() || amount <= 0) return;
+        double before = victim.getHealth();
+        victim.setNoDamageTicks(0);
+        dealDamage(victim, source, amount); // animation + knockback (armour-reduced)
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (victim.isDead()) return;
+            double target = before - amount;
+            if (target <= 0) {
+                victim.setHealth(0);
+            } else if (victim.getHealth() > target) {
+                victim.setHealth(target); // strip the armour reduction back off
+            }
+        }, 1L);
+    }
+
     public boolean isActive(UUID id, Ability ability) {
         return activeRemainingMillis(id, ability) > 0;
     }
@@ -145,10 +166,8 @@ public final class AbilityManager {
             case WIND_SLAM -> windSlam(player);
             case GALE_STEP -> galeStep(player);
             case PHASE_STRIKE -> phaseStrike(player);
-            case SOUL_RIP -> soulRip(player);
-            case EARTHSHATTER -> earthshatter(player);
-            case INFERNO_RING -> infernoRing(player);
-            case VAULT -> vault(player);
+            case ZELKOVA -> zelkova(player);
+            case MOOK -> mook(player);
         }
     }
 
@@ -478,15 +497,37 @@ public final class AbilityManager {
     private void shockSword(Player player) {
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
-        RayTraceResult res = world.rayTraceEntities(eye, eye.getDirection(), 5.0, 1.0,
+        Vector dir = eye.getDirection();
+        // Draw an arcing slash of electric particles sweeping across the swing.
+        Vector right = new Vector(-dir.getZ(), 0, dir.getX());
+        if (right.lengthSquared() < 0.01) right = new Vector(1, 0, 0);
+        right.normalize();
+        Vector up = right.clone().crossProduct(dir).normalize();
+        double reach = 5.0;
+        for (double t = -1.0; t <= 1.0; t += 0.08) {
+            // arc: forward reach with a curved sideways+vertical sweep
+            double side = Math.sin(t * Math.PI / 2) * 1.6;
+            double lift = (1 - t * t) * 0.9 - 0.2;
+            for (double d = 1.5; d <= reach; d += 1.0) {
+                Location p = eye.clone()
+                        .add(dir.clone().multiply(d))
+                        .add(right.clone().multiply(side * (d / reach)))
+                        .add(up.clone().multiply(lift * (d / reach)));
+                world.spawnParticle(Particle.ELECTRIC_SPARK, p, 1, 0.02, 0.02, 0.02, 0);
+            }
+        }
+        world.spawnParticle(Particle.WAX_OFF, eye.clone().add(dir.clone().multiply(2.5)), 12, 0.4, 0.4, 0.4, 0.05);
+        world.playSound(player.getLocation(), Sound.ITEM_TRIDENT_THROW, 1f, 1.6f);
+        world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 0.8f);
+
+        RayTraceResult res = world.rayTraceEntities(eye, dir, reach, 1.4,
                 e -> e instanceof LivingEntity && !e.equals(player));
         if (res != null && res.getHitEntity() instanceof LivingEntity target) {
-            world.strikeLightningEffect(target.getLocation());
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 3));
             world.spawnParticle(Particle.ELECTRIC_SPARK, target.getLocation().add(0, 1, 0), 25, 0.3, 0.5, 0.3, 0.1);
+            world.playSound(target.getLocation(), Sound.ENTITY_ALLAY_HURT, 1f, 0.6f);
             dealDamage(target, player, 0.88); // applies Slow -> 1/5
         }
-        world.playSound(player.getLocation(), Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 0.6f, 1.6f);
     }
 
     private void galvanize(Player player) {
@@ -578,51 +619,79 @@ public final class AbilityManager {
         }
     }
 
-    private void soulRip(Player player) {
+    private void zelkova(Player player) {
+        zelkovaSlam(player, false);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline()) zelkovaSlam(player, true);
+        }, 12L);
+    }
+
+    private void zelkovaSlam(Player player, boolean stunning) {
+        Location center = player.getLocation();
+        World world = center.getWorld();
+        world.spawnParticle(Particle.EXPLOSION, center, 2, 0.8, 0.1, 0.8, 0);
+        world.spawnParticle(Particle.BLOCK, center.clone().add(0, 0.1, 0), 40, 1.2, 0.1, 1.2,
+                Material.DIRT.createBlockData());
+        world.playSound(center, Sound.ITEM_MACE_SMASH_GROUND, 1f, stunning ? 0.8f : 1.1f);
+        // Break cobwebs in the area.
+        int r = 4;
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    Block b = world.getBlockAt(center.getBlockX() + dx, center.getBlockY() + dy, center.getBlockZ() + dz);
+                    if (b.getType() == Material.COBWEB) b.setType(Material.AIR, false);
+                }
+            }
+        }
+        for (LivingEntity target : nearbyEnemies(player, 4.5)) {
+            dealTrueDamage(target, player, 4.0); // 2 hearts of true damage per slam
+            if (stunning && target instanceof Player victim) stun(victim, 30);
+        }
+    }
+
+    /** Locks a player's movement AND camera for {@code ticks} ticks by re-teleporting them. */
+    private void stun(Player victim, int ticks) {
+        Location lock = victim.getLocation().clone();
+        victim.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, ticks, 0));
+        victim.getWorld().playSound(lock, Sound.BLOCK_ANVIL_LAND, 0.6f, 1.4f);
+        new BukkitRunnable() {
+            int t = 0;
+
+            @Override
+            public void run() {
+                t++;
+                if (!victim.isOnline() || t > ticks) { cancel(); return; }
+                victim.teleport(lock); // re-lock position + look direction each tick
+                victim.setVelocity(new Vector(0, 0, 0));
+                victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 3, 0.2, 0.3, 0.2, 0);
+            }
+        }.runTaskTimer(plugin, 1L, 1L);
+    }
+
+    private void mook(Player player) {
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
-        RayTraceResult res = world.rayTraceEntities(eye, eye.getDirection(), 15.0, 1.0,
+        RayTraceResult res = world.rayTraceEntities(eye, eye.getDirection(), 5.5, 1.0,
                 e -> e instanceof LivingEntity && !e.equals(player));
-        world.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 0.7f);
-        if (res != null && res.getHitEntity() instanceof LivingEntity target) {
-            Vector pull = player.getLocation().toVector().subtract(target.getLocation().toVector()).normalize().multiply(1.5).setY(0.35);
-            target.setVelocity(pull);
-            world.spawnParticle(Particle.ENCHANT, target.getLocation().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 1.0);
-            dealDamage(target, player, 5.2); // 13s
-        }
-    }
+        player.setVelocity(eye.getDirection().clone().setY(0.05).normalize().multiply(1.4)); // dash in
+        world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 1.2f);
+        if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) return;
+        // Multi-slash: 4 hits totalling 6 damage, with slash particles on each.
+        new BukkitRunnable() {
+            int slashes = 0;
 
-    private void earthshatter(Player player) {
-        Location center = player.getLocation();
-        center.getWorld().spawnParticle(Particle.EXPLOSION, center, 2, 1, 0.1, 1, 0);
-        center.getWorld().playSound(center, Sound.ENTITY_RAVAGER_ROAR, 1f, 0.8f);
-        for (LivingEntity target : nearbyEnemies(player, 5.0)) {
-            target.setVelocity(target.getVelocity().setY(0.95));
-            dealDamage(target, player, 6.4); // 16s
-        }
-    }
-
-    private void infernoRing(Player player) {
-        Location center = player.getLocation();
-        for (int i = 0; i < 24; i++) {
-            double a = Math.PI * 2 * i / 24;
-            center.getWorld().spawnParticle(Particle.FLAME,
-                    center.clone().add(Math.cos(a) * 3, 0.3, Math.sin(a) * 3), 2, 0.05, 0.1, 0.05, 0.01);
-        }
-        center.getWorld().playSound(center, Sound.ITEM_FIRECHARGE_USE, 1f, 0.7f);
-        for (LivingEntity target : nearbyEnemies(player, 5.0)) {
-            target.setFireTicks(100);
-            dealDamage(target, player, 6.8); // 17s
-        }
-    }
-
-    private void vault(Player player) {
-        grantNoFall(player);
-        Vector v = player.getVelocity();
-        player.setVelocity(new Vector(v.getX() * 0.3, 1.5, v.getZ() * 0.3));
-        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 60, 0));
-        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 20, 0.3, 0.1, 0.3, 0.05);
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1f, 1.0f);
+            @Override
+            public void run() {
+                slashes++;
+                if (!player.isOnline() || target.isDead() || !target.isValid() || slashes > 4) { cancel(); return; }
+                target.setNoDamageTicks(0); // bypass i-frames so every slash lands
+                dealDamage(target, player, 1.5);
+                Location at = target.getLocation().add(0, 1, 0);
+                world.spawnParticle(Particle.SWEEP_ATTACK, at, 1, 0.3, 0.3, 0.3, 0);
+                world.spawnParticle(Particle.CRIT, at, 8, 0.3, 0.3, 0.3, 0.2);
+                world.playSound(at, Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.8f, 1.3f + slashes * 0.1f);
+            }
+        }.runTaskTimer(plugin, 2L, 3L);
     }
 
     /** Enemies within {@code radius} that fall inside the look-direction cone (dot > minDot). */

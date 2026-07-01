@@ -56,6 +56,17 @@ public final class CardManager {
             instance.addModifier(new AttributeModifier(keyFor(card), card.amount(), card.operation()));
         }
 
+        // Titan's trade-off: +4 hearts but 20% slower. The health is its attribute card;
+        // the slow is a separate movement-speed modifier applied here.
+        if (data.hasCard(Card.TITAN)) {
+            AttributeInstance speed = player.getAttribute(Attribute.MOVEMENT_SPEED);
+            if (speed != null) {
+                speed.addModifier(new AttributeModifier(
+                        new NamespacedKey(plugin, "titan_slow"), -0.20,
+                        AttributeModifier.Operation.ADD_SCALAR));
+            }
+        }
+
         // Clamp health if max health shrank (e.g. after a reset).
         AttributeInstance maxHealth = player.getAttribute(Attribute.MAX_HEALTH);
         if (maxHealth != null && player.getHealth() > maxHealth.getValue()) {

@@ -54,9 +54,6 @@ public final class CombatListener implements Listener {
         if (data.hasCard(Card.BLOODLUST)) {
             killer.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 100, 0));
         }
-        if (data.hasCard(Card.MOMENTUM)) {
-            killer.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 80, 0));
-        }
     }
 
     /** Ruin fireball impact: true AoE damage + fire, no block grief. */
@@ -150,17 +147,14 @@ public final class CombatListener implements Listener {
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
                         if (!v.isDead() && v.isValid()) plugin.abilities().dealDamage(v, atk, 3.0);
                     });
-                    attacker.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 10, 0.3, 0.3, 0.3, 0.1);
+                    // SFX + visual so the backstab proc is obvious.
+                    Location fx = victim.getLocation().add(0, 1, 0);
+                    attacker.getWorld().spawnParticle(Particle.CRIT, fx, 14, 0.3, 0.3, 0.3, 0.2);
+                    attacker.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, fx, 6, 0.2, 0.2, 0.2, 0);
+                    attacker.getWorld().playSound(fx, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 0.8f);
+                    attacker.getWorld().playSound(fx, Sound.ITEM_TRIDENT_RETURN, 0.8f, 1.5f);
                 }
             }
-        }
-
-        // Bramble: a victim player poisons whoever melees them.
-        if (victim instanceof Player victimPlayer
-                && event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK
-                && event.getDamager() instanceof LivingEntity source && !source.equals(victimPlayer)
-                && plugin.data().get(victimPlayer.getUniqueId()).hasCard(Card.BRAMBLE)) {
-            source.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 60, 0));
         }
     }
 
@@ -219,6 +213,10 @@ public final class CombatListener implements Listener {
         }
         if (data.hasCard(Card.JUGGERNAUT)) {
             event.setDamage(event.getDamage() * 0.85);
+        }
+        // Glass Cannon: glass jaw — take 20% more damage from everything.
+        if (data.hasCard(Card.GLASS_CANNON)) {
+            event.setDamage(event.getDamage() * 1.20);
         }
         // Ghost: when hit, a chance to fully vanish (armor too) + Speed II for 3s.
         if (data.hasCard(Card.GHOST) && ThreadLocalRandom.current().nextDouble() < plugin.config().ghostChance()) {

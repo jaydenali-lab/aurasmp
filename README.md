@@ -34,7 +34,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
-## The 54 Talents (passive)
+## The 52 Talents (passive)
 
 **Attribute talents (10)** — applied as persistent attribute modifiers:
 
@@ -114,21 +114,19 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Spine Cutter | Backstabs deal +3 damage |
 | Risky Moves | 20% chance to fully negate an incoming hit |
 
-**More talents (7):**
+**More talents (5):**
 
 | Talent | Effect |
 |--------|--------|
-| Titan | +4 hearts of max health |
-| Glass Cannon | +40% melee damage |
+| Titan | +4 hearts of max health, but 20% slower |
+| Glass Cannon | +40% melee damage, but take 20% more damage |
 | Fortress | +5 armor |
 | Vampiric | Heal 20% of the melee damage you deal |
-| Momentum | Speed I for 4s after a kill |
-| Bramble | Melee attackers are poisoned |
 | Second Wind | Below 20% HP: Regen II + Absorption (30s cooldown) |
 
 (Note: the original **Thorns** was replaced by **Ghost**.)
 
-## The 33 Manifestations (active)
+## The 31 Manifestations (active)
 
 Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
 deal normal damage** (reduced by armour), scaled to cooldown (≈ cooldown ÷ 5
@@ -161,15 +159,13 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Wildfire | Erupt a cone of fire that ignites enemies | 15s |
 | Frostdraw Spikes | Ice spikes impale and chill foes ahead | 12s |
 | Tundra | Freeze a wide zone, slowing all within | 18s |
-| Shock Sword | A lightning slash that stuns | 11s |
+| Shock Sword | An electric arc slash that slows | 11s |
 | Galvanize | Haste + Speed + Strength for 6s | 24s |
 | Wind Slam | Leap up and slam down, blasting foes back | 13s |
 | Gale Step | Blink-dash on wind; no fall damage after | 8s |
 | Phase Strike | Blink to the enemy you face and strike | 12s |
-| Soul Rip | Yank the enemy you face toward you | 13s |
-| Earthshatter | Erupt the ground, launching foes up | 16s |
-| Inferno Ring | Ring of fire ignites nearby enemies | 17s |
-| Vault | Leap high into the air, no fall damage | 9s |
+| Zelkova | Two ground slams (true dmg) that break cobwebs; the 2nd stuns and locks the camera | 20s |
+| Mook | Dash in and slash rapidly for 6 damage | 12s |
 
 *Flame Grab through Gale Step are real Deepwoken mantras.*
 
@@ -256,5 +252,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.7.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.8.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

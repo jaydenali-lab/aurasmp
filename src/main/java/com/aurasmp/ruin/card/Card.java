@@ -98,15 +98,13 @@ public enum Card {
     RISKY_MOVES("Risky Moves", Material.PHANTOM_MEMBRANE, "20% chance to fully negate an incoming hit."),
 
     // ==== More talents ====
-    TITAN("Titan", Material.ENCHANTED_GOLDEN_APPLE, "+4 hearts of max health.",
+    TITAN("Titan", Material.ENCHANTED_GOLDEN_APPLE, "+4 hearts of max health, but 20% slower.",
             Attribute.MAX_HEALTH, AttributeModifier.Operation.ADD_NUMBER, 8.0),
-    GLASS_CANNON("Glass Cannon", Material.TNT, "+40% melee damage.",
+    GLASS_CANNON("Glass Cannon", Material.TNT, "+40% melee damage, but take 20% more damage.",
             Attribute.ATTACK_DAMAGE, AttributeModifier.Operation.ADD_SCALAR, 0.40),
     FORTRESS("Fortress", Material.IRON_BLOCK, "+5 armor.",
             Attribute.ARMOR, AttributeModifier.Operation.ADD_NUMBER, 5.0),
     VAMPIRIC("Vampiric", Material.REDSTONE, "Heal 20% of the melee damage you deal."),
-    MOMENTUM("Momentum", Material.SUGAR, "Speed I for 4s after a kill."),
-    BRAMBLE("Bramble", Material.SWEET_BERRIES, "Melee attackers are poisoned."),
     SECOND_WIND("Second Wind", Material.TOTEM_OF_UNDYING, "Below 20% HP: Regen II + Absorption (30s cd).");
 
     private final String displayName;
@@ -151,7 +149,7 @@ public enum Card {
         }
         for (Card c : new Card[]{VITALITY, BULWARK, SWIFTNESS, STEADFAST, REACH, LEECH, BERSERKER,
                 ADRENALINE, HASTE, FIRE_WALKER, VENOM, CRIT, BLOODLUST, STEADY_FEET, QUICKDRAW,
-                KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER, FORTRESS, BRAMBLE}) {
+                KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER, FORTRESS}) {
             RARITY.put(c, Rarity.RARE);
         }
     }

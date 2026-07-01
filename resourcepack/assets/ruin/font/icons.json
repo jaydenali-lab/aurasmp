@@ -272,38 +272,20 @@
     },
     {
       "type": "bitmap",
-      "file": "ruin:font/soul_rip.png",
+      "file": "ruin:font/zelkova.png",
       "ascent": 7,
       "height": 8,
       "chars": [
-        ""
+        ""
       ]
     },
     {
       "type": "bitmap",
-      "file": "ruin:font/earthshatter.png",
+      "file": "ruin:font/mook.png",
       "ascent": 7,
       "height": 8,
       "chars": [
-        ""
-      ]
-    },
-    {
-      "type": "bitmap",
-      "file": "ruin:font/inferno_ring.png",
-      "ascent": 7,
-      "height": 8,
-      "chars": [
-        ""
-      ]
-    },
-    {
-      "type": "bitmap",
-      "file": "ruin:font/vault.png",
-      "ascent": 7,
-      "height": 8,
-      "chars": [
-        ""
+        ""
       ]
     }
   ]
