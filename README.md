@@ -34,7 +34,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
-## The 47 Talents (passive)
+## The 54 Talents (passive)
 
 **Attribute talents (10)** — applied as persistent attribute modifiers:
 
@@ -114,14 +114,26 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Spine Cutter | Backstabs deal +3 damage |
 | Risky Moves | 20% chance to fully negate an incoming hit |
 
+**More talents (7):**
+
+| Talent | Effect |
+|--------|--------|
+| Titan | +4 hearts of max health |
+| Glass Cannon | +40% melee damage |
+| Fortress | +5 armor |
+| Vampiric | Heal 20% of the melee damage you deal |
+| Momentum | Speed I for 4s after a kill |
+| Bramble | Melee attackers are poisoned |
+| Second Wind | Below 20% HP: Regen II + Absorption (30s cooldown) |
+
 (Note: the original **Thorns** was replaced by **Ghost**.)
 
-## The 28 Manifestations (active)
+## The 33 Manifestations (active)
 
 Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
 deal normal damage** (reduced by armour), scaled to cooldown (≈ cooldown ÷ 5
 hearts); ones that also apply a debuff deal 1/5 of that. The **Catalyst can't be
-dropped** and is **restored when you respawn**.
+dropped** and is **restored when you respawn**. Movement manifestations grant an 8s no-fall-damage window.
 
 | Manifestation | Effect | Cooldown |
 |---------------|--------|----------|
@@ -153,8 +165,13 @@ dropped** and is **restored when you respawn**.
 | Galvanize | Haste + Speed + Strength for 6s | 24s |
 | Wind Slam | Leap up and slam down, blasting foes back | 13s |
 | Gale Step | Blink-dash on wind; no fall damage after | 8s |
+| Phase Strike | Blink to the enemy you face and strike | 12s |
+| Soul Rip | Yank the enemy you face toward you | 13s |
+| Earthshatter | Erupt the ground, launching foes up | 16s |
+| Inferno Ring | Ring of fire ignites nearby enemies | 17s |
+| Vault | Leap high into the air, no fall damage | 9s |
 
-*The last eight are real Deepwoken mantras.*
+*Flame Grab through Gale Step are real Deepwoken mantras.*
 
 ## HUD & custom icons
 
@@ -239,5 +256,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.6.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.7.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

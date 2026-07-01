@@ -54,6 +54,9 @@ public final class CombatListener implements Listener {
         if (data.hasCard(Card.BLOODLUST)) {
             killer.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 100, 0));
         }
+        if (data.hasCard(Card.MOMENTUM)) {
+            killer.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 80, 0));
+        }
     }
 
     /** Ruin fireball impact: true AoE damage + fire, no block grief. */
@@ -119,6 +122,7 @@ public final class CombatListener implements Listener {
             event.setDamage(damage);
 
             if (!projectile && data.hasCard(Card.LIFESTEAL)) heal(attacker, damage * 0.10);
+            if (!projectile && data.hasCard(Card.VAMPIRIC)) heal(attacker, damage * 0.20);
 
             if (!projectile) {
                 if (data.hasCard(Card.IGNITE)) victim.setFireTicks(60);
@@ -150,11 +154,21 @@ public final class CombatListener implements Listener {
                 }
             }
         }
+
+        // Bramble: a victim player poisons whoever melees them.
+        if (victim instanceof Player victimPlayer
+                && event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK
+                && event.getDamager() instanceof LivingEntity source && !source.equals(victimPlayer)
+                && plugin.data().get(victimPlayer.getUniqueId()).hasCard(Card.BRAMBLE)) {
+            source.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 60, 0));
+        }
     }
 
     // Retribution: count hits taken; every 3rd arms a true-damage bonus for the next melee hit.
     private final java.util.Map<UUID, Integer> retributionHits = new java.util.HashMap<>();
     private final java.util.Set<UUID> retributionArmed = new java.util.HashSet<>();
+    // Second Wind cooldown per player.
+    private final java.util.Map<UUID, Long> secondWindUntil = new java.util.HashMap<>();
     // Guard so Cleave's splash hits don't recursively trigger more cleaves.
     private final java.util.Set<UUID> cleaving = new java.util.HashSet<>();
 
@@ -216,6 +230,17 @@ public final class CombatListener implements Listener {
             if (hits >= 5) {
                 retributionArmed.add(player.getUniqueId());
                 retributionHits.put(player.getUniqueId(), 0);
+            }
+        }
+        // Second Wind: at low HP, once per 30s, get Regen II + Absorption.
+        if (data.hasCard(Card.SECOND_WIND) && healthRatio(player) < 0.20) {
+            long now = System.currentTimeMillis();
+            Long until = secondWindUntil.get(player.getUniqueId());
+            if (until == null || now >= until) {
+                secondWindUntil.put(player.getUniqueId(), now + 30_000);
+                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80, 1));
+                player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 200, 1));
+                player.playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 0.6f, 1.4f);
             }
         }
     }

@@ -58,6 +58,11 @@ public final class AbilityManager {
         return until != null && System.currentTimeMillis() < until;
     }
 
+    /** Suppress fall damage for the next 8s (used by all movement manifestations). */
+    private void grantNoFall(Player player) {
+        noFallUntil.put(player.getUniqueId(), System.currentTimeMillis() + 8_000);
+    }
+
     public boolean isRuinFireball(Entity entity) {
         return entity != null
                 && entity.getPersistentDataContainer().has(fireballKey, PersistentDataType.BYTE);
@@ -139,12 +144,18 @@ public final class AbilityManager {
             case GALVANIZE -> galvanize(player);
             case WIND_SLAM -> windSlam(player);
             case GALE_STEP -> galeStep(player);
+            case PHASE_STRIKE -> phaseStrike(player);
+            case SOUL_RIP -> soulRip(player);
+            case EARTHSHATTER -> earthshatter(player);
+            case INFERNO_RING -> infernoRing(player);
+            case VAULT -> vault(player);
         }
     }
 
     // ---- individual abilities ----
 
     private void blink(Player player) {
+        grantNoFall(player);
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
         RayTraceResult hit = world.rayTraceBlocks(eye, eye.getDirection(), 8.0);
@@ -201,6 +212,7 @@ public final class AbilityManager {
     }
 
     private void leap(Player player) {
+        grantNoFall(player);
         Vector velocity = player.getLocation().getDirection().multiply(1.0).setY(1.0);
         player.setVelocity(velocity);
         player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 100, 0));
@@ -265,6 +277,7 @@ public final class AbilityManager {
     }
 
     private void grapple(Player player) {
+        grantNoFall(player);
         // Fire an arrow and ride it through the air until it lands.
         Arrow arrow = player.launchProjectile(Arrow.class, player.getEyeLocation().getDirection().multiply(2.5));
         arrow.setShooter(player);
@@ -364,6 +377,7 @@ public final class AbilityManager {
     }
 
     private void dash(Player player) {
+        grantNoFall(player);
         Vector dir = player.getEyeLocation().getDirection();
         dir.setY(Math.max(0.15, dir.getY() * 0.3));
         player.setVelocity(dir.normalize().multiply(1.5));
@@ -484,6 +498,7 @@ public final class AbilityManager {
     }
 
     private void windSlam(Player player) {
+        grantNoFall(player);
         // Mace-style: leap up, then dive super fast and slam — damage scales with fall height.
         Vector v = player.getVelocity();
         player.setVelocity(new Vector(v.getX(), 1.2, v.getZ()));
@@ -539,6 +554,75 @@ public final class AbilityManager {
         player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 4, 0.3, 0.2, 0.3, 0);
         player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 15, 0.2, 0.1, 0.2, 0.05);
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1f, 1.3f);
+    }
+
+    private void phaseStrike(Player player) {
+        grantNoFall(player);
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult res = world.rayTraceEntities(eye, eye.getDirection(), 12.0, 1.0,
+                e -> e instanceof LivingEntity && !e.equals(player));
+        if (res != null && res.getHitEntity() instanceof LivingEntity target) {
+            Location dest = target.getLocation().clone();
+            Vector toPlayer = player.getLocation().toVector().subtract(target.getLocation().toVector()).setY(0);
+            if (toPlayer.lengthSquared() > 0.01) dest.add(toPlayer.normalize().multiply(1.2));
+            dest.setDirection(target.getLocation().toVector().subtract(dest.toVector()));
+            world.spawnParticle(Particle.PORTAL, player.getLocation(), 30, 0.4, 0.6, 0.4, 0.5);
+            player.teleport(dest);
+            world.spawnParticle(Particle.PORTAL, dest, 30, 0.4, 0.6, 0.4, 0.5);
+            world.playSound(dest, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1.2f);
+            dealDamage(target, player, 4.8); // 12s
+        } else {
+            player.teleport(eye.add(eye.getDirection().multiply(6)));
+            world.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1.2f);
+        }
+    }
+
+    private void soulRip(Player player) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult res = world.rayTraceEntities(eye, eye.getDirection(), 15.0, 1.0,
+                e -> e instanceof LivingEntity && !e.equals(player));
+        world.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 0.7f);
+        if (res != null && res.getHitEntity() instanceof LivingEntity target) {
+            Vector pull = player.getLocation().toVector().subtract(target.getLocation().toVector()).normalize().multiply(1.5).setY(0.35);
+            target.setVelocity(pull);
+            world.spawnParticle(Particle.ENCHANT, target.getLocation().add(0, 1, 0), 30, 0.3, 0.5, 0.3, 1.0);
+            dealDamage(target, player, 5.2); // 13s
+        }
+    }
+
+    private void earthshatter(Player player) {
+        Location center = player.getLocation();
+        center.getWorld().spawnParticle(Particle.EXPLOSION, center, 2, 1, 0.1, 1, 0);
+        center.getWorld().playSound(center, Sound.ENTITY_RAVAGER_ROAR, 1f, 0.8f);
+        for (LivingEntity target : nearbyEnemies(player, 5.0)) {
+            target.setVelocity(target.getVelocity().setY(0.95));
+            dealDamage(target, player, 6.4); // 16s
+        }
+    }
+
+    private void infernoRing(Player player) {
+        Location center = player.getLocation();
+        for (int i = 0; i < 24; i++) {
+            double a = Math.PI * 2 * i / 24;
+            center.getWorld().spawnParticle(Particle.FLAME,
+                    center.clone().add(Math.cos(a) * 3, 0.3, Math.sin(a) * 3), 2, 0.05, 0.1, 0.05, 0.01);
+        }
+        center.getWorld().playSound(center, Sound.ITEM_FIRECHARGE_USE, 1f, 0.7f);
+        for (LivingEntity target : nearbyEnemies(player, 5.0)) {
+            target.setFireTicks(100);
+            dealDamage(target, player, 6.8); // 17s
+        }
+    }
+
+    private void vault(Player player) {
+        grantNoFall(player);
+        Vector v = player.getVelocity();
+        player.setVelocity(new Vector(v.getX() * 0.3, 1.5, v.getZ() * 0.3));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 60, 0));
+        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 20, 0.3, 0.1, 0.3, 0.05);
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1f, 1.0f);
     }
 
     /** Enemies within {@code radius} that fall inside the look-direction cone (dot > minDot). */

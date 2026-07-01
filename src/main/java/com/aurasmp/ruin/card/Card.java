@@ -95,7 +95,19 @@ public enum Card {
     PACK_LEADER("Pack Leader", Material.WOLF_ARMOR, "Resistance while an ally fights beside you."),
     UNYIELDING_INFERNO("Unyielding Inferno", Material.BLAZE_POWDER, "+2 hearts to hits on burning foes."),
     SPINE_CUTTER("Spine Cutter", Material.NETHERITE_SWORD, "Backstabs deal +3 damage."),
-    RISKY_MOVES("Risky Moves", Material.PHANTOM_MEMBRANE, "20% chance to fully negate an incoming hit.");
+    RISKY_MOVES("Risky Moves", Material.PHANTOM_MEMBRANE, "20% chance to fully negate an incoming hit."),
+
+    // ==== More talents ====
+    TITAN("Titan", Material.ENCHANTED_GOLDEN_APPLE, "+4 hearts of max health.",
+            Attribute.MAX_HEALTH, AttributeModifier.Operation.ADD_NUMBER, 8.0),
+    GLASS_CANNON("Glass Cannon", Material.TNT, "+40% melee damage.",
+            Attribute.ATTACK_DAMAGE, AttributeModifier.Operation.ADD_SCALAR, 0.40),
+    FORTRESS("Fortress", Material.IRON_BLOCK, "+5 armor.",
+            Attribute.ARMOR, AttributeModifier.Operation.ADD_NUMBER, 5.0),
+    VAMPIRIC("Vampiric", Material.REDSTONE, "Heal 20% of the melee damage you deal."),
+    MOMENTUM("Momentum", Material.SUGAR, "Speed I for 4s after a kill."),
+    BRAMBLE("Bramble", Material.SWEET_BERRIES, "Melee attackers are poisoned."),
+    SECOND_WIND("Second Wind", Material.TOTEM_OF_UNDYING, "Below 20% HP: Regen II + Absorption (30s cd).");
 
     private final String displayName;
     private final Material icon;
@@ -129,16 +141,17 @@ public enum Card {
     // ---- Rarity tiers (everything not listed is COMMON) ----
     private static final java.util.EnumMap<Card, Rarity> RARITY = new java.util.EnumMap<>(Card.class);
     static {
-        for (Card c : new Card[]{ONSLAUGHT, EXECUTIONER, JUGGERNAUT, GHOST, RISKY_MOVES}) {
+        for (Card c : new Card[]{ONSLAUGHT, EXECUTIONER, JUGGERNAUT, GHOST, RISKY_MOVES,
+                GLASS_CANNON, SECOND_WIND}) {
             RARITY.put(c, Rarity.LEGENDARY);
         }
         for (Card c : new Card[]{ENDURANCE, LIFESTEAL, REGENERATOR, BARRIER, CLEAVE, RETRIBUTION,
-                THRESHERS_REACH, UNYIELDING_INFERNO, SPINE_CUTTER}) {
+                THRESHERS_REACH, UNYIELDING_INFERNO, SPINE_CUTTER, TITAN, VAMPIRIC}) {
             RARITY.put(c, Rarity.EPIC);
         }
         for (Card c : new Card[]{VITALITY, BULWARK, SWIFTNESS, STEADFAST, REACH, LEECH, BERSERKER,
                 ADRENALINE, HASTE, FIRE_WALKER, VENOM, CRIT, BLOODLUST, STEADY_FEET, QUICKDRAW,
-                KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER}) {
+                KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER, FORTRESS, BRAMBLE}) {
             RARITY.put(c, Rarity.RARE);
         }
     }
