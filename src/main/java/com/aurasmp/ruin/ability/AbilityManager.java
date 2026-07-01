@@ -676,7 +676,7 @@ public final class AbilityManager {
         player.setVelocity(eye.getDirection().clone().setY(0.05).normalize().multiply(1.4)); // dash in
         world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 1.2f);
         if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) return;
-        // Multi-slash: 4 hits totalling 6 damage, a cloud-particle slash on each.
+        // Multi-slash: 4 hits totalling 12 damage, a cloud-particle slash on each.
         new BukkitRunnable() {
             int slashes = 0;
 
@@ -685,7 +685,7 @@ public final class AbilityManager {
                 slashes++;
                 if (!player.isOnline() || target.isDead() || !target.isValid() || slashes > 4) { cancel(); return; }
                 target.setNoDamageTicks(0); // bypass i-frames so every slash lands
-                dealDamage(target, player, 1.5);
+                dealDamage(target, player, 3.0);
                 Location at = target.getLocation().add(0, 1, 0);
                 cloudSlash(world, at, slashes); // alternating diagonal cloud slash
                 world.playSound(at, Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.8f, 1.3f + slashes * 0.1f);

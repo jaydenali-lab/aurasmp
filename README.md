@@ -165,7 +165,7 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Gale Step | Blink-dash on wind; no fall damage after | 8s |
 | Phase Strike | Blink to the enemy you face and strike | 12s |
 | Zelkova | Two ground slams (true dmg) that break cobwebs; the 2nd stuns and locks the camera | 20s |
-| Mook | Dash in and slash rapidly for 6 damage | 12s |
+| Mook | Dash in and slash rapidly for 12 damage | 12s |
 
 *Flame Grab through Gale Step are real Deepwoken mantras.*
 
@@ -252,5 +252,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.8.2.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.8.3.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

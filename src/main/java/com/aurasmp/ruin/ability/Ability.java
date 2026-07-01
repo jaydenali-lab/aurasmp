@@ -50,7 +50,7 @@ public enum Ability {
     // ==== More manifestations ====
     PHASE_STRIKE("Phase Strike", Material.ENDER_EYE, "Blink to the enemy you face and strike.", 12_000, 0xE01D, 0),
     ZELKOVA("Zelkova", Material.COBWEB, "Two ground slams (true dmg); the 2nd stuns and locks the camera.", 20_000, 0xE022, 0),
-    MOOK("Mook", Material.IRON_SWORD, "Dash in and slash rapidly for 6 damage.", 12_000, 0xE023, 0);
+    MOOK("Mook", Material.IRON_SWORD, "Dash in and slash rapidly for 12 damage.", 12_000, 0xE023, 0);
 
     private final String displayName;
     private final Material icon;
