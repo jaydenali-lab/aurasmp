@@ -42,7 +42,7 @@ public enum Ability {
     WILDFIRE("Wildfire", Material.FIRE_CHARGE, "Erupt a cone of fire that ignites enemies.", 15_000, 0xE016, 0),
     FROSTDRAW_SPIKES("Frostdraw Spikes", Material.PACKED_ICE, "Ice spikes impale and chill foes ahead.", 12_000, 0xE017, 0),
     TUNDRA("Tundra", Material.BLUE_ICE, "Freeze a wide zone, slowing all within.", 18_000, 0xE018, 0),
-    SHOCK_SWORD("Shock Sword", Material.LIGHTNING_ROD, "An electric arc slash that slows.", 11_000, 0xE019, 0),
+    SHOCK_SWORD("Shock Sword", Material.LIGHTNING_ROD, "A sweeping arc slash that slows.", 11_000, 0xE019, 0),
     GALVANIZE("Galvanize", Material.COPPER_INGOT, "Electrify: Haste, Speed & Strength for 6s.", 24_000, 0xE01A, 6_000),
     WIND_SLAM("Wind Slam", Material.BREEZE_ROD, "Leap up and slam down, blasting foes back.", 13_000, 0xE01B, 0),
     GALE_STEP("Gale Step", Material.FEATHER, "Blink-dash on wind; no fall damage after.", 8_000, 0xE01C, 0),
@@ -50,7 +50,7 @@ public enum Ability {
     // ==== More manifestations ====
     PHASE_STRIKE("Phase Strike", Material.ENDER_EYE, "Blink to the enemy you face and strike.", 12_000, 0xE01D, 0),
     ZELKOVA("Zelkova", Material.COBWEB, "Two ground slams (true dmg); the 2nd stuns and locks the camera.", 20_000, 0xE022, 0),
-    MOOK("Mook", Material.IRON_SWORD, "Dash in and slash rapidly for 6 damage.", 12_000, 0xE023, 0);
+    MOOK("Mook", Material.IRON_SWORD, "Dash in and slash rapidly for 12 damage.", 12_000, 0xE023, 0);
 
     private final String displayName;
     private final Material icon;
