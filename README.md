@@ -252,5 +252,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.8.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.8.1.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.
