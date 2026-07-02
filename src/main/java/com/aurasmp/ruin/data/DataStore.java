@@ -47,6 +47,12 @@ public final class DataStore {
         data.setXp(Math.max(0, cfg.getInt(base + ".xp", 0)));
         data.setRerolls(Math.max(0, cfg.getInt(base + ".rerolls", PlayerData.DEFAULT_REROLLS)));
 
+        for (String raw : cfg.getStringList(base + ".trusted")) {
+            try {
+                data.trusted().add(UUID.fromString(raw));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
         for (String name : cfg.getStringList(base + ".cards")) {
             try {
                 data.cards().add(Card.valueOf(name));
@@ -73,6 +79,7 @@ public final class DataStore {
         cfg.set(base + ".level", data.level());
         cfg.set(base + ".xp", data.xp());
         cfg.set(base + ".rerolls", data.rerolls());
+        cfg.set(base + ".trusted", data.trusted().stream().map(UUID::toString).toList());
         cfg.set(base + ".cards", data.cards().stream().map(Enum::name).toList());
         cfg.set(base + ".abilities", data.abilities().stream().map(Enum::name).toList());
         try {

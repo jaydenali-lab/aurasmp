@@ -91,7 +91,9 @@ public final class CombatListener implements Listener {
         world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.3f);
         for (org.bukkit.entity.Entity entity : world.getNearbyEntities(loc, 2.5, 2.5, 2.5)) {
             if (entity instanceof LivingEntity le && !entity.equals(shooter)
-                    && !(entity instanceof org.bukkit.entity.ArmorStand)) {
+                    && !(entity instanceof org.bukkit.entity.ArmorStand)
+                    && !(entity instanceof Player other
+                        && plugin.data().get(shooter.getUniqueId()).isTrusted(other.getUniqueId()))) {
                 le.setFireTicks(60);
                 plugin.abilities().dealDamage(le, shooter, 4.4); // 11s cd -> ~2.2 hearts
             }
@@ -268,11 +270,16 @@ public final class CombatListener implements Listener {
                 || victim.hasPotionEffect(PotionEffectType.BLINDNESS);
     }
 
-    /** Players and monsters near the attacker — what Duelist counts as "enemies". */
+    /** Players (except trusted allies) and monsters near the attacker — Duelist's "enemies". */
     private int nearbyEnemyCount(Player player) {
+        PlayerData data = plugin.data().get(player.getUniqueId());
         int count = 0;
         for (Entity e : player.getNearbyEntities(8, 8, 8)) {
-            if (e instanceof Player || e instanceof Monster) count++;
+            if (e instanceof Player other) {
+                if (!data.isTrusted(other.getUniqueId())) count++;
+            } else if (e instanceof Monster) {
+                count++;
+            }
         }
         return count;
     }

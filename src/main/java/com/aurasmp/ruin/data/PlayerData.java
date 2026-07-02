@@ -5,8 +5,10 @@ import com.aurasmp.ruin.card.Card;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /** Mutable per-player progression state. */
 public final class PlayerData {
@@ -20,6 +22,8 @@ public final class PlayerData {
     private int rerolls = DEFAULT_REROLLS;
     private final Set<Card> cards = EnumSet.noneOf(Card.class);
     private final List<Ability> abilities = new ArrayList<>(MAX_ABILITIES);
+    // Players this player considers allies (one-way; affects only their own effects).
+    private final Set<UUID> trusted = new HashSet<>();
 
     public int level() { return level; }
     public void setLevel(int level) { this.level = level; }
@@ -38,6 +42,9 @@ public final class PlayerData {
     public boolean hasAbility(Ability ability) { return abilities.contains(ability); }
 
     public boolean isMaxLevel() { return level >= MAX_LEVEL; }
+
+    public Set<UUID> trusted() { return trusted; }
+    public boolean isTrusted(UUID id) { return trusted.contains(id); }
 
     /** Wipe everything back to a fresh level-1 slate. */
     public void reset() {

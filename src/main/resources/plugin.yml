@@ -1,5 +1,5 @@
 name: Ruin
-version: 1.11.0
+version: 1.12.0
 main: com.aurasmp.ruin.RuinPlugin
 api-version: '1.21'
 author: AuraSMP
@@ -15,6 +15,17 @@ commands:
       /ruin give <mirror|catalyst> [player] [amount] - admin give
       /ruin reset [player] - reset progression
       /ruin reload - reload config.yml (admin)
+    permission: ruin.use
+  trust:
+    description: Mark a player as a trusted ally (your manifestations spare them).
+    usage: |
+      /trust <player> - trust an ally
+      /trust remove <player> - stop trusting them
+      /trust list - show your trusted allies
+    permission: ruin.use
+  untrust:
+    description: Stop trusting a player.
+    usage: /untrust <player>
     permission: ruin.use
 permissions:
   ruin.use:

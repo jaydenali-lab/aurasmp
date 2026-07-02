@@ -144,14 +144,18 @@ public final class AbilityManager {
         double max = blockHit != null ? blockHit.getHitPosition().distance(eye.toVector()) : range;
         if (max < 0.5) return null;
         return world.rayTraceEntities(eye, eye.getDirection(), max, size,
-                e -> e instanceof LivingEntity && !e.equals(player)
-                        && !(e instanceof org.bukkit.entity.ArmorStand));
+                e -> targetable(e, player));
     }
 
-    /** Something abilities are allowed to hit: alive, not the caster, not decoration. */
+    /** Something abilities are allowed to hit: alive, not the caster, not decoration, not an ally. */
     private boolean targetable(Entity entity, Player caster) {
-        return entity instanceof LivingEntity && !entity.equals(caster)
-                && !(entity instanceof org.bukkit.entity.ArmorStand);
+        if (!(entity instanceof LivingEntity) || entity.equals(caster)
+                || entity instanceof org.bukkit.entity.ArmorStand) {
+            return false;
+        }
+        // /trust: your manifestations never hit players you trust.
+        return !(entity instanceof Player other)
+                || !plugin.data().get(caster.getUniqueId()).isTrusted(other.getUniqueId());
     }
 
     public boolean isRuinFireball(Entity entity) {
@@ -1451,7 +1455,8 @@ public final class AbilityManager {
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 100, 0));
         player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0));
         for (Entity e : player.getNearbyEntities(8, 8, 8)) {
-            if (e instanceof Player ally) {
+            if (e instanceof Player ally
+                    && plugin.data().get(player.getUniqueId()).isTrusted(ally.getUniqueId())) {
                 ally.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 100, 0));
                 ally.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 0));
                 world.spawnParticle(Particle.HEART, ally.getLocation().add(0, 2, 0), 3, 0.3, 0.2, 0.3, 0);
@@ -1504,7 +1509,8 @@ public final class AbilityManager {
         World world = player.getWorld();
         int revealed = 0;
         for (Entity e : player.getNearbyEntities(20, 20, 20)) {
-            if (e instanceof Player enemy) {
+            if (e instanceof Player enemy
+                    && !plugin.data().get(player.getUniqueId()).isTrusted(enemy.getUniqueId())) {
                 enemy.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 100, 0));
                 revealed++;
             }

@@ -65,6 +65,18 @@ public final class RuinPlugin extends JavaPlugin {
             command.setExecutor(executor);
             command.setTabCompleter(executor);
         }
+        PluginCommand trust = getCommand("trust");
+        if (trust != null) {
+            com.aurasmp.ruin.command.TrustCommand executor = new com.aurasmp.ruin.command.TrustCommand(this, false);
+            trust.setExecutor(executor);
+            trust.setTabCompleter(executor);
+        }
+        PluginCommand untrust = getCommand("untrust");
+        if (untrust != null) {
+            com.aurasmp.ruin.command.TrustCommand executor = new com.aurasmp.ruin.command.TrustCommand(this, true);
+            untrust.setExecutor(executor);
+            untrust.setTabCompleter(executor);
+        }
 
         // Players already online during a /reload need their state (re)loaded.
         for (Player player : getServer().getOnlinePlayers()) {

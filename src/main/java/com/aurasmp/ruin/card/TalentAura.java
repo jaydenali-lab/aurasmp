@@ -45,18 +45,20 @@ public final class TalentAura {
             if (data.hasCard(Card.ESCAPE_PLAN) && healthRatio(player) < 0.30) {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, true, false, false));
             }
-            // Medic: nearby hurt allies slowly regenerate.
+            // Medic: nearby hurt allies slowly regenerate (allies = players you /trust).
             if (data.hasCard(Card.MEDIC)) {
                 for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 8, 8)) {
-                    if (entity instanceof Player ally && healthRatio(ally) < 0.9) {
+                    if (entity instanceof Player ally && data.isTrusted(ally.getUniqueId())
+                            && healthRatio(ally) < 0.9) {
                         ally.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 0, true, false, false));
                     }
                 }
             }
-            // Sixth Sense: sneaking players nearby are revealed.
+            // Sixth Sense: sneaking enemies nearby are revealed (trusted players are not).
             if (data.hasCard(Card.SIXTH_SENSE)) {
                 for (org.bukkit.entity.Entity entity : player.getNearbyEntities(10, 10, 10)) {
-                    if (entity instanceof Player sneak && sneak.isSneaking()) {
+                    if (entity instanceof Player sneak && sneak.isSneaking()
+                            && !data.isTrusted(sneak.getUniqueId())) {
                         sneak.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, true, false, false));
                     }
                 }
@@ -79,8 +81,8 @@ public final class TalentAura {
             if (data.hasCard(Card.CONDITIONED_RUNNER) && player.isSprinting() && healthRatio(player) < 0.75) {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, DURATION_TICKS, 0, true, false, false));
             }
-            // Pack Leader (Deepwoken): resistance while an ally fights beside you.
-            if (data.hasCard(Card.PACK_LEADER) && hasAllyNear(player)) {
+            // Pack Leader (Deepwoken): resistance while a trusted ally fights beside you.
+            if (data.hasCard(Card.PACK_LEADER) && hasAllyNear(player, data)) {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, DURATION_TICKS, 0, true, false, false));
             }
         }
@@ -98,9 +100,9 @@ public final class TalentAura {
         return max <= 0 ? 1.0 : player.getHealth() / max;
     }
 
-    private boolean hasAllyNear(Player player) {
+    private boolean hasAllyNear(Player player, PlayerData data) {
         for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 8, 8)) {
-            if (entity instanceof Player) return true;
+            if (entity instanceof Player other && data.isTrusted(other.getUniqueId())) return true;
         }
         return false;
     }

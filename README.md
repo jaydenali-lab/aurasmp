@@ -270,6 +270,21 @@ progress to the next level (`Level 4 — 320 / 900 XP`). It **auto-hides 5 secon
 after your last XP gain; a kill streak keeps refreshing it. It's per-player
 (client-side), so other players don't see yours.
 
+## Allies — /trust
+
+By default every other player counts as an **enemy**: your damaging
+manifestations hit them, and Sixth Sense / True Sight reveal them. Marking
+someone as an ally changes that:
+
+- `/trust <player>` — your manifestations **stop hitting them**, and your
+  support effects (**Rally**, **Medic**, **Pack Leader**) start working on them.
+- `/trust remove <player>` (or `/untrust <player>`) — back to enemy.
+- `/trust list` — who you trust.
+
+Trust is **one-way**: it only changes what *your* abilities do. For full
+teamwork, both players trust each other. (Vanilla melee/arrows still hit
+allies — trust governs Ruin abilities, not Minecraft itself.)
+
 ## Commands
 
 `/ruin` (alias for `/ruin level`)
@@ -323,5 +338,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.11.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.12.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.
