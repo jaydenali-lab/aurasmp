@@ -42,6 +42,8 @@ public final class AbilityManager {
     private final java.util.Set<UUID> abilityDamaging = new java.util.HashSet<>();
     // Players who shouldn't take fall damage for a window (Gale Step).
     private final Map<UUID, Long> noFallUntil = new HashMap<>();
+    // Players in a Riposte parry stance (until timestamp).
+    private final Map<UUID, Long> riposteUntil = new HashMap<>();
     private final NamespacedKey fireballKey;
 
     public AbilityManager(RuinPlugin plugin) {
@@ -61,6 +63,39 @@ public final class AbilityManager {
     /** Suppress fall damage for the next 8s (used by all movement manifestations). */
     private void grantNoFall(Player player) {
         noFallUntil.put(player.getUniqueId(), System.currentTimeMillis() + 8_000);
+    }
+
+    /** If the player is in a Riposte stance, consume it (one parry per cast). */
+    public boolean consumeRiposte(UUID id) {
+        Long until = riposteUntil.get(id);
+        if (until == null || System.currentTimeMillis() >= until) return false;
+        riposteUntil.remove(id);
+        return true;
+    }
+
+    /** Drops transient per-player state on quit. Cooldowns intentionally survive relogs. */
+    public void cleanup(UUID id) {
+        noFallUntil.remove(id);
+        riposteUntil.remove(id);
+        activeUntil.remove(id);
+    }
+
+    /** Entity ray-trace clamped to line of sight — walls stop targeting. */
+    private RayTraceResult rayTraceLos(Player player, double range, double size) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult blockHit = world.rayTraceBlocks(eye, eye.getDirection(), range);
+        double max = blockHit != null ? blockHit.getHitPosition().distance(eye.toVector()) : range;
+        if (max < 0.5) return null;
+        return world.rayTraceEntities(eye, eye.getDirection(), max, size,
+                e -> e instanceof LivingEntity && !e.equals(player)
+                        && !(e instanceof org.bukkit.entity.ArmorStand));
+    }
+
+    /** Something abilities are allowed to hit: alive, not the caster, not decoration. */
+    private boolean targetable(Entity entity, Player caster) {
+        return entity instanceof LivingEntity && !entity.equals(caster)
+                && !(entity instanceof org.bukkit.entity.ArmorStand);
     }
 
     public boolean isRuinFireball(Entity entity) {
@@ -94,12 +129,17 @@ public final class AbilityManager {
         victim.setNoDamageTicks(0);
         dealDamage(victim, source, amount); // animation + knockback (armour-reduced)
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (victim.isDead()) return;
+            if (victim.isDead() || !victim.isValid()) return;
+            double now = victim.getHealth();
+            if (before - now <= 0.001) return; // hit was cancelled (god mode, protection) — no top-up
             double target = before - amount;
-            if (target <= 0) {
-                victim.setHealth(0);
-            } else if (victim.getHealth() > target) {
+            if (now <= target) return; // armour didn't eat anything
+            if (target > 0) {
                 victim.setHealth(target); // strip the armour reduction back off
+            } else {
+                // Lethal: go through the damage pipeline so totems and death events work.
+                victim.setNoDamageTicks(0);
+                dealDamage(victim, source, Math.max(1000.0, now * 2));
             }
         }, 1L);
     }
@@ -128,7 +168,12 @@ public final class AbilityManager {
             return;
         }
         activate(player, ability);
-        cooldowns.set(id, ability.name(), ability.cooldownMillis());
+        long cooldown = ability.cooldownMillis();
+        // Attunement talent: manifestation cooldowns are 15% shorter.
+        if (plugin.data().get(id).hasCard(com.aurasmp.ruin.card.Card.ATTUNEMENT)) {
+            cooldown = (long) (cooldown * 0.85);
+        }
+        cooldowns.set(id, ability.name(), cooldown);
         if (ability.hasActiveState()) {
             activeUntil.computeIfAbsent(id, k -> new HashMap<>())
                     .put(ability, System.currentTimeMillis() + ability.activeDurationMillis());
@@ -168,6 +213,16 @@ public final class AbilityManager {
             case PHASE_STRIKE -> phaseStrike(player);
             case ZELKOVA -> zelkova(player);
             case MOOK -> mook(player);
+            case SHADOW_LANCE -> shadowLance(player);
+            case ASTRAL_WIND -> astralWind(player);
+            case BLOOD_PACT -> bloodPact(player);
+            case RIPOSTE -> riposte(player);
+            case ICE_BARRIER -> iceBarrier(player);
+            case GUILLOTINE -> guillotine(player);
+            case REWIND -> rewind(player);
+            case SINGULARITY -> singularity(player);
+            case DISPLACE -> displace(player);
+            case MIASMA -> miasma(player);
         }
     }
 
@@ -180,6 +235,7 @@ public final class AbilityManager {
         RayTraceResult hit = world.rayTraceBlocks(eye, eye.getDirection(), 8.0);
         double distance = hit != null ? Math.max(0, hit.getHitPosition().distance(eye.toVector()) - 1) : 8.0;
         Location target = eye.add(eye.getDirection().multiply(distance));
+        target.subtract(0, 1.62, 0); // ray ends at eye height — drop back down to the feet
         target.setX(Math.floor(target.getX()) + 0.5);
         target.setZ(Math.floor(target.getZ()) + 0.5);
         target.setPitch(player.getLocation().getPitch());
@@ -196,8 +252,9 @@ public final class AbilityManager {
         center.getWorld().spawnParticle(Particle.EXPLOSION, center, 6, RADIUS / 2, 0.3, RADIUS / 2, 0);
         center.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.4f);
         for (LivingEntity target : nearbyEnemies(player)) {
-            Vector push = target.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.4).setY(0.5);
-            target.setVelocity(push);
+            Vector push = target.getLocation().toVector().subtract(center.toVector());
+            if (push.lengthSquared() < 0.01) push = new Vector(1, 0, 0); // overlapping: pick a direction
+            target.setVelocity(push.normalize().multiply(1.4).setY(0.5));
             dealDamage(target, player, 4.8); // 12s cd -> 2.4 hearts
         }
     }
@@ -218,8 +275,7 @@ public final class AbilityManager {
     private void smite(Player player) {
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
-        RayTraceResult result = world.rayTraceEntities(eye, eye.getDirection(), 30.0, 1.0,
-                e -> e instanceof LivingEntity && !e.equals(player));
+        RayTraceResult result = rayTraceLos(player, 30.0, 1.0);
         Location strike = result != null && result.getHitEntity() != null
                 ? result.getHitEntity().getLocation()
                 : eye.add(eye.getDirection().multiply(20));
@@ -272,8 +328,9 @@ public final class AbilityManager {
         Location center = player.getLocation();
         center.getWorld().playSound(center, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.6f);
         for (LivingEntity target : nearbyEnemies(player, 8.0)) {
-            Vector pull = center.toVector().subtract(target.getLocation().toVector()).normalize().multiply(1.2).setY(0.3);
-            target.setVelocity(pull);
+            Vector pull = center.toVector().subtract(target.getLocation().toVector());
+            if (pull.lengthSquared() < 0.01) continue; // already on top of you
+            target.setVelocity(pull.normalize().multiply(1.2).setY(0.3));
             target.getWorld().spawnParticle(Particle.ENCHANT, target.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3, 0.5);
         }
     }
@@ -387,7 +444,8 @@ public final class AbilityManager {
             world.spawnParticle(Particle.FLAME, target, 60, 2, 1, 2, 0.05);
             world.playSound(target, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.8f);
             for (Entity entity : world.getNearbyEntities(target, 4, 4, 4)) {
-                if (entity instanceof LivingEntity le && !entity.equals(player)) {
+                if (targetable(entity, player)) {
+                    LivingEntity le = (LivingEntity) entity;
                     le.setFireTicks(60);
                     dealDamage(le, player, 8.0);
                 }
@@ -411,8 +469,7 @@ public final class AbilityManager {
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
         Vector dir = eye.getDirection();
-        RayTraceResult res = world.rayTraceEntities(eye, dir, 6.0, 1.2,
-                e -> e instanceof LivingEntity && !e.equals(player));
+        RayTraceResult res = rayTraceLos(player, 6.0, 1.2);
         world.playSound(player.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1f, 0.8f);
         if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) {
             player.setVelocity(dir.clone().multiply(0.9).setY(0.25)); // whiff: short lunge
@@ -470,12 +527,15 @@ public final class AbilityManager {
             }
         }
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            for (BlockState st : changed) st.update(true, false);
+            // Only revert blocks that are still our ice — never overwrite player changes.
+            for (BlockState st : changed) {
+                if (st.getBlock().getType() == Material.PACKED_ICE) st.update(true, false);
+            }
         }, 100L);
 
         // Impale + chill enemies caught in the spikes.
         for (Entity entity : world.getNearbyEntities(base, 3, 3, 3)) {
-            if (entity instanceof LivingEntity le && !entity.equals(player)) {
+            if (targetable(entity, player) && entity instanceof LivingEntity le) {
                 le.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 2));
                 dealDamage(le, player, 0.96); // applies Slow -> 1/5
             }
@@ -520,8 +580,7 @@ public final class AbilityManager {
         world.playSound(player.getLocation(), Sound.ITEM_TRIDENT_THROW, 1f, 1.6f);
         world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 0.8f);
 
-        RayTraceResult res = world.rayTraceEntities(eye, dir, reach, 1.4,
-                e -> e instanceof LivingEntity && !e.equals(player));
+        RayTraceResult res = rayTraceLos(player, reach, 1.4);
         if (res != null && res.getHitEntity() instanceof LivingEntity target) {
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 3));
             world.spawnParticle(Particle.ELECTRIC_SPARK, target.getLocation().add(0, 1, 0), 25, 0.3, 0.5, 0.3, 0.1);
@@ -554,7 +613,7 @@ public final class AbilityManager {
             @Override
             public void run() {
                 ticks++;
-                if (!player.isOnline()) { cancel(); return; }
+                if (!player.isOnline() || player.isDead()) { cancel(); return; }
                 if (!airborne && !player.isOnGround()) airborne = true;
                 if (airborne) maxFall = Math.max(maxFall, player.getFallDistance());
                 if (airborne && !player.isOnGround() && player.getVelocity().getY() <= 0.05) diving = true;
@@ -579,30 +638,38 @@ public final class AbilityManager {
         // base ~2 hearts, + up to ~5.4 hearts the higher you leapt.
         double dmg = 4.0 + Math.min(fall, 12.0) * 0.9;
         for (LivingEntity target : nearbyEnemies(player, 5.0)) {
-            Vector push = target.getLocation().toVector().subtract(center.toVector()).normalize().multiply(1.5).setY(0.65);
-            target.setVelocity(push);
+            Vector push = target.getLocation().toVector().subtract(center.toVector());
+            if (push.lengthSquared() < 0.01) push = new Vector(1, 0, 0);
+            target.setVelocity(push.normalize().multiply(1.5).setY(0.65));
             dealDamage(target, player, dmg);
         }
     }
 
     private void galeStep(Player player) {
-        Vector dir = player.getEyeLocation().getDirection();
-        dir.setY(Math.max(0.2, dir.getY() * 0.4));
-        player.setVelocity(dir.normalize().multiply(1.8));
+        // A true blink-dash on wind: instantly step ~6 blocks forward (block-clipped),
+        // unlike Dash's velocity burst. No fall damage after, like a wind charge.
+        grantNoFall(player);
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        Vector dir = eye.getDirection().clone().setY(0);
+        if (dir.lengthSquared() < 0.01) dir = new Vector(1, 0, 0);
+        dir.normalize();
+        RayTraceResult hit = world.rayTraceBlocks(eye, dir, 6.0);
+        double distance = hit != null ? Math.max(0, hit.getHitPosition().distance(eye.toVector()) - 1) : 6.0;
+        Location target = player.getLocation().add(dir.multiply(distance));
+        world.spawnParticle(Particle.GUST, player.getLocation(), 3, 0.3, 0.2, 0.3, 0);
+        world.spawnParticle(Particle.CLOUD, player.getLocation(), 15, 0.2, 0.1, 0.2, 0.05);
+        player.teleport(target);
+        world.spawnParticle(Particle.CLOUD, target, 15, 0.2, 0.1, 0.2, 0.05);
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 1));
-        // No fall damage after the step (like a wind charge), for 8s.
-        noFallUntil.put(player.getUniqueId(), System.currentTimeMillis() + 8_000);
-        player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 4, 0.3, 0.2, 0.3, 0);
-        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 15, 0.2, 0.1, 0.2, 0.05);
-        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_JUMP, 1f, 1.3f);
+        world.playSound(target, Sound.ENTITY_BREEZE_JUMP, 1f, 1.3f);
     }
 
     private void phaseStrike(Player player) {
         grantNoFall(player);
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
-        RayTraceResult res = world.rayTraceEntities(eye, eye.getDirection(), 12.0, 1.0,
-                e -> e instanceof LivingEntity && !e.equals(player));
+        RayTraceResult res = rayTraceLos(player, 12.0, 1.0); // walls block the strike
         if (res != null && res.getHitEntity() instanceof LivingEntity target) {
             Location dest = target.getLocation().clone();
             Vector toPlayer = player.getLocation().toVector().subtract(target.getLocation().toVector()).setY(0);
@@ -614,7 +681,12 @@ public final class AbilityManager {
             world.playSound(dest, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1.2f);
             dealDamage(target, player, 4.8); // 12s
         } else {
-            player.teleport(eye.add(eye.getDirection().multiply(6)));
+            // Whiff: short blink forward, clamped to line of sight (no phasing through walls).
+            RayTraceResult blockHit = world.rayTraceBlocks(eye, eye.getDirection(), 6.0);
+            double distance = blockHit != null
+                    ? Math.max(0, blockHit.getHitPosition().distance(eye.toVector()) - 1) : 6.0;
+            Location dest = eye.add(eye.getDirection().multiply(distance)).subtract(0, 1.62, 0);
+            player.teleport(dest);
             world.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1.2f);
         }
     }
@@ -622,7 +694,7 @@ public final class AbilityManager {
     private void zelkova(Player player) {
         zelkovaSlam(player, false);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (player.isOnline()) zelkovaSlam(player, true);
+            if (player.isOnline() && !player.isDead()) zelkovaSlam(player, true);
         }, 12L);
     }
 
@@ -660,7 +732,7 @@ public final class AbilityManager {
             @Override
             public void run() {
                 t++;
-                if (!victim.isOnline() || t > ticks) { cancel(); return; }
+                if (!victim.isOnline() || victim.isDead() || t > ticks) { cancel(); return; }
                 victim.teleport(lock); // re-lock position + look direction each tick
                 victim.setVelocity(new Vector(0, 0, 0));
                 victim.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 3, 0.2, 0.3, 0.2, 0);
@@ -671,11 +743,13 @@ public final class AbilityManager {
     private void mook(Player player) {
         World world = player.getWorld();
         Location eye = player.getEyeLocation();
-        RayTraceResult res = world.rayTraceEntities(eye, eye.getDirection(), 5.5, 1.0,
-                e -> e instanceof LivingEntity && !e.equals(player));
+        RayTraceResult res = rayTraceLos(player, 5.5, 1.0);
         player.setVelocity(eye.getDirection().clone().setY(0.05).normalize().multiply(1.4)); // dash in
         world.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 1.2f);
-        if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) return;
+        if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) {
+            refundCooldown(player, Ability.MOOK, 4_000); // whiffed — most of the cooldown back
+            return;
+        }
         // Multi-slash: 4 hits totalling 12 damage, a cloud-particle slash on each.
         new BukkitRunnable() {
             int slashes = 0;
@@ -683,7 +757,13 @@ public final class AbilityManager {
             @Override
             public void run() {
                 slashes++;
-                if (!player.isOnline() || target.isDead() || !target.isValid() || slashes > 4) { cancel(); return; }
+                if (!player.isOnline() || player.isDead() || target.isDead() || !target.isValid()
+                        || slashes > 4
+                        || target.getWorld() != player.getWorld()
+                        || target.getLocation().distanceSquared(player.getLocation()) > 36) { // broke off
+                    cancel();
+                    return;
+                }
                 target.setNoDamageTicks(0); // bypass i-frames so every slash lands
                 dealDamage(target, player, 3.0);
                 Location at = target.getLocation().add(0, 1, 0);
@@ -702,6 +782,234 @@ public final class AbilityManager {
             Location p = center.clone().add(axis.clone().multiply(s * 1.2));
             world.spawnParticle(Particle.CLOUD, p, 1, 0.03, 0.03, 0.03, 0);
         }
+    }
+
+    /**
+     * Replaces the cooldown {@code tryActivate} is about to set with a shorter one
+     * (must run a tick later, since tryActivate sets the full cooldown after activate()).
+     */
+    private void refundCooldown(Player player, Ability ability, long millis) {
+        plugin.getServer().getScheduler().runTask(plugin,
+                () -> cooldowns.set(player.getUniqueId(), ability.name(), millis));
+    }
+
+    // ==== 1.9.0 manifestations ====
+
+    private void shadowLance(Player player) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        Vector dir = eye.getDirection().normalize();
+        world.playSound(player.getLocation(), Sound.ENTITY_WITHER_SHOOT, 1f, 0.6f);
+        java.util.Set<UUID> pierced = new java.util.HashSet<>();
+        for (double d = 1.0; d <= 12.0; d += 0.5) {
+            Location p = eye.clone().add(dir.clone().multiply(d));
+            if (!p.getBlock().isPassable()) break;
+            world.spawnParticle(Particle.SQUID_INK, p, 2, 0.05, 0.05, 0.05, 0.01);
+            world.spawnParticle(Particle.SOUL, p, 1, 0.05, 0.05, 0.05, 0.005);
+            for (Entity e : world.getNearbyEntities(p, 0.9, 0.9, 0.9)) {
+                if (targetable(e, player) && e instanceof LivingEntity le && pierced.add(e.getUniqueId())) {
+                    dealDamage(le, player, 5.6); // 14s cd -> 2.8 hearts, hits everyone in the line
+                }
+            }
+        }
+    }
+
+    private void astralWind(Player player) {
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1f, 1.4f);
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                ticks += 5;
+                if (!player.isOnline() || player.isDead() || ticks > 100) { cancel(); return; }
+                Location center = player.getLocation();
+                center.getWorld().spawnParticle(Particle.GUST, center, 2, 1.5, 0.5, 1.5, 0);
+                for (LivingEntity target : nearbyEnemies(player, 4.0)) {
+                    Vector push = target.getLocation().toVector().subtract(center.toVector());
+                    if (push.lengthSquared() < 0.01) push = new Vector(1, 0, 0);
+                    target.setVelocity(push.normalize().multiply(0.7).setY(0.15));
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 5L);
+    }
+
+    private void bloodPact(Player player) {
+        if (player.getHealth() <= 5.0) {
+            // Too hurt to pay the price — soft fail, give the cooldown back.
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
+            refundCooldown(player, Ability.BLOOD_PACT, 1_000);
+            return;
+        }
+        player.setHealth(player.getHealth() - 4.0);
+        UUID id = player.getUniqueId();
+        for (Ability other : Ability.values()) {
+            if (other != Ability.BLOOD_PACT) cooldowns.set(id, other.name(), 0);
+        }
+        Location loc = player.getLocation().add(0, 1, 0);
+        loc.getWorld().spawnParticle(Particle.DUST, loc, 40, 0.4, 0.6, 0.4,
+                new Particle.DustOptions(Color.fromRGB(150, 0, 0), 1.6f));
+        loc.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, loc, 10, 0.3, 0.4, 0.3, 0);
+        loc.getWorld().playSound(loc, Sound.ENTITY_WARDEN_HEARTBEAT, 1f, 1.2f);
+    }
+
+    private void riposte(Player player) {
+        riposteUntil.put(player.getUniqueId(), System.currentTimeMillis() + 1_500);
+        player.getWorld().spawnParticle(Particle.CRIT, player.getLocation().add(0, 1, 0), 12, 0.4, 0.5, 0.4, 0.05);
+        player.getWorld().playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_IRON, 1f, 1.4f);
+    }
+
+    /** The parry payoff — called by the combat listener when a stance eats a hit. */
+    public void riposteCounter(Player player, LivingEntity attacker) {
+        World world = player.getWorld();
+        world.playSound(player.getLocation(), Sound.ITEM_SHIELD_BLOCK, 1f, 1.2f);
+        world.spawnParticle(Particle.SWEEP_ATTACK, attacker.getLocation().add(0, 1, 0), 2, 0.3, 0.3, 0.3, 0);
+        Vector away = attacker.getLocation().toVector().subtract(player.getLocation().toVector());
+        if (away.lengthSquared() < 0.01) away = new Vector(1, 0, 0);
+        attacker.setVelocity(away.normalize().multiply(1.0).setY(0.35));
+        dealDamage(attacker, player, 6.0);
+    }
+
+    private void iceBarrier(Player player) {
+        World world = player.getWorld();
+        Vector dir = player.getEyeLocation().getDirection().clone().setY(0);
+        if (dir.lengthSquared() < 0.01) dir = new Vector(1, 0, 0);
+        dir.normalize();
+        Vector right = new Vector(-dir.getZ(), 0, dir.getX());
+        Location base = player.getLocation().add(dir.clone().multiply(2.5));
+        java.util.List<BlockState> changed = new java.util.ArrayList<>();
+        for (int w = -2; w <= 2; w++) {
+            for (int h = 0; h <= 2; h++) {
+                Block b = world.getBlockAt(
+                        base.getBlockX() + (int) Math.round(right.getX() * w),
+                        base.getBlockY() + h,
+                        base.getBlockZ() + (int) Math.round(right.getZ() * w));
+                if (b.isPassable()) {
+                    changed.add(b.getState());
+                    b.setType(Material.PACKED_ICE, false);
+                }
+            }
+        }
+        world.spawnParticle(Particle.SNOWFLAKE, base.clone().add(0, 1, 0), 40, 1.5, 1, 1.5, 0.02);
+        world.playSound(base, Sound.BLOCK_GLASS_PLACE, 1f, 0.8f);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            // Only revert blocks that are still our ice — never overwrite player changes.
+            for (BlockState st : changed) {
+                if (st.getBlock().getType() == Material.PACKED_ICE) st.update(true, false);
+            }
+            world.playSound(base, Sound.BLOCK_GLASS_BREAK, 0.8f, 1.2f);
+        }, 100L);
+    }
+
+    private void guillotine(Player player) {
+        World world = player.getWorld();
+        RayTraceResult res = rayTraceLos(player, 8.0, 1.2);
+        if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) {
+            refundCooldown(player, Ability.GUILLOTINE, 4_000);
+            return;
+        }
+        double max = target.getAttribute(Attribute.MAX_HEALTH) != null
+                ? target.getAttribute(Attribute.MAX_HEALTH).getValue() : 20.0;
+        double missing = Math.max(0, max - target.getHealth());
+        Location at = target.getLocation().add(0, 1, 0);
+        world.spawnParticle(Particle.SWEEP_ATTACK, at, 3, 0.4, 0.4, 0.4, 0);
+        world.spawnParticle(Particle.CRIT, at, 15, 0.4, 0.4, 0.4, 0.2);
+        world.playSound(at, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 0.6f);
+        dealDamage(target, player, 4.0 + missing * 0.25); // execute: scales with missing health
+    }
+
+    private void rewind(Player player) {
+        Location mark = player.getLocation().clone();
+        double healthMark = player.getHealth();
+        World world = player.getWorld();
+        world.spawnParticle(Particle.REVERSE_PORTAL, mark.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.02);
+        world.playSound(mark, Sound.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, 1f, 1.4f);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!player.isOnline() || player.isDead()) return;
+            world.spawnParticle(Particle.REVERSE_PORTAL, player.getLocation().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.02);
+            player.teleport(mark);
+            double max = player.getAttribute(Attribute.MAX_HEALTH) != null
+                    ? player.getAttribute(Attribute.MAX_HEALTH).getValue() : 20.0;
+            if (player.getHealth() < healthMark) {
+                player.setHealth(Math.min(max, healthMark)); // undo the damage taken since the mark
+            }
+            world.spawnParticle(Particle.REVERSE_PORTAL, mark.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.02);
+            world.playSound(mark, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 0.6f);
+        }, 60L);
+    }
+
+    private void singularity(Player player) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult hit = world.rayTraceBlocks(eye, eye.getDirection(), 12.0);
+        Location point = hit != null
+                ? hit.getHitPosition().toLocation(world).add(0, 0.5, 0)
+                : eye.add(eye.getDirection().multiply(8));
+        world.playSound(point, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 0.5f);
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                ticks += 5;
+                if (ticks > 60) { cancel(); return; }
+                world.spawnParticle(Particle.PORTAL, point, 25, 0.3, 0.3, 0.3, 0.6);
+                world.spawnParticle(Particle.END_ROD, point, 3, 0.1, 0.1, 0.1, 0.02);
+                for (Entity e : world.getNearbyEntities(point, 6, 6, 6)) {
+                    if (targetable(e, player) && e instanceof LivingEntity le) {
+                        Vector pull = point.toVector().subtract(le.getLocation().toVector());
+                        if (pull.lengthSquared() < 1.0) {
+                            dealDamage(le, player, 0.6); // grinding at the core
+                        } else {
+                            le.setVelocity(pull.normalize().multiply(0.55).setY(Math.max(0.1, pull.getY() * 0.1)));
+                        }
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 5L);
+    }
+
+    private void displace(Player player) {
+        World world = player.getWorld();
+        RayTraceResult res = rayTraceLos(player, 10.0, 1.2);
+        if (res == null || !(res.getHitEntity() instanceof LivingEntity target)) {
+            refundCooldown(player, Ability.DISPLACE, 3_000);
+            return;
+        }
+        Location mine = player.getLocation().clone();
+        Location theirs = target.getLocation().clone();
+        // Keep each one's own facing after the swap.
+        Location toTheirs = theirs.clone();
+        toTheirs.setYaw(mine.getYaw());
+        toTheirs.setPitch(mine.getPitch());
+        Location toMine = mine.clone();
+        toMine.setYaw(theirs.getYaw());
+        toMine.setPitch(theirs.getPitch());
+        world.spawnParticle(Particle.PORTAL, mine, 30, 0.3, 0.6, 0.3, 0.5);
+        world.spawnParticle(Particle.PORTAL, theirs, 30, 0.3, 0.6, 0.3, 0.5);
+        player.teleport(toTheirs);
+        target.teleport(toMine);
+        world.playSound(toTheirs, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 1.3f);
+        world.playSound(toMine, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 0.9f);
+    }
+
+    private void miasma(Player player) {
+        World world = player.getWorld();
+        Location eye = player.getEyeLocation();
+        RayTraceResult hit = world.rayTraceBlocks(eye, eye.getDirection(), 12.0);
+        Location at = hit != null
+                ? hit.getHitPosition().toLocation(world)
+                : eye.add(eye.getDirection().multiply(8));
+        world.playSound(at, Sound.ENTITY_WITCH_THROW, 1f, 0.7f);
+        org.bukkit.entity.AreaEffectCloud cloud =
+                world.spawn(at, org.bukkit.entity.AreaEffectCloud.class);
+        cloud.setSource(player);
+        cloud.setRadius(3.0f);
+        cloud.setDuration(100); // 5s
+        cloud.setWaitTime(5);
+        cloud.setRadiusOnUse(0f);
+        cloud.setColor(Color.fromRGB(70, 130, 40));
+        cloud.addCustomEffect(new PotionEffect(PotionEffectType.POISON, 80, 1), true);
     }
 
     /** Enemies within {@code radius} that fall inside the look-direction cone (dot > minDot). */
@@ -724,8 +1032,8 @@ public final class AbilityManager {
     private java.util.List<LivingEntity> nearbyEnemies(Player player, double radius) {
         java.util.List<LivingEntity> out = new java.util.ArrayList<>();
         for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
-            if (entity instanceof LivingEntity living && !entity.equals(player)) {
-                out.add(living);
+            if (targetable(entity, player)) {
+                out.add((LivingEntity) entity);
             }
         }
         return out;

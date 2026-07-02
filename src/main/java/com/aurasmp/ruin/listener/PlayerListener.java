@@ -39,15 +39,23 @@ public final class PlayerListener implements Listener {
         if (!data.abilities().isEmpty() && !hasCatalyst(player)) {
             player.getInventory().addItem(plugin.items().catalyst(data.abilities()));
         }
-        // Resume any draft they had queued when they left.
+        // Self-heal: re-queue any level-up picks that were lost (e.g. logout mid-draft).
+        int expectedAbilities = data.level() / 5; // manifestations at levels 5 and 10
+        int expectedTalents = (data.level() - 1) - expectedAbilities
+                + (data.level() >= PlayerData.MAX_LEVEL ? 1 : 0); // max-level capstone talent
+        int owedAbilities = Math.max(0,
+                Math.min(expectedAbilities, PlayerData.MAX_ABILITIES) - data.abilities().size());
+        int owedTalents = Math.max(0, expectedTalents - data.cards().size());
+        for (int i = 0; i < owedAbilities; i++) plugin.gui().queue(player, true);
+        for (int i = 0; i < owedTalents; i++) plugin.gui().queue(player, false);
         plugin.gui().openNextIfIdle(player);
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         plugin.gui().clear(event.getPlayer().getUniqueId());
-        plugin.abilities().cooldowns().clear(event.getPlayer().getUniqueId());
-        plugin.abilities().clearActive(event.getPlayer().getUniqueId());
+        // Cooldowns deliberately survive a relog — quitting is not a cooldown reset.
+        plugin.abilities().cleanup(event.getPlayer().getUniqueId());
         plugin.xpBar().cleanup(event.getPlayer().getUniqueId());
         plugin.data().unload(event.getPlayer().getUniqueId());
     }

@@ -45,6 +45,7 @@ public final class SelectionGui {
     /** Holder so we can recognise our own inventories in the listener. */
     public static final class Session implements InventoryHolder {
         private final boolean ability;
+        private final long openedAt = System.currentTimeMillis();
         private final Map<Integer, Card> cardSlots = new HashMap<>();
         private final Map<Integer, Ability> abilitySlots = new HashMap<>();
         private Inventory inventory;
@@ -52,6 +53,15 @@ public final class SelectionGui {
         Session(boolean ability) { this.ability = ability; }
 
         @Override public Inventory getInventory() { return inventory; }
+    }
+
+    /**
+     * Draft-menu invincibility, capped at 10s per menu so leaving one open
+     * cannot be used as on-demand permanent immunity.
+     */
+    public boolean isProtected(Player player) {
+        Session session = open.get(player.getUniqueId());
+        return session != null && System.currentTimeMillis() - session.openedAt < 10_000;
     }
 
     public void queue(Player player, boolean ability) {
@@ -70,7 +80,8 @@ public final class SelectionGui {
         boolean ability = queue.peekFirst();
         PlayerData data = plugin.data().get(player.getUniqueId());
 
-        Session session = ability ? buildAbilityMenu(data) : buildCardMenu(data);
+        int remaining = queue.size() - 1;
+        Session session = ability ? buildAbilityMenu(data, remaining) : buildCardMenu(data, remaining);
         if (session == null) {
             // Nothing left to offer (owns everything / ability slots full) — drop the pick.
             queue.pollFirst();
@@ -82,7 +93,7 @@ public final class SelectionGui {
         player.playSound(player.getLocation(), Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1f, 1.2f);
     }
 
-    private Session buildCardMenu(PlayerData data) {
+    private Session buildCardMenu(PlayerData data, int remaining) {
         List<Card> pool = new ArrayList<>();
         for (Card card : Card.values()) {
             if (!data.hasCard(card)) pool.add(card);
@@ -92,19 +103,22 @@ public final class SelectionGui {
 
         Session session = new Session(false);
         Inventory inv = Bukkit.createInventory(session, 27,
-                Component.text("Choose a Talent", NamedTextColor.DARK_AQUA));
+                Component.text("✦ Choose a Talent", NamedTextColor.DARK_AQUA));
         session.inventory = inv;
         fill(inv);
         for (int i = 0; i < chosen.size(); i++) {
             Card card = chosen.get(i);
             session.cardSlots.put(CARD_SLOTS[i], card);
             inv.setItem(CARD_SLOTS[i], cardIcon(card));
+            // A rarity-colored pane above each option so the roll reads at a glance.
+            inv.setItem(CARD_SLOTS[i] - 9, rarityPane(card.rarity()));
         }
         placeReroll(inv, data);
+        placeQueued(inv, remaining);
         return session;
     }
 
-    private Session buildAbilityMenu(PlayerData data) {
+    private Session buildAbilityMenu(PlayerData data, int remaining) {
         if (data.abilities().size() >= PlayerData.MAX_ABILITIES) return null;
         List<Ability> pool = new ArrayList<>();
         for (Ability ability : Ability.values()) {
@@ -115,17 +129,18 @@ public final class SelectionGui {
 
         Session session = new Session(true);
         Inventory inv = Bukkit.createInventory(session, 27,
-                Component.text("Choose a Manifestation", NamedTextColor.DARK_PURPLE));
+                Component.text("✦ Choose a Manifestation", NamedTextColor.DARK_PURPLE));
         session.inventory = inv;
         fill(inv);
         int count = Math.min(ABILITY_SLOTS.length, pool.size());
         for (int i = 0; i < count; i++) {
             Ability ability = pool.get(i);
             session.abilitySlots.put(ABILITY_SLOTS[i], ability);
-            inv.setItem(ABILITY_SLOTS[i], icon(ability.icon(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
-                    ability.description() + "  (" + (ability.cooldownMillis() / 1000) + "s)"));
+            inv.setItem(ABILITY_SLOTS[i], abilityIcon(ability, data));
+            inv.setItem(ABILITY_SLOTS[i] - 9, pane(Material.MAGENTA_STAINED_GLASS_PANE));
         }
         placeReroll(inv, data);
+        placeQueued(inv, remaining);
         return session;
     }
 
@@ -163,10 +178,15 @@ public final class SelectionGui {
         data.setRerolls(data.rerolls() - 1);
         plugin.data().save(player.getUniqueId(), data);
         player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 1f, 1.4f);
+        // Invalidate the old session immediately — clicks on it are dead from here,
+        // so a same-tick reroll+pick can't double-dip the draft.
+        open.remove(player.getUniqueId());
         // Rebuild a fresh roll of the same type next tick.
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             if (!player.isOnline()) return;
-            Session fresh = session.ability ? buildAbilityMenu(data) : buildCardMenu(data);
+            Deque<Boolean> queue = pending.get(player.getUniqueId());
+            int remaining = queue == null ? 0 : Math.max(0, queue.size() - 1);
+            Session fresh = session.ability ? buildAbilityMenu(data, remaining) : buildCardMenu(data, remaining);
             if (fresh == null) return;
             open.put(player.getUniqueId(), fresh);
             player.openInventory(fresh.inventory);
@@ -198,7 +218,14 @@ public final class SelectionGui {
         plugin.cards().recalc(player, data);
         plugin.data().save(player.getUniqueId(), data);
         player.sendMessage(Component.text("You picked ", NamedTextColor.GRAY)
-                .append(Component.text(card.displayName(), NamedTextColor.AQUA)));
+                .append(Component.text(card.displayName(), card.rarity().color()))
+                .append(Component.text(" [" + card.rarity().label() + "]", card.rarity().color())));
+        // Rarer pick, bigger fanfare.
+        switch (card.rarity()) {
+            case LEGENDARY -> player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1.3f);
+            case EPIC -> player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.4f);
+            default -> player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.1f);
+        }
     }
 
     private void applyAbility(Player player, Ability ability) {
@@ -208,6 +235,7 @@ public final class SelectionGui {
         plugin.data().save(player.getUniqueId(), data);
         player.sendMessage(Component.text("You picked ", NamedTextColor.GRAY)
                 .append(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE)));
+        player.playSound(player.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 1f, 1.2f);
     }
 
     /** Removes any existing Catalysts and gives a fresh one reflecting current bindings. */
@@ -226,13 +254,71 @@ public final class SelectionGui {
     private void placeReroll(Inventory inv, PlayerData data) {
         int left = data.rerolls();
         ItemStack item = new ItemStack(left > 0 ? Material.ENDER_EYE : Material.BARRIER);
+        item.setAmount(Math.max(1, left)); // stack size mirrors rerolls left
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text("Reroll  " + left + "/" + PlayerData.DEFAULT_REROLLS,
                 left > 0 ? NamedTextColor.GREEN : NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
-        meta.lore(List.of(Component.text(left > 0 ? "Click to reroll" : "None left",
+        meta.lore(List.of(Component.text(left > 0 ? "Click to reroll these options" : "None left",
                 left > 0 ? NamedTextColor.YELLOW : NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false)));
         item.setItemMeta(meta);
         inv.setItem(REROLL_SLOT, item);
+    }
+
+    /** Bottom-left marker showing how many more drafts are waiting after this one. */
+    private void placeQueued(Inventory inv, int remaining) {
+        if (remaining <= 0) return;
+        ItemStack item = new ItemStack(Material.ARROW);
+        item.setAmount(Math.min(64, remaining));
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("+" + remaining + " more pick" + (remaining == 1 ? "" : "s")
+                + " after this", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        item.setItemMeta(meta);
+        inv.setItem(18, item);
+    }
+
+    /** Manifestation option: description + cooldown + which click it will bind to. */
+    private ItemStack abilityIcon(Ability ability, PlayerData data) {
+        ItemStack item = new ItemStack(ability.icon());
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE)
+                .decoration(TextDecoration.ITALIC, false));
+        List<Component> lore = new ArrayList<>();
+        for (String line : wrap(ability.description(), 32)) {
+            lore.add(Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        }
+        lore.add(Component.text(""));
+        lore.add(Component.text("Cooldown: " + (ability.cooldownMillis() / 1000) + "s", NamedTextColor.GOLD)
+                .decoration(TextDecoration.ITALIC, false));
+        String bind = data.abilities().isEmpty() ? "Right-click" : "Shift + Right-click";
+        lore.add(Component.text("Binds to: " + bind, NamedTextColor.AQUA)
+                .decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text("Click to pick", NamedTextColor.YELLOW)
+                .decoration(TextDecoration.ITALIC, false));
+        meta.lore(lore);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private ItemStack pane(Material material) {
+        ItemStack pane = new ItemStack(material);
+        ItemMeta meta = pane.getItemMeta();
+        meta.displayName(Component.text(" "));
+        pane.setItemMeta(meta);
+        return pane;
+    }
+
+    private ItemStack rarityPane(Rarity rarity) {
+        Material material = switch (rarity) {
+            case LEGENDARY -> Material.YELLOW_STAINED_GLASS_PANE;
+            case EPIC -> Material.PURPLE_STAINED_GLASS_PANE;
+            case RARE -> Material.BLUE_STAINED_GLASS_PANE;
+            default -> Material.LIGHT_GRAY_STAINED_GLASS_PANE;
+        };
+        ItemStack pane = new ItemStack(material);
+        ItemMeta meta = pane.getItemMeta();
+        meta.displayName(Component.text(rarity.label(), rarity.color()).decoration(TextDecoration.ITALIC, false));
+        pane.setItemMeta(meta);
+        return pane;
     }
 
     private ItemStack cardIcon(Card card) {
@@ -271,24 +357,11 @@ public final class SelectionGui {
     }
 
     private void fill(Inventory inv) {
-        ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
-        ItemMeta meta = pane.getItemMeta();
-        meta.displayName(Component.text(" "));
-        pane.setItemMeta(meta);
-        for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, pane);
-    }
-
-    private ItemStack icon(Material material, String title, NamedTextColor color, String description) {
-        ItemStack item = new ItemStack(material);
-        ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text(title, color).decoration(TextDecoration.ITALIC, false));
-        List<Component> lore = new ArrayList<>();
-        for (String line : wrap(description, 32)) {
-            lore.add(Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        ItemStack border = pane(Material.BLACK_STAINED_GLASS_PANE);
+        ItemStack inner = pane(Material.GRAY_STAINED_GLASS_PANE);
+        for (int i = 0; i < inv.getSize(); i++) {
+            inv.setItem(i, (i / 9) == 1 ? inner : border);
         }
-        meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
     }
 
     private List<String> wrap(String text, int width) {

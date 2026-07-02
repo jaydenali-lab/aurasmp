@@ -105,7 +105,29 @@ public enum Card {
     FORTRESS("Fortress", Material.IRON_BLOCK, "+5 armor.",
             Attribute.ARMOR, AttributeModifier.Operation.ADD_NUMBER, 5.0),
     VAMPIRIC("Vampiric", Material.REDSTONE, "Heal 20% of the melee damage you deal."),
-    SECOND_WIND("Second Wind", Material.TOTEM_OF_UNDYING, "Below 20% HP: Regen II + Absorption (30s cd).");
+    SECOND_WIND("Second Wind", Material.TOTEM_OF_UNDYING, "Below 20% HP: Regen II + Absorption (30s cd)."),
+
+    // ==== 1.9.0: 20 more talents — all in CombatListener / AbilityManager ====
+    FIRST_STRIKE("First Strike", Material.WOODEN_SWORD, "+30% melee damage to full-health targets."),
+    PREDATOR("Predator", Material.BONE, "+25% melee damage to debuffed targets (poison, slow, wither, burning, frozen)."),
+    DUELIST("Duelist", Material.CHAIN, "+15% melee damage while exactly one enemy is near you."),
+    AERIAL("Aerial", Material.ELYTRA, "+25% melee damage while you're airborne."),
+    WARPATH("Warpath", Material.LEATHER_BOOTS, "+20% melee damage while sprinting."),
+    COMBO("Combo", Material.CLOCK, "Consecutive hits on the same target stack +8% damage (up to +40%)."),
+    VENDETTA("Vendetta", Material.FERMENTED_SPIDER_EYE, "+40% melee damage for 6s against the last enemy that hit you."),
+    NIGHT_STALKER("Night Stalker", Material.SCULK, "+25% melee damage to targets standing in darkness."),
+    GIANT_SLAYER("Giant Slayer", Material.ANVIL, "+20% melee damage to enemies with more health than you."),
+    SHIELDBREAKER("Shieldbreaker", Material.MACE, "+40% melee damage to targets with absorption hearts."),
+    MANGLE("Mangle", Material.ROTTEN_FLESH, "Enemies you hit heal 50% less for 5s."),
+    SKIRMISHER("Skirmisher", Material.STRING, "Hitting an enemy grants you Speed I for 2s."),
+    RAMPAGE("Rampage", Material.WITHER_SKELETON_SKULL, "Kills grant +8% damage for 20s, stacking 3 times."),
+    ATTUNEMENT("Attunement", Material.AMETHYST_SHARD, "Your manifestation cooldowns are 15% shorter."),
+    HEADHUNTER("Headhunter", Material.PLAYER_HEAD, "Player kills grant 2 absorption hearts for 30s."),
+    UNDYING("Undying", Material.END_CRYSTAL, "Once per 60s, a killing blow leaves you at 1 HP instead."),
+    BASTION("Bastion", Material.OBSIDIAN, "Take 25% less damage while sneaking."),
+    BRACED("Braced", Material.SHULKER_SHELL, "Hits taken at full health deal 30% less."),
+    DEFLECTION("Deflection", Material.ARROW, "Take 30% less projectile damage."),
+    ESCAPE_ARTIST("Escape Artist", Material.LEAD, "Slowness never sticks to you.");
 
     private final String displayName;
     private final Material icon;
@@ -140,16 +162,19 @@ public enum Card {
     private static final java.util.EnumMap<Card, Rarity> RARITY = new java.util.EnumMap<>(Card.class);
     static {
         for (Card c : new Card[]{ONSLAUGHT, EXECUTIONER, JUGGERNAUT, GHOST, RISKY_MOVES,
-                GLASS_CANNON, SECOND_WIND}) {
+                GLASS_CANNON, SECOND_WIND, UNDYING}) {
             RARITY.put(c, Rarity.LEGENDARY);
         }
         for (Card c : new Card[]{ENDURANCE, LIFESTEAL, REGENERATOR, BARRIER, CLEAVE, RETRIBUTION,
-                THRESHERS_REACH, UNYIELDING_INFERNO, SPINE_CUTTER, TITAN, VAMPIRIC}) {
+                THRESHERS_REACH, UNYIELDING_INFERNO, SPINE_CUTTER, TITAN, VAMPIRIC,
+                PREDATOR, COMBO, MANGLE, RAMPAGE, ATTUNEMENT, HEADHUNTER, BASTION, ESCAPE_ARTIST}) {
             RARITY.put(c, Rarity.EPIC);
         }
         for (Card c : new Card[]{VITALITY, BULWARK, SWIFTNESS, STEADFAST, REACH, LEECH, BERSERKER,
                 ADRENALINE, HASTE, FIRE_WALKER, VENOM, CRIT, BLOODLUST, STEADY_FEET, QUICKDRAW,
-                KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER, FORTRESS}) {
+                KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER, FORTRESS,
+                FIRST_STRIKE, DUELIST, AERIAL, VENDETTA, NIGHT_STALKER, GIANT_SLAYER,
+                SHIELDBREAKER, BRACED, DEFLECTION}) {
             RARITY.put(c, Rarity.RARE);
         }
     }

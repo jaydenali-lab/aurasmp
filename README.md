@@ -9,12 +9,16 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 - **Earn XP by killing.** Weak/passive mobs give little, hostile mobs give more, strong
   mobs and bosses give a lot, and **players give the most**.
 - **Level up to draft.** Each level-up opens a draft menu — **5 talents** or **4
-  manifestations** to choose from. You're **invincible while it's open**, and you
-  get **5 rerolls per build** (resets on a Mirror Shard wipe).
+  manifestations** to choose from. You're **invincible while it's open** (up to 10s),
+  and you get **5 rerolls per build** (resets on a Mirror Shard wipe).
   - Levels **1–10** (max level is **10**).
   - Most levels offer a **Talent** (passive).
   - **Every 5th level (5 and 10)** offers a **Manifestation** (active cast) instead.
+  - **Level 10 also grants a bonus talent** — a finished build is **8 talents + 2
+    manifestations**.
   - If you gain several levels at once, the drafts open **one after another**.
+  - Options show their **rarity** (colored pane above each): grey Common, blue Rare,
+    purple Epic, yellow Legendary — rarer talents roll less often.
 - **Cast Manifestations** with the **Ruin Catalyst** (given when you learn your first one):
   - Right-click = first manifestation
   - Shift + Right-click = second manifestation
@@ -34,7 +38,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
-## The 52 Talents (passive)
+## The 72 Talents (passive)
 
 **Attribute talents (10)** — applied as persistent attribute modifiers:
 
@@ -65,7 +69,6 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Sharpshooter | +25% projectile damage |
 | Juggernaut | Take 15% less damage from all sources |
 | Scavenger | +50% Ruin XP from kills |
-| Ghost | 15% chance when hit to fully vanish (armor too) + Speed II for 3s |
 
 **Expansion — attribute (3):**
 
@@ -124,9 +127,34 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Vampiric | Heal 20% of the melee damage you deal |
 | Second Wind | Below 20% HP: Regen II + Absorption (30s cooldown) |
 
+**Conditional & tactical talents (20):**
+
+| Talent | Effect |
+|--------|--------|
+| First Strike | +30% melee damage to full-health targets |
+| Predator | +25% melee damage to debuffed targets (poison, slow, wither, burning, frozen) |
+| Duelist | +15% melee damage while exactly one enemy is near you |
+| Aerial | +25% melee damage while airborne |
+| Warpath | +20% melee damage while sprinting |
+| Combo | Consecutive hits on the same target stack +8% damage each (up to +40%) |
+| Vendetta | +40% melee damage for 6s against the last enemy that hit you |
+| Night Stalker | +25% melee damage to targets standing in darkness |
+| Giant Slayer | +20% melee damage to enemies with more health than you |
+| Shieldbreaker | +40% melee damage to targets with absorption hearts |
+| Mangle | Enemies you hit heal 50% less for 5s |
+| Skirmisher | Hitting an enemy grants Speed I for 2s |
+| Rampage | Kills grant +8% damage for 20s, stacking 3 times |
+| Attunement | Manifestation cooldowns are 15% shorter |
+| Headhunter | Player kills grant 2 absorption hearts for 30s |
+| Undying | Once per 60s, a killing blow leaves you at 1 HP instead |
+| Bastion | Take 25% less damage while sneaking |
+| Braced | Hits taken at full health deal 30% less |
+| Deflection | Take 30% less projectile damage |
+| Escape Artist | Slowness never sticks to you |
+
 (Note: the original **Thorns** was replaced by **Ghost**.)
 
-## The 31 Manifestations (active)
+## The 41 Manifestations (active)
 
 Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
 deal normal damage** (reduced by armour), scaled to cooldown (≈ cooldown ÷ 5
@@ -166,8 +194,19 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Phase Strike | Blink to the enemy you face and strike | 12s |
 | Zelkova | Two ground slams (true dmg) that break cobwebs; the 2nd stuns and locks the camera | 20s |
 | Mook | Dash in and slash rapidly for 12 damage | 12s |
+| Shadow Lance | Pierce all enemies in a line of shadow | 14s |
+| Astral Wind | A 5s storm aura that shoves enemies away | 18s |
+| Blood Pact | Sacrifice 2 hearts; reset your other cooldowns | 45s |
+| Riposte | 1.5s stance: parry the next hit and counter it | 16s |
+| Ice Barrier | Raise a wall of ice in front of you for 5s | 15s |
+| Guillotine | Heavy blow: +25% of the target's missing health | 15s |
+| Rewind | Mark yourself; 3s later snap back, restoring health | 25s |
+| Singularity | Collapse a point that drags enemies in for 3s | 16s |
+| Displace | Swap positions with the enemy you face | 12s |
+| Miasma | Leave a lingering poison cloud where you look | 15s |
 
-*Flame Grab through Gale Step are real Deepwoken mantras.*
+*Flame Grab through Gale Step are real Deepwoken mantras. Mook and Guillotine
+refund most of their cooldown if the opener misses.*
 
 ## HUD & custom icons
 
@@ -252,5 +291,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.8.4.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.9.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

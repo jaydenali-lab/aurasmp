@@ -9,7 +9,9 @@ import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Monster;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.inventory.EquipmentSlot;
@@ -20,6 +22,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPotionEffectEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -54,6 +58,17 @@ public final class CombatListener implements Listener {
         if (data.hasCard(Card.BLOODLUST)) {
             killer.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 100, 0));
         }
+        // Rampage: each kill banks a +8% damage stack for 20s (max 3).
+        if (data.hasCard(Card.RAMPAGE)) {
+            java.util.ArrayDeque<Long> stacks =
+                    rampage.computeIfAbsent(killer.getUniqueId(), k -> new java.util.ArrayDeque<>());
+            stacks.addLast(System.currentTimeMillis() + 20_000);
+            while (stacks.size() > 3) stacks.removeFirst();
+        }
+        // Headhunter: player kills grant 2 absorption hearts for 30s.
+        if (data.hasCard(Card.HEADHUNTER) && dead instanceof Player) {
+            killer.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 1));
+        }
     }
 
     /** Ruin fireball impact: true AoE damage + fire, no block grief. */
@@ -70,7 +85,8 @@ public final class CombatListener implements Listener {
         world.spawnParticle(Particle.FLAME, loc, 25, 1, 1, 1, 0.03);
         world.playSound(loc, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.3f);
         for (org.bukkit.entity.Entity entity : world.getNearbyEntities(loc, 2.5, 2.5, 2.5)) {
-            if (entity instanceof LivingEntity le && !entity.equals(shooter)) {
+            if (entity instanceof LivingEntity le && !entity.equals(shooter)
+                    && !(entity instanceof org.bukkit.entity.ArmorStand)) {
                 le.setFireTicks(60);
                 plugin.abilities().dealDamage(le, shooter, 4.4); // 11s cd -> ~2.2 hearts
             }
@@ -78,8 +94,12 @@ public final class CombatListener implements Listener {
         event.getEntity().remove();
     }
 
-    /** Attacker-side multipliers + lifesteal + thorns. */
-    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    /**
+     * Attacker-side multipliers + on-hit talents. Runs at HIGHEST so victim-side
+     * cancels (Riposte, Risky Moves, draft protection) resolve first — cancelled
+     * hits must not trigger attacker talents.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onAttack(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof LivingEntity victim)) return;
 
@@ -102,6 +122,8 @@ public final class CombatListener implements Listener {
             UUID aid = attacker.getUniqueId();
             // Ability true-damage routes back through here — don't layer melee talents on it.
             if (plugin.abilities().isAbilityDamage(aid)) return;
+            // Cleave splash also re-enters here — splash must not re-trigger the talent suite.
+            if (cleaving.contains(aid)) return;
 
             PlayerData data = plugin.data().get(aid);
             double damage = event.getDamage();
@@ -116,6 +138,31 @@ public final class CombatListener implements Listener {
             if (!projectile && data.hasCard(Card.UNYIELDING_INFERNO) && victim.getFireTicks() > 0) {
                 damage += 4.0;
             }
+            // 1.9.0 conditional melee talents.
+            if (!projectile) {
+                if (data.hasCard(Card.FIRST_STRIKE) && healthRatio(victim) >= 0.999) damage *= 1.30;
+                if (data.hasCard(Card.PREDATOR) && isDebuffed(victim)) damage *= 1.25;
+                if (data.hasCard(Card.DUELIST) && nearbyEnemyCount(attacker) == 1) damage *= 1.15;
+                if (data.hasCard(Card.AERIAL) && !attacker.isOnGround()) damage *= 1.25;
+                if (data.hasCard(Card.WARPATH) && attacker.isSprinting()) damage *= 1.20;
+                if (data.hasCard(Card.NIGHT_STALKER)
+                        && victim.getLocation().getBlock().getLightLevel() < 7) damage *= 1.25;
+                if (data.hasCard(Card.GIANT_SLAYER) && victim.getHealth() > attacker.getHealth()) damage *= 1.20;
+                if (data.hasCard(Card.SHIELDBREAKER) && victim.getAbsorptionAmount() > 0) damage *= 1.40;
+                if (data.hasCard(Card.VENDETTA)) {
+                    Grudge grudge = grudges.get(aid);
+                    if (grudge != null && grudge.enemy().equals(victim.getUniqueId())
+                            && System.currentTimeMillis() < grudge.until()) {
+                        damage *= 1.40;
+                    }
+                }
+                if (data.hasCard(Card.COMBO)) {
+                    damage *= 1 + 0.08 * comboStacks(aid, victim.getUniqueId());
+                }
+                if (data.hasCard(Card.RAMPAGE)) {
+                    damage *= 1 + 0.08 * rampageStacks(aid);
+                }
+            }
             event.setDamage(damage);
 
             if (!projectile && data.hasCard(Card.LIFESTEAL)) heal(attacker, damage * 0.10);
@@ -125,13 +172,22 @@ public final class CombatListener implements Listener {
                 if (data.hasCard(Card.IGNITE)) victim.setFireTicks(60);
                 if (data.hasCard(Card.VENOM)) victim.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 60, 0));
                 if (data.hasCard(Card.FROSTBITE)) victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0));
+                // Mangle: the victim heals 50% less for 5s (see onRegain).
+                if (data.hasCard(Card.MANGLE)) {
+                    mangledUntil.put(victim.getUniqueId(), System.currentTimeMillis() + 5_000);
+                }
+                // Skirmisher: hitting grants a short burst of speed to stick to the target.
+                if (data.hasCard(Card.SKIRMISHER)) {
+                    attacker.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0));
+                }
                 if (data.hasCard(Card.CLEAVE)) cleave(attacker, victim, damage);
-                // Retribution: spend the armed counter (every 3 hits taken) as +2 hearts of TRUE
-                // damage. Applied next tick on top of this hit so it ignores armour/i-frames.
+                // Retribution: spend the armed counter (every 5 hits taken) as +1.5 hearts of TRUE
+                // damage. Routed through dealTrueDamage so totems and death events still work.
                 if (data.hasCard(Card.RETRIBUTION) && retributionArmed.remove(aid)) {
                     LivingEntity v = victim;
+                    Player atk = attacker;
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        if (!v.isDead() && v.isValid()) v.setHealth(Math.max(0.0, v.getHealth() - 3.0));
+                        if (!v.isDead() && v.isValid()) plugin.abilities().dealTrueDamage(v, atk, 3.0);
                     });
                     attacker.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, victim.getLocation().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0);
                 }
@@ -139,9 +195,9 @@ public final class CombatListener implements Listener {
                     victim.setFireTicks(Math.max(victim.getFireTicks(), 100));
                     attacker.getWorld().spawnParticle(Particle.FLAME, victim.getLocation().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0.02);
                 }
-                // Spine Cutter: a back hit (facings aligned) deals +3 normal damage next tick.
-                if (data.hasCard(Card.SPINE_CUTTER)
-                        && attacker.getLocation().getDirection().dot(victim.getLocation().getDirection()) > 0.4) {
+                // Spine Cutter: a back hit (horizontal facings aligned — pitch ignored so
+                // looking down at someone's face doesn't count) deals +3 damage next tick.
+                if (data.hasCard(Card.SPINE_CUTTER) && isBackstab(attacker, victim)) {
                     LivingEntity v = victim;
                     Player atk = attacker;
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
@@ -166,6 +222,87 @@ public final class CombatListener implements Listener {
     // Guard so Cleave's splash hits don't recursively trigger more cleaves.
     private final java.util.Set<UUID> cleaving = new java.util.HashSet<>();
 
+    // ---- 1.9.0 talent state ----
+    /** Vendetta: the last enemy that hit this player, and until when the grudge lasts. */
+    private record Grudge(UUID enemy, long until) {}
+    private final java.util.Map<UUID, Grudge> grudges = new java.util.HashMap<>();
+    /** Combo: consecutive-hit streak against a single target. */
+    private static final class ComboState { UUID target; int stacks; long last; }
+    private final java.util.Map<UUID, ComboState> combos = new java.util.HashMap<>();
+    /** Rampage: expiry timestamps of kill stacks (max 3 kept). */
+    private final java.util.Map<UUID, java.util.ArrayDeque<Long>> rampage = new java.util.HashMap<>();
+    /** Mangle: victims healing at half effect until the timestamp. */
+    private final java.util.Map<UUID, Long> mangledUntil = new java.util.HashMap<>();
+    /** Undying: per-player cheat-death cooldown. */
+    private final java.util.Map<UUID, Long> undyingUntil = new java.util.HashMap<>();
+
+    /** Backstab = both facing roughly the same horizontal direction. */
+    private boolean isBackstab(Player attacker, LivingEntity victim) {
+        org.bukkit.util.Vector a = attacker.getLocation().getDirection().setY(0);
+        org.bukkit.util.Vector v = victim.getLocation().getDirection().setY(0);
+        if (a.lengthSquared() < 0.01 || v.lengthSquared() < 0.01) return false;
+        return a.normalize().dot(v.normalize()) > 0.5;
+    }
+
+    private boolean isDebuffed(LivingEntity victim) {
+        return victim.getFireTicks() > 0 || victim.getFreezeTicks() > 0
+                || victim.hasPotionEffect(PotionEffectType.POISON)
+                || victim.hasPotionEffect(PotionEffectType.SLOWNESS)
+                || victim.hasPotionEffect(PotionEffectType.WITHER)
+                || victim.hasPotionEffect(PotionEffectType.BLINDNESS);
+    }
+
+    /** Players and monsters near the attacker — what Duelist counts as "enemies". */
+    private int nearbyEnemyCount(Player player) {
+        int count = 0;
+        for (Entity e : player.getNearbyEntities(8, 8, 8)) {
+            if (e instanceof Player || e instanceof Monster) count++;
+        }
+        return count;
+    }
+
+    /** Advances the attacker's combo against this victim; returns the stack count (0-5). */
+    private int comboStacks(UUID attacker, UUID victim) {
+        long now = System.currentTimeMillis();
+        ComboState state = combos.computeIfAbsent(attacker, k -> new ComboState());
+        if (victim.equals(state.target) && now - state.last <= 2_000) {
+            state.stacks = Math.min(state.stacks + 1, 5);
+        } else {
+            state.stacks = 0;
+        }
+        state.target = victim;
+        state.last = now;
+        return state.stacks;
+    }
+
+    private int rampageStacks(UUID id) {
+        java.util.ArrayDeque<Long> stacks = rampage.get(id);
+        if (stacks == null) return 0;
+        long now = System.currentTimeMillis();
+        stacks.removeIf(expiry -> expiry <= now);
+        return Math.min(stacks.size(), 3);
+    }
+
+    /** Mangle: marked victims regain half health from all sources (regen, potions, food). */
+    @EventHandler(ignoreCancelled = true)
+    public void onRegain(EntityRegainHealthEvent event) {
+        Long until = mangledUntil.get(event.getEntity().getUniqueId());
+        if (until != null && System.currentTimeMillis() < until) {
+            event.setAmount(event.getAmount() * 0.5);
+        }
+    }
+
+    /** Escape Artist: slowness never sticks. */
+    @EventHandler(ignoreCancelled = true)
+    public void onPotion(EntityPotionEffectEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (event.getNewEffect() == null
+                || !event.getNewEffect().getType().equals(PotionEffectType.SLOWNESS)) return;
+        if (plugin.data().get(player.getUniqueId()).hasCard(Card.ESCAPE_ARTIST)) {
+            event.setCancelled(true);
+        }
+    }
+
     private void cleave(Player attacker, LivingEntity origin, double damage) {
         UUID id = attacker.getUniqueId();
         if (cleaving.contains(id)) return;
@@ -189,13 +326,38 @@ public final class CombatListener implements Listener {
     public void onDamaged(EntityDamageEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
 
-        // Invincible while a draft menu is open (you're forced to pick).
-        if (plugin.gui().hasOpen(player)) {
+        // Invincible while a draft menu is open (you're forced to pick) — capped at
+        // 10s per draft so an unpicked menu can't be camped as permanent immunity.
+        if (plugin.gui().isProtected(player)) {
             event.setCancelled(true);
             return;
         }
 
+        // Riposte stance: parry the next hit outright and counter the attacker.
+        if (event instanceof EntityDamageByEntityEvent parried
+                && plugin.abilities().consumeRiposte(player.getUniqueId())) {
+            event.setCancelled(true);
+            LivingEntity source = null;
+            if (parried.getDamager() instanceof LivingEntity le) source = le;
+            else if (parried.getDamager() instanceof Projectile proj
+                    && proj.getShooter() instanceof LivingEntity le) source = le;
+            if (source != null) plugin.abilities().riposteCounter(player, source);
+            return;
+        }
+
         PlayerData data = plugin.data().get(player.getUniqueId());
+
+        // Vendetta: remember who last hit you (6s grudge window).
+        if (data.hasCard(Card.VENDETTA) && event instanceof EntityDamageByEntityEvent hitBy) {
+            LivingEntity source = null;
+            if (hitBy.getDamager() instanceof LivingEntity le) source = le;
+            else if (hitBy.getDamager() instanceof Projectile proj
+                    && proj.getShooter() instanceof LivingEntity le) source = le;
+            if (source != null) {
+                grudges.put(player.getUniqueId(),
+                        new Grudge(source.getUniqueId(), System.currentTimeMillis() + 6_000));
+            }
+        }
 
         // Risky Moves: chance to fully negate an incoming hit.
         if (data.hasCard(Card.RISKY_MOVES) && ThreadLocalRandom.current().nextDouble() < 0.20) {
@@ -217,6 +379,19 @@ public final class CombatListener implements Listener {
         // Glass Cannon: glass jaw — take 20% more damage from everything.
         if (data.hasCard(Card.GLASS_CANNON)) {
             event.setDamage(event.getDamage() * 1.20);
+        }
+        // Bastion: hunker down — 25% less damage while sneaking.
+        if (data.hasCard(Card.BASTION) && player.isSneaking()) {
+            event.setDamage(event.getDamage() * 0.75);
+        }
+        // Braced: hits taken at full health deal 30% less (anti-burst opener).
+        if (data.hasCard(Card.BRACED) && healthRatio(player) >= 0.999) {
+            event.setDamage(event.getDamage() * 0.70);
+        }
+        // Deflection: 30% less projectile damage.
+        if (data.hasCard(Card.DEFLECTION)
+                && event.getCause() == EntityDamageEvent.DamageCause.PROJECTILE) {
+            event.setDamage(event.getDamage() * 0.70);
         }
         // Ghost: when hit, a chance to fully vanish (armor too) + Speed II for 3s.
         if (data.hasCard(Card.GHOST) && ThreadLocalRandom.current().nextDouble() < plugin.config().ghostChance()) {
@@ -241,6 +416,19 @@ public final class CombatListener implements Listener {
                 player.playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 0.6f, 1.4f);
             }
         }
+        // Undying: once per 60s, a killing blow leaves you at 1 HP instead.
+        if (data.hasCard(Card.UNDYING) && event.getFinalDamage() >= player.getHealth()) {
+            long now = System.currentTimeMillis();
+            Long until = undyingUntil.get(player.getUniqueId());
+            if (until == null || now >= until) {
+                undyingUntil.put(player.getUniqueId(), now + 60_000);
+                event.setCancelled(true);
+                player.setHealth(1.0);
+                player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,
+                        player.getLocation().add(0, 1, 0), 40, 0.4, 0.6, 0.4, 0.3);
+                player.getWorld().playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 0.8f, 1.6f);
+            }
+        }
     }
 
     private static final EquipmentSlot[] VISUAL_SLOTS = {
@@ -253,10 +441,14 @@ public final class CombatListener implements Listener {
      * send empty equipment to every other player, then restore the real gear when the
      * effect ends.
      */
+    // Ghost: when the vanish visuals should end — a newer proc extends it.
+    private final java.util.Map<UUID, Long> ghostUntil = new java.util.HashMap<>();
+
     private void applyGhost(Player player, int durationTicks) {
         player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, durationTicks, 0));
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, durationTicks, 1));
         player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PHANTOM_FLAP, 0.8f, 1.6f);
+        ghostUntil.put(player.getUniqueId(), System.currentTimeMillis() + durationTicks * 50L);
 
         ItemStack air = new ItemStack(Material.AIR);
         for (Player viewer : plugin.getServer().getOnlinePlayers()) {
@@ -265,6 +457,8 @@ public final class CombatListener implements Listener {
         }
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             if (!player.isOnline()) return;
+            // An overlapping proc extended the vanish — let its restore task handle it.
+            if (System.currentTimeMillis() < ghostUntil.getOrDefault(player.getUniqueId(), 0L) - 25) return;
             for (Player viewer : plugin.getServer().getOnlinePlayers()) {
                 if (viewer.equals(player)) continue;
                 for (EquipmentSlot slot : VISUAL_SLOTS) {

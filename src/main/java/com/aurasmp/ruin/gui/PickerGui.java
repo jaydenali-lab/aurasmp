@@ -29,10 +29,16 @@ public final class PickerGui {
         this.plugin = plugin;
     }
 
+    /** Options per page — bottom row is reserved for the pager buttons. */
+    private static final int PAGE_SIZE = 45;
+    private static final int PREV_SLOT = 45;
+    private static final int NEXT_SLOT = 53;
+
     public static final class Holder implements InventoryHolder {
         private Inventory inventory;
         UUID target;
         boolean ability;
+        int page;
         Card replaceCard;        // talent being replaced (null = add)
         Ability replaceAbility;  // manifestation being replaced (null = add)
         final Map<Integer, Card> cardSlots = new HashMap<>();
@@ -42,45 +48,86 @@ public final class PickerGui {
     }
 
     public void openTalent(Player viewer, UUID target, Card replacing) {
+        openTalent(viewer, target, replacing, 0);
+    }
+
+    private void openTalent(Player viewer, UUID target, Card replacing, int page) {
+        Card[] all = Card.values();
+        int pages = (all.length + PAGE_SIZE - 1) / PAGE_SIZE;
+        page = Math.max(0, Math.min(page, pages - 1));
+
         Holder h = new Holder();
         h.target = target;
         h.ability = false;
         h.replaceCard = replacing;
+        h.page = page;
         Inventory inv = Bukkit.createInventory(h, 54,
-                Component.text(replacing == null ? "Add a Talent" : "Replace Talent", NamedTextColor.DARK_AQUA));
+                Component.text((replacing == null ? "Add a Talent" : "Replace Talent")
+                        + "  (" + (page + 1) + "/" + pages + ")", NamedTextColor.DARK_AQUA));
         h.inventory = inv;
-        int i = 0;
-        for (Card card : Card.values()) {
-            if (i >= 54) break;
+        for (int i = 0; i < PAGE_SIZE; i++) {
+            int index = page * PAGE_SIZE + i;
+            if (index >= all.length) break;
+            Card card = all[index];
             h.cardSlots.put(i, card);
             inv.setItem(i, icon(card.icon(), card.displayName(), card.rarity().color(),
                     card.rarity().label() + " · " + card.description()));
-            i++;
         }
+        placePager(inv, page, pages);
         viewer.openInventory(inv);
     }
 
     public void openAbility(Player viewer, UUID target, Ability replacing) {
+        openAbility(viewer, target, replacing, 0);
+    }
+
+    private void openAbility(Player viewer, UUID target, Ability replacing, int page) {
+        Ability[] all = Ability.values();
+        int pages = (all.length + PAGE_SIZE - 1) / PAGE_SIZE;
+        page = Math.max(0, Math.min(page, pages - 1));
+
         Holder h = new Holder();
         h.target = target;
         h.ability = true;
         h.replaceAbility = replacing;
-        Inventory inv = Bukkit.createInventory(h, 36,
-                Component.text(replacing == null ? "Add a Manifestation" : "Replace Manifestation", NamedTextColor.DARK_PURPLE));
+        h.page = page;
+        Inventory inv = Bukkit.createInventory(h, 54,
+                Component.text((replacing == null ? "Add a Manifestation" : "Replace Manifestation")
+                        + "  (" + (page + 1) + "/" + pages + ")", NamedTextColor.DARK_PURPLE));
         h.inventory = inv;
-        int i = 0;
-        for (Ability ability : Ability.values()) {
-            if (i >= 36) break;
+        for (int i = 0; i < PAGE_SIZE; i++) {
+            int index = page * PAGE_SIZE + i;
+            if (index >= all.length) break;
+            Ability ability = all[index];
             h.abilitySlots.put(i, ability);
             inv.setItem(i, icon(ability.icon(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
                     ability.description() + "  (" + (ability.cooldownMillis() / 1000) + "s)"));
-            i++;
         }
+        placePager(inv, page, pages);
         viewer.openInventory(inv);
+    }
+
+    private void placePager(Inventory inv, int page, int pages) {
+        if (page > 0) {
+            inv.setItem(PREV_SLOT, icon(Material.ARROW, "◀ Previous page", NamedTextColor.YELLOW,
+                    "Page " + page + " of " + pages));
+        }
+        if (page < pages - 1) {
+            inv.setItem(NEXT_SLOT, icon(Material.ARROW, "Next page ▶", NamedTextColor.YELLOW,
+                    "Page " + (page + 2) + " of " + pages));
+        }
     }
 
     /** Apply the chosen pick to the target's data, then reopen the build editor. */
     public void handlePick(Player viewer, Holder holder, int slot) {
+        // Pager buttons flip the page instead of picking.
+        if (slot == PREV_SLOT || slot == NEXT_SLOT) {
+            int page = holder.page + (slot == NEXT_SLOT ? 1 : -1);
+            if (holder.ability) openAbility(viewer, holder.target, holder.replaceAbility, page);
+            else openTalent(viewer, holder.target, holder.replaceCard, page);
+            return;
+        }
+
         PlayerData data = plugin.data().get(holder.target);
         Player target = Bukkit.getPlayer(holder.target);
 

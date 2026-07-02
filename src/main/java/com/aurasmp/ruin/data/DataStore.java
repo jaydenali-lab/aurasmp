@@ -72,6 +72,7 @@ public final class DataStore {
         String base = "players." + id;
         cfg.set(base + ".level", data.level());
         cfg.set(base + ".xp", data.xp());
+        cfg.set(base + ".rerolls", data.rerolls());
         cfg.set(base + ".cards", data.cards().stream().map(Enum::name).toList());
         cfg.set(base + ".abilities", data.abilities().stream().map(Enum::name).toList());
         try {

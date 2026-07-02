@@ -60,6 +60,7 @@ public final class Progression {
 
     /** Award XP and resolve any level-ups. Returns the number of levels gained. */
     public int award(Player player, PlayerData data, int amount) {
+        amount = Math.max(0, amount); // never drive XP negative (e.g. /ruin xp -999)
         if (data.isMaxLevel()) {
             return 0;
         }
@@ -76,6 +77,8 @@ public final class Progression {
             // Every 5th level (5 and 10) grants a manifestation; the rest grant talents.
             boolean ability = data.level() % 5 == 0;
             plugin.gui().queue(player, ability);
+            // Capstone: reaching max level also grants a bonus talent (8 talents total).
+            if (ability && data.level() == PlayerData.MAX_LEVEL) plugin.gui().queue(player, false);
         }
 
         if (gained > 0) {
@@ -87,6 +90,8 @@ public final class Progression {
         }
         // Pop the XP boss bar (auto-hides after 5s) on every gain.
         plugin.xpBar().show(player, data);
+        // Persist immediately — a server crash must not eat XP or levels.
+        plugin.data().save(player.getUniqueId(), data);
         return gained;
     }
 
@@ -99,6 +104,8 @@ public final class Progression {
             gained++;
             boolean ability = data.level() % 5 == 0;
             plugin.gui().queue(player, ability);
+            // Capstone: reaching max level also grants a bonus talent (8 talents total).
+            if (ability && data.level() == PlayerData.MAX_LEVEL) plugin.gui().queue(player, false);
         }
         if (gained > 0) {
             player.showTitle(net.kyori.adventure.title.Title.title(
@@ -108,6 +115,7 @@ public final class Progression {
             // Drafts open one after another (the GUI advances to the next on each pick).
             plugin.gui().openNextIfIdle(player);
         }
+        plugin.data().save(player.getUniqueId(), data);
         return gained;
     }
 }

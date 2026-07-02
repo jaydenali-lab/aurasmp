@@ -71,4 +71,45 @@ public final class GuiListener implements Listener {
         if (!(event.getPlayer() instanceof Player player)) return;
         plugin.gui().handleClose(player, session);
     }
+
+    // ---- Catalyst containment: it must never leave the owner's inventory ----
+    // (stashing it in a chest and letting join/respawn hand out a fresh one = free
+    // nether stars; same for crafting it into a beacon).
+
+    @EventHandler(ignoreCancelled = true)
+    public void onCatalystStash(org.bukkit.event.inventory.InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        // Top inventory CRAFTING = plain player view, nothing foreign open.
+        if (event.getView().getTopInventory().getType()
+                == org.bukkit.event.inventory.InventoryType.CRAFTING) return;
+        boolean touchesCatalyst = plugin.items().isCatalyst(event.getCurrentItem())
+                || plugin.items().isCatalyst(event.getCursor())
+                || (event.getClick() == org.bukkit.event.inventory.ClickType.NUMBER_KEY
+                    && plugin.items().isCatalyst(player.getInventory().getItem(event.getHotbarButton())));
+        if (touchesCatalyst) event.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onCatalystDrag(org.bukkit.event.inventory.InventoryDragEvent event) {
+        if (!plugin.items().isCatalyst(event.getOldCursor())) return;
+        int topSize = event.getView().getTopInventory().getSize();
+        if (event.getView().getTopInventory().getType()
+                == org.bukkit.event.inventory.InventoryType.CRAFTING) return;
+        for (int raw : event.getRawSlots()) {
+            if (raw < topSize) { // dragging into the open container
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    public void onCatalystCraft(org.bukkit.event.inventory.PrepareItemCraftEvent event) {
+        for (org.bukkit.inventory.ItemStack item : event.getInventory().getMatrix()) {
+            if (plugin.items().isCatalyst(item)) {
+                event.getInventory().setResult(null);
+                return;
+            }
+        }
+    }
 }

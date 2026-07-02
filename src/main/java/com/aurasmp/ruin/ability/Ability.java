@@ -50,7 +50,19 @@ public enum Ability {
     // ==== More manifestations ====
     PHASE_STRIKE("Phase Strike", Material.ENDER_EYE, "Blink to the enemy you face and strike.", 12_000, 0xE01D, 0),
     ZELKOVA("Zelkova", Material.COBWEB, "Two ground slams (true dmg); the 2nd stuns and locks the camera.", 20_000, 0xE022, 0),
-    MOOK("Mook", Material.IRON_SWORD, "Dash in and slash rapidly for 12 damage.", 12_000, 0xE023, 0);
+    MOOK("Mook", Material.IRON_SWORD, "Dash in and slash rapidly for 12 damage.", 12_000, 0xE023, 0),
+
+    // ==== 1.9.0: 10 more manifestations ====
+    SHADOW_LANCE("Shadow Lance", Material.ECHO_SHARD, "Pierce all enemies in a line of shadow.", 14_000, 0xE024, 0),
+    ASTRAL_WIND("Astral Wind", Material.WIND_CHARGE, "A 5s storm aura that shoves enemies away.", 18_000, 0xE025, 5_000),
+    BLOOD_PACT("Blood Pact", Material.NETHER_WART, "Sacrifice 2 hearts; reset your other cooldowns.", 45_000, 0xE026, 0),
+    RIPOSTE("Riposte", Material.SHIELD, "1.5s stance: parry the next hit and counter it.", 16_000, 0xE027, 1_500),
+    ICE_BARRIER("Ice Barrier", Material.ICE, "Raise a wall of ice in front of you for 5s.", 15_000, 0xE028, 0),
+    GUILLOTINE("Guillotine", Material.IRON_AXE, "Heavy blow: +25% of the target's missing health.", 15_000, 0xE029, 0),
+    REWIND("Rewind", Material.CLOCK, "Mark yourself; 3s later snap back, restoring health.", 25_000, 0xE02A, 3_000),
+    SINGULARITY("Singularity", Material.CRYING_OBSIDIAN, "Collapse a point that drags enemies in for 3s.", 16_000, 0xE02B, 0),
+    DISPLACE("Displace", Material.CHORUS_FRUIT, "Swap positions with the enemy you face.", 12_000, 0xE02C, 0),
+    MIASMA("Miasma", Material.DRAGON_BREATH, "Leave a lingering poison cloud where you look.", 15_000, 0xE02D, 0);
 
     private final String displayName;
     private final Material icon;
