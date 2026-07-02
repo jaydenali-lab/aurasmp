@@ -127,7 +127,18 @@ public enum Card {
     BASTION("Bastion", Material.OBSIDIAN, "Take 15% less damage while sneaking."),
     BRACED("Braced", Material.SHULKER_SHELL, "Hits taken at full health deal 15% less."),
     DEFLECTION("Deflection", Material.ARROW, "Take 20% less projectile damage."),
-    ESCAPE_ARTIST("Escape Artist", Material.LEAD, "Slowness never sticks to you.");
+    ESCAPE_ARTIST("Escape Artist", Material.LEAD, "Slowness never sticks to you."),
+
+    // ==== 1.11.0: 8 more talents ====
+    CLARITY("Clarity", Material.GLASS, "Blindness, nausea and darkness never stick to you."),
+    BATTLE_RUSH("Battle Rush", Material.RECOVERY_COMPASS, "Player kills refund half your manifestation cooldowns."),
+    SIXTH_SENSE("Sixth Sense", Material.SCULK_SENSOR, "Sneaking enemies within 10 blocks are revealed."),
+    BLOODHOUND("Bloodhound", Material.RED_CANDLE, "Players you hit glow for 3s."),
+    OVERHEAL("Overheal", Material.SPONGE, "Healing past full health becomes absorption (up to 2 hearts)."),
+    HAYMAKER("Haymaker", Material.SLIME_BALL, "Your melee hits knock enemies back much further.",
+            Attribute.ATTACK_KNOCKBACK, AttributeModifier.Operation.ADD_NUMBER, 0.5),
+    MEDIC("Medic", Material.CAKE, "Nearby hurt allies slowly regenerate."),
+    ESCAPE_PLAN("Escape Plan", Material.RABBIT_HIDE, "Below 30% health you move 10% faster.");
 
     private final String displayName;
     private final Material icon;
@@ -169,14 +180,15 @@ public enum Card {
         }
         for (Card c : new Card[]{ENDURANCE, LIFESTEAL, REGENERATOR, BARRIER, CLEAVE, RETRIBUTION,
                 THRESHERS_REACH, UNYIELDING_INFERNO, SPINE_CUTTER, TITAN, VAMPIRIC,
-                PREDATOR, COMBO, MANGLE, RAMPAGE, ATTUNEMENT, HEADHUNTER, BASTION, ESCAPE_ARTIST}) {
+                PREDATOR, COMBO, MANGLE, RAMPAGE, ATTUNEMENT, HEADHUNTER, BASTION, ESCAPE_ARTIST,
+                BATTLE_RUSH, OVERHEAL}) {
             RARITY.put(c, Rarity.EPIC);
         }
         for (Card c : new Card[]{VITALITY, BULWARK, SWIFTNESS, STEADFAST, REACH, LEECH, BERSERKER,
                 ADRENALINE, HASTE, FIRE_WALKER, VENOM, CRIT, BLOODLUST, STEADY_FEET, QUICKDRAW,
                 KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER, FORTRESS,
                 FIRST_STRIKE, DUELIST, AERIAL, VENDETTA, NIGHT_STALKER, GIANT_SLAYER,
-                SHIELDBREAKER, BRACED, DEFLECTION}) {
+                SHIELDBREAKER, BRACED, DEFLECTION, CLARITY, SIXTH_SENSE, HAYMAKER, MEDIC}) {
             RARITY.put(c, Rarity.RARE);
         }
     }

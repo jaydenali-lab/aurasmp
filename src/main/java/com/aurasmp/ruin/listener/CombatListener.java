@@ -69,6 +69,11 @@ public final class CombatListener implements Listener {
         if (data.hasCard(Card.HEADHUNTER) && dead instanceof Player) {
             killer.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 600, 1));
         }
+        // Battle Rush: player kills refund half of every manifestation cooldown.
+        if (data.hasCard(Card.BATTLE_RUSH) && dead instanceof Player) {
+            plugin.abilities().halveCooldowns(killer.getUniqueId());
+            killer.playSound(killer.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 0.7f, 1.8f);
+        }
     }
 
     /** Ruin fireball impact: true AoE damage + fire, no block grief. */
@@ -180,6 +185,17 @@ public final class CombatListener implements Listener {
                 if (data.hasCard(Card.SKIRMISHER)) {
                     attacker.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0));
                 }
+                // Bloodhound: players you hit glow briefly.
+                if (data.hasCard(Card.BLOODHOUND) && victim instanceof Player) {
+                    victim.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0));
+                }
+                // Static Charge manifestation: spend an empowered hit.
+                if (plugin.abilities().consumeStaticCharge(aid)) {
+                    event.setDamage(event.getDamage() + 2.0);
+                    attacker.getWorld().spawnParticle(Particle.ELECTRIC_SPARK,
+                            victim.getLocation().add(0, 1, 0), 12, 0.3, 0.4, 0.3, 0.1);
+                    attacker.getWorld().playSound(victim.getLocation(), Sound.ENTITY_BEE_HURT, 0.8f, 1.8f);
+                }
                 if (data.hasCard(Card.CLEAVE)) cleave(attacker, victim, damage);
                 // Retribution: spend the armed counter (every 5 hits taken) as +1.5 hearts of TRUE
                 // damage. Routed through dealTrueDamage so totems and death events still work.
@@ -283,22 +299,37 @@ public final class CombatListener implements Listener {
         return Math.min(stacks.size(), 3);
     }
 
-    /** Mangle: marked victims regain half health from all sources (regen, potions, food). */
+    /** Mangle: marked victims regain half health. Overheal: excess healing becomes absorption. */
     @EventHandler(ignoreCancelled = true)
     public void onRegain(EntityRegainHealthEvent event) {
         Long until = mangledUntil.get(event.getEntity().getUniqueId());
         if (until != null && System.currentTimeMillis() < until) {
             event.setAmount(event.getAmount() * 0.5);
         }
+        if (event.getEntity() instanceof Player player
+                && plugin.data().get(player.getUniqueId()).hasCard(Card.OVERHEAL)) {
+            double max = player.getAttribute(Attribute.MAX_HEALTH) != null
+                    ? player.getAttribute(Attribute.MAX_HEALTH).getValue() : 20.0;
+            double overflow = player.getHealth() + event.getAmount() - max;
+            if (overflow > 0) {
+                player.setAbsorptionAmount(Math.min(4.0, player.getAbsorptionAmount() + overflow));
+            }
+        }
     }
 
-    /** Escape Artist: slowness never sticks. */
+    /** Escape Artist / Clarity: certain debuffs never stick. */
     @EventHandler(ignoreCancelled = true)
     public void onPotion(EntityPotionEffectEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
-        if (event.getNewEffect() == null
-                || !event.getNewEffect().getType().equals(PotionEffectType.SLOWNESS)) return;
-        if (plugin.data().get(player.getUniqueId()).hasCard(Card.ESCAPE_ARTIST)) {
+        if (event.getNewEffect() == null) return;
+        PotionEffectType type = event.getNewEffect().getType();
+        PlayerData data = plugin.data().get(player.getUniqueId());
+        if (type.equals(PotionEffectType.SLOWNESS) && data.hasCard(Card.ESCAPE_ARTIST)) {
+            event.setCancelled(true);
+            return;
+        }
+        if ((type.equals(PotionEffectType.BLINDNESS) || type.equals(PotionEffectType.NAUSEA)
+                || type.equals(PotionEffectType.DARKNESS)) && data.hasCard(Card.CLARITY)) {
             event.setCancelled(true);
         }
     }
@@ -333,6 +364,15 @@ public final class CombatListener implements Listener {
             return;
         }
 
+        // Aegis ward: incoming projectiles simply stop.
+        if (event.getCause() == EntityDamageEvent.DamageCause.PROJECTILE
+                && plugin.abilities().hasAegis(player.getUniqueId())) {
+            event.setCancelled(true);
+            player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 8, 0.4, 0.5, 0.4, 0.02);
+            player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 0.5f, 1.9f);
+            return;
+        }
+
         // Riposte stance: parry the next hit outright and counter the attacker.
         if (event instanceof EntityDamageByEntityEvent parried
                 && plugin.abilities().consumeRiposte(player.getUniqueId())) {
@@ -343,6 +383,26 @@ public final class CombatListener implements Listener {
                     && proj.getShooter() instanceof LivingEntity le) source = le;
             if (source != null) plugin.abilities().riposteCounter(player, source);
             return;
+        }
+
+        // Overcharge: melee attackers get zapped back.
+        if (event instanceof EntityDamageByEntityEvent zapped
+                && zapped.getDamager() instanceof LivingEntity meleeSource
+                && plugin.abilities().isOvercharged(player.getUniqueId())
+                && !plugin.abilities().isAbilityDamage(player.getUniqueId())) {
+            plugin.abilities().overchargeZap(player, meleeSource);
+        }
+
+        // Afterimage: the first hit in the window blinks you backwards (damage still lands).
+        if (event instanceof EntityDamageByEntityEvent
+                && plugin.abilities().consumeAfterimage(player.getUniqueId())) {
+            plugin.getServer().getScheduler().runTask(plugin,
+                    () -> { if (player.isOnline() && !player.isDead()) plugin.abilities().afterimageBlink(player); });
+        }
+
+        // Sunder: cracked guard — take 15% more from everything while marked.
+        if (plugin.abilities().isSundered(player.getUniqueId())) {
+            event.setDamage(event.getDamage() * 1.15);
         }
 
         PlayerData data = plugin.data().get(player.getUniqueId());

@@ -38,7 +38,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
-## The 72 Talents (passive)
+## The 80 Talents (passive)
 
 **Attribute talents (10)** — applied as persistent attribute modifiers:
 
@@ -152,9 +152,22 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Deflection | Take 20% less projectile damage |
 | Escape Artist | Slowness never sticks to you |
 
+**Instinct talents (8):**
+
+| Talent | Effect |
+|--------|--------|
+| Clarity | Blindness, nausea and darkness never stick to you |
+| Battle Rush | Player kills refund half your manifestation cooldowns |
+| Sixth Sense | Sneaking enemies within 10 blocks are revealed |
+| Bloodhound | Players you hit glow for 3s |
+| Overheal | Healing past full health becomes absorption (up to 2 hearts) |
+| Haymaker | Your melee hits knock enemies back much further |
+| Medic | Nearby hurt allies slowly regenerate |
+| Escape Plan | Below 30% health you move 10% faster |
+
 (Note: the original **Thorns** was replaced by **Ghost**.)
 
-## The 41 Manifestations (active)
+## The 60 Manifestations (active)
 
 Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
 deal normal damage** (reduced by armour), scaled to cooldown (≈ cooldown ÷ 5
@@ -169,18 +182,14 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Bloodthirst | Instantly heal 3 hearts + Regen II | 18s |
 | Smite | Strike lightning at the enemy you face | 14s |
 | Leap | Launch into the air, no fall damage | 8s |
-| Frost Nova | Slow + damage all enemies near you | 15s |
 | Wither Touch | Wither II to nearby enemies for 6s | 16s |
-| Aura Burst | AoE blast around you (no block damage) | 20s |
 | Magnetize | Pull nearby enemies toward you | 13s |
 | Fireball | Hurl a fireball that ignites foes on impact | 11s |
 | Updraft | Fling nearby enemies into the air | 13s |
 | Launch | Fire an arrow and ride it through the air | 8s |
 | Berserk | Strength + Speed + Resistance for 6s | 30s |
-| Smoke Bomb | Blind nearby foes; turn invisible for 3s | 22s |
-| Lightning Storm | Strike up to 3 nearby enemies with lightning | 18s |
+| Smoke Bomb | Blind + slow all foes near you | 22s |
 | Sanctuary | Regen + Resistance + Absorption for 5s | 28s |
-| Plague | Poison II + Nausea to nearby enemies for 6s | 16s |
 | Meteor | Call down a meteor where you look after 1s | 20s |
 | Dash | Dash forward with a burst of speed | 7s |
 | Flame Grab | Lunge, seize a foe in flame and slam them | 13s |
@@ -188,7 +197,6 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Frostdraw Spikes | Ice spikes impale and chill foes ahead | 12s |
 | Tundra | Freeze a wide zone, slowing all within | 18s |
 | Shock Sword | A sweeping arc slash that slows | 11s |
-| Galvanize | Haste + Speed + Strength for 6s | 24s |
 | Wind Slam | Leap up and slam down, blasting foes back | 13s |
 | Gale Step | Blink-dash on wind; no fall damage after | 8s |
 | Phase Strike | Blink to the enemy you face and strike | 12s |
@@ -204,6 +212,30 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Singularity | Collapse a point that drags enemies in for 3s | 16s |
 | Displace | Swap positions with the enemy you face | 12s |
 | Miasma | Leave a lingering poison cloud where you look | 15s |
+| Cryostasis | Encase yourself in ice: 2.5s invulnerable but frozen | 25s |
+| Aegis | 4s ward that stops every projectile aimed at you | 20s |
+| Overcharge | 6s: anyone who melees you gets zapped | 18s |
+| Hex | Curse the enemy you face with Weakness II | 15s |
+| Static Charge | Your next 3 melee hits deal +2 shock damage | 16s |
+| Grasping Vines | Root the enemy you face in place for 2s | 14s |
+| Afterimage | 4s: getting hit blinks you backwards, once | 18s |
+| Volley | Loose a fan of five arrows | 12s |
+| Chakram | A blade arcs out and back, cutting twice | 13s |
+| Fissure | Crack the ground in a line that erupts under foes | 15s |
+| Lifedrain | Channel 3s: siphon health from the enemy you face | 18s |
+| Warp Beacon | Drop a beacon; recast within 10s to warp back | 20s |
+| Cannonball | Hurl yourself in an arc and detonate on landing | 16s |
+| Silence | Seal the enemy you face: no manifestations for 4s | 20s |
+| Torrent | A water jet that blasts one enemy far away | 10s |
+| Ember Mine | Bury a fire mine that erupts when stepped on | 18s |
+| Sonic Shriek | A shriek that hurls one enemy away, dazed | 15s |
+| Levitate | Float the enemy you face helplessly into the air | 14s |
+| Sunder | Crack their guard: target takes +15% damage for 5s | 15s |
+| Rally | Sound the horn: nearby allies gain Speed + Regen | 22s |
+| Cocoon | Wrap the enemy you face in cobwebs | 16s |
+| Purge | Cleanse every debuff and douse yourself | 18s |
+| True Sight | Reveal every player within 20 blocks for 5s | 20s |
+| Tether | Leash the enemy you face to the spot for 4s | 17s |
 
 *Flame Grab through Gale Step are real Deepwoken mantras. Mook and Guillotine
 refund most of their cooldown if the opener misses.*
@@ -291,5 +323,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.10.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.11.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

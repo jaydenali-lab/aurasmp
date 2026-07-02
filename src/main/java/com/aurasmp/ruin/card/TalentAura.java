@@ -24,12 +24,44 @@ public final class TalentAura {
         this.plugin = plugin;
     }
 
+    private BukkitTask fastTask;
+
     public void start() {
         task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 40L, REFRESH_TICKS);
+        // Reactive talents need a much faster pulse than the 10s aura refresh.
+        fastTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::fastTick, 40L, 40L);
     }
 
     public void stop() {
         if (task != null) task.cancel();
+        if (fastTask != null) fastTask.cancel();
+    }
+
+    /** Every 2s: Escape Plan, Medic and Sixth Sense. */
+    private void fastTick() {
+        for (Player player : plugin.getServer().getOnlinePlayers()) {
+            PlayerData data = plugin.data().get(player.getUniqueId());
+            // Escape Plan: below 30% health you move faster.
+            if (data.hasCard(Card.ESCAPE_PLAN) && healthRatio(player) < 0.30) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, true, false, false));
+            }
+            // Medic: nearby hurt allies slowly regenerate.
+            if (data.hasCard(Card.MEDIC)) {
+                for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 8, 8)) {
+                    if (entity instanceof Player ally && healthRatio(ally) < 0.9) {
+                        ally.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 0, true, false, false));
+                    }
+                }
+            }
+            // Sixth Sense: sneaking players nearby are revealed.
+            if (data.hasCard(Card.SIXTH_SENSE)) {
+                for (org.bukkit.entity.Entity entity : player.getNearbyEntities(10, 10, 10)) {
+                    if (entity instanceof Player sneak && sneak.isSneaking()) {
+                        sneak.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, true, false, false));
+                    }
+                }
+            }
+        }
     }
 
     private void tick() {

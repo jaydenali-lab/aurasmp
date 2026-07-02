@@ -65,7 +65,7 @@
     },
     {
       "type": "bitmap",
-      "file": "ruin:font/frost.png",
+      "file": "ruin:font/cryostasis.png",
       "ascent": 7,
       "height": 8,
       "chars": [
@@ -83,7 +83,7 @@
     },
     {
       "type": "bitmap",
-      "file": "ruin:font/aura.png",
+      "file": "ruin:font/aegis.png",
       "ascent": 7,
       "height": 8,
       "chars": [
@@ -146,7 +146,7 @@
     },
     {
       "type": "bitmap",
-      "file": "ruin:font/storm.png",
+      "file": "ruin:font/overcharge.png",
       "ascent": 7,
       "height": 8,
       "chars": [
@@ -164,7 +164,7 @@
     },
     {
       "type": "bitmap",
-      "file": "ruin:font/plague.png",
+      "file": "ruin:font/hex.png",
       "ascent": 7,
       "height": 8,
       "chars": [
@@ -236,7 +236,7 @@
     },
     {
       "type": "bitmap",
-      "file": "ruin:font/galvanize.png",
+      "file": "ruin:font/static_charge.png",
       "ascent": 7,
       "height": 8,
       "chars": [
@@ -376,6 +376,177 @@
       "height": 8,
       "chars": [
         ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/grasping_vines.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/afterimage.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/volley.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/chakram.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/fissure.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/lifedrain.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/warp_beacon.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/cannonball.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/silence.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/torrent.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/ember_mine.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/sonic_shriek.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/levitate.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/sunder.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/rally.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/cocoon.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/purge.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/true_sight.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "ruin:font/tether.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        ""
       ]
     }
   ]
