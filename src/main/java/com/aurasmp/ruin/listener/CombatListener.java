@@ -56,9 +56,9 @@ public final class CombatListener implements Listener {
             killer.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80, 0));
         }
         if (data.hasCard(Card.BLOODLUST)) {
-            killer.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 100, 0));
+            killer.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 60, 0));
         }
-        // Rampage: each kill banks a +8% damage stack for 20s (max 3).
+        // Rampage: each kill banks a +5% damage stack for 20s (max 3).
         if (data.hasCard(Card.RAMPAGE)) {
             java.util.ArrayDeque<Long> stacks =
                     rampage.computeIfAbsent(killer.getUniqueId(), k -> new java.util.ArrayDeque<>());
@@ -127,40 +127,40 @@ public final class CombatListener implements Listener {
 
             PlayerData data = plugin.data().get(aid);
             double damage = event.getDamage();
-            if (data.hasCard(Card.BERSERKER) && healthRatio(attacker) < 0.30) damage *= 1.30;
-            if (data.hasCard(Card.EXECUTIONER) && healthRatio(victim) < 0.20) damage *= 1.50;
-            if (projectile && data.hasCard(Card.SHARPSHOOTER)) damage *= 1.25;
+            if (data.hasCard(Card.BERSERKER) && healthRatio(attacker) < 0.30) damage *= 1.20;
+            if (data.hasCard(Card.EXECUTIONER) && healthRatio(victim) < 0.20) damage *= 1.30;
+            if (projectile && data.hasCard(Card.SHARPSHOOTER)) damage *= 1.15;
             if (!projectile && data.hasCard(Card.CRIT) && ThreadLocalRandom.current().nextDouble() < 0.25) {
-                damage *= 1.50;
+                damage *= 1.35;
                 attacker.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 12, 0.3, 0.3, 0.3, 0.1);
             }
             // Unyielding Inferno: bonus damage to burning targets.
             if (!projectile && data.hasCard(Card.UNYIELDING_INFERNO) && victim.getFireTicks() > 0) {
-                damage += 4.0;
+                damage += 3.0;
             }
             // 1.9.0 conditional melee talents.
             if (!projectile) {
-                if (data.hasCard(Card.FIRST_STRIKE) && healthRatio(victim) >= 0.999) damage *= 1.30;
-                if (data.hasCard(Card.PREDATOR) && isDebuffed(victim)) damage *= 1.25;
-                if (data.hasCard(Card.DUELIST) && nearbyEnemyCount(attacker) == 1) damage *= 1.15;
-                if (data.hasCard(Card.AERIAL) && !attacker.isOnGround()) damage *= 1.25;
-                if (data.hasCard(Card.WARPATH) && attacker.isSprinting()) damage *= 1.20;
+                if (data.hasCard(Card.FIRST_STRIKE) && healthRatio(victim) >= 0.999) damage *= 1.20;
+                if (data.hasCard(Card.PREDATOR) && isDebuffed(victim)) damage *= 1.15;
+                if (data.hasCard(Card.DUELIST) && nearbyEnemyCount(attacker) == 1) damage *= 1.10;
+                if (data.hasCard(Card.AERIAL) && !attacker.isOnGround()) damage *= 1.15;
+                if (data.hasCard(Card.WARPATH) && attacker.isSprinting()) damage *= 1.12;
                 if (data.hasCard(Card.NIGHT_STALKER)
-                        && victim.getLocation().getBlock().getLightLevel() < 7) damage *= 1.25;
-                if (data.hasCard(Card.GIANT_SLAYER) && victim.getHealth() > attacker.getHealth()) damage *= 1.20;
-                if (data.hasCard(Card.SHIELDBREAKER) && victim.getAbsorptionAmount() > 0) damage *= 1.40;
+                        && victim.getLocation().getBlock().getLightLevel() < 7) damage *= 1.15;
+                if (data.hasCard(Card.GIANT_SLAYER) && victim.getHealth() > attacker.getHealth()) damage *= 1.12;
+                if (data.hasCard(Card.SHIELDBREAKER) && victim.getAbsorptionAmount() > 0) damage *= 1.25;
                 if (data.hasCard(Card.VENDETTA)) {
                     Grudge grudge = grudges.get(aid);
                     if (grudge != null && grudge.enemy().equals(victim.getUniqueId())
                             && System.currentTimeMillis() < grudge.until()) {
-                        damage *= 1.40;
+                        damage *= 1.25;
                     }
                 }
                 if (data.hasCard(Card.COMBO)) {
-                    damage *= 1 + 0.08 * comboStacks(aid, victim.getUniqueId());
+                    damage *= 1 + 0.05 * comboStacks(aid, victim.getUniqueId());
                 }
                 if (data.hasCard(Card.RAMPAGE)) {
-                    damage *= 1 + 0.08 * rampageStacks(aid);
+                    damage *= 1 + 0.05 * rampageStacks(aid);
                 }
             }
             event.setDamage(damage);
@@ -187,7 +187,7 @@ public final class CombatListener implements Listener {
                     LivingEntity v = victim;
                     Player atk = attacker;
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        if (!v.isDead() && v.isValid()) plugin.abilities().dealTrueDamage(v, atk, 3.0);
+                        if (!v.isDead() && v.isValid()) plugin.abilities().dealTrueDamage(v, atk, 2.0);
                     });
                     attacker.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, victim.getLocation().add(0, 1, 0), 8, 0.3, 0.3, 0.3, 0);
                 }
@@ -201,7 +201,7 @@ public final class CombatListener implements Listener {
                     LivingEntity v = victim;
                     Player atk = attacker;
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        if (!v.isDead() && v.isValid()) plugin.abilities().dealDamage(v, atk, 3.0);
+                        if (!v.isDead() && v.isValid()) plugin.abilities().dealDamage(v, atk, 2.0);
                     });
                     // SFX + visual so the backstab proc is obvious.
                     Location fx = victim.getLocation().add(0, 1, 0);

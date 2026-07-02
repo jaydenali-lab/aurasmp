@@ -49,8 +49,8 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Bulwark | +3 armor |
 | Tough Skin | +4 armor toughness |
 | Swiftness | +15% movement speed |
-| Brutality | +10% melee damage |
-| Onslaught | +20% melee damage |
+| Brutality | +8% melee damage |
+| Onslaught | +15% melee damage |
 | Frenzy | +10% attack speed |
 | Steadfast | +40% knockback resistance |
 | Reach | +1 block of attack reach |
@@ -62,11 +62,11 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Lifesteal | Heal 10% of melee damage you deal |
 | Leech | Heal 1 heart on every melee kill |
 | Ghost | 15% chance when hit to fully vanish (armor too) + Speed II for 3s |
-| Berserker | +30% damage while below 30% health |
-| Executioner | +50% damage to targets below 20% health |
+| Berserker | +20% damage while below 30% health |
+| Executioner | +30% damage to targets below 20% health |
 | Feather | Immune to fall damage |
 | Adrenaline | Speed II + Regen I for 4s after a kill |
-| Sharpshooter | +25% projectile damage |
+| Sharpshooter | +15% projectile damage |
 | Juggernaut | Take 15% less damage from all sources |
 | Scavenger | +50% Ruin XP from kills |
 
@@ -98,9 +98,9 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Venom | Melee hits apply Poison |
 | Frostbite | Melee hits slow the target |
 | Cleave | Melee hits splash 30% damage to nearby enemies |
-| Crit | 25% chance for melee hits to deal +50% |
-| Bloodlust | Strength I for 5s after a kill |
-| Retribution | Every 5 hits taken, your next melee hit deals +1.5 hearts of true damage |
+| Crit | 25% chance for melee hits to deal +35% |
+| Bloodlust | Strength I for 3s after a kill |
+| Retribution | Every 5 hits taken, your next melee hit deals +1 heart of true damage |
 
 **Deepwoken talents (10):**
 
@@ -113,8 +113,8 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Kick Off | +6% speed and no short-fall damage |
 | Conditioned Runner | Regenerate while sprinting hurt |
 | Pack Leader | Resistance while an ally is near |
-| Unyielding Inferno | +2 hearts to hits on burning foes |
-| Spine Cutter | Backstabs deal +3 damage |
+| Unyielding Inferno | +1.5 hearts to hits on burning foes |
+| Spine Cutter | Backstabs deal +2 damage |
 | Risky Moves | 20% chance to fully negate an incoming hit |
 
 **More talents (5):**
@@ -122,7 +122,7 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Talent | Effect |
 |--------|--------|
 | Titan | +4 hearts of max health, but 20% slower |
-| Glass Cannon | +40% melee damage, but take 20% more damage |
+| Glass Cannon | +30% melee damage, but take 20% more damage |
 | Fortress | +5 armor |
 | Vampiric | Heal 20% of the melee damage you deal |
 | Second Wind | Below 20% HP: Regen II + Absorption (30s cooldown) |
@@ -131,19 +131,19 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 
 | Talent | Effect |
 |--------|--------|
-| First Strike | +30% melee damage to full-health targets |
-| Predator | +25% melee damage to debuffed targets (poison, slow, wither, burning, frozen) |
-| Duelist | +15% melee damage while exactly one enemy is near you |
-| Aerial | +25% melee damage while airborne |
-| Warpath | +20% melee damage while sprinting |
-| Combo | Consecutive hits on the same target stack +8% damage each (up to +40%) |
-| Vendetta | +40% melee damage for 6s against the last enemy that hit you |
-| Night Stalker | +25% melee damage to targets standing in darkness |
-| Giant Slayer | +20% melee damage to enemies with more health than you |
-| Shieldbreaker | +40% melee damage to targets with absorption hearts |
+| First Strike | +20% melee damage to full-health targets |
+| Predator | +15% melee damage to debuffed targets (poison, slow, wither, burning, frozen) |
+| Duelist | +10% melee damage while exactly one enemy is near you |
+| Aerial | +15% melee damage while airborne |
+| Warpath | +12% melee damage while sprinting |
+| Combo | Consecutive hits on the same target stack +5% damage each (up to +25%) |
+| Vendetta | +25% melee damage for 6s against the last enemy that hit you |
+| Night Stalker | +15% melee damage to targets standing in darkness |
+| Giant Slayer | +12% melee damage to enemies with more health than you |
+| Shieldbreaker | +25% melee damage to targets with absorption hearts |
 | Mangle | Enemies you hit heal 50% less for 5s |
 | Skirmisher | Hitting an enemy grants Speed I for 2s |
-| Rampage | Kills grant +8% damage for 20s, stacking 3 times |
+| Rampage | Kills grant +5% damage for 20s, stacking 3 times |
 | Attunement | Manifestation cooldowns are 15% shorter |
 | Headhunter | Player kills grant 2 absorption hearts for 30s |
 | Undying | Once per 60s, a killing blow leaves you at 1 HP instead |
@@ -291,5 +291,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.9.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.9.1.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.
