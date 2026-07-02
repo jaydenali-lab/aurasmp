@@ -70,7 +70,7 @@ public final class PickerGui {
             if (index >= all.length) break;
             Card card = all[index];
             h.cardSlots.put(i, card);
-            inv.setItem(i, icon(card.icon(), card.displayName(), card.rarity().color(),
+            inv.setItem(i, icon(card.icon(), card.modelKey(), card.displayName(), card.rarity().color(),
                     card.rarity().label() + " · " + card.description()));
         }
         placePager(inv, page, pages);
@@ -100,7 +100,7 @@ public final class PickerGui {
             if (index >= all.length) break;
             Ability ability = all[index];
             h.abilitySlots.put(i, ability);
-            inv.setItem(i, icon(ability.icon(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
+            inv.setItem(i, icon(ability.icon(), ability.modelKey(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
                     ability.description() + "  (" + (ability.cooldownMillis() / 1000) + "s)"));
         }
         placePager(inv, page, pages);
@@ -109,11 +109,11 @@ public final class PickerGui {
 
     private void placePager(Inventory inv, int page, int pages) {
         if (page > 0) {
-            inv.setItem(PREV_SLOT, icon(Material.ARROW, "◀ Previous page", NamedTextColor.YELLOW,
+            inv.setItem(PREV_SLOT, icon(Material.ARROW, null, "◀ Previous page", NamedTextColor.YELLOW,
                     "Page " + page + " of " + pages));
         }
         if (page < pages - 1) {
-            inv.setItem(NEXT_SLOT, icon(Material.ARROW, "Next page ▶", NamedTextColor.YELLOW,
+            inv.setItem(NEXT_SLOT, icon(Material.ARROW, null, "Next page ▶", NamedTextColor.YELLOW,
                     "Page " + (page + 2) + " of " + pages));
         }
     }
@@ -157,9 +157,12 @@ public final class PickerGui {
         plugin.getServer().getScheduler().runTask(plugin, () -> plugin.buildGui().open(viewer, holder.target));
     }
 
-    private ItemStack icon(Material material, String title, NamedTextColor color, String description) {
+    private ItemStack icon(Material material, String modelKey, String title, NamedTextColor color, String description) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
+        if (modelKey != null) {
+            meta.setItemModel(org.bukkit.NamespacedKey.fromString("ruin:" + modelKey));
+        }
         meta.displayName(Component.text(title, color).decoration(TextDecoration.ITALIC, false));
         meta.lore(List.of(Component.text(description, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
         item.setItemMeta(meta);

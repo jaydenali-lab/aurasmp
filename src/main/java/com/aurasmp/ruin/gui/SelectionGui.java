@@ -280,6 +280,8 @@ public final class SelectionGui {
     private ItemStack abilityIcon(Ability ability, PlayerData data) {
         ItemStack item = new ItemStack(ability.icon());
         ItemMeta meta = item.getItemMeta();
+        // Show the manifestation's HUD glyph from the resource pack as the icon.
+        meta.setItemModel(org.bukkit.NamespacedKey.fromString("ruin:" + ability.modelKey()));
         meta.displayName(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE)
                 .decoration(TextDecoration.ITALIC, false));
         List<Component> lore = new ArrayList<>();
@@ -324,6 +326,8 @@ public final class SelectionGui {
     private ItemStack cardIcon(Card card) {
         ItemStack item = new ItemStack(card.icon());
         ItemMeta meta = item.getItemMeta();
+        // Show the talent's glyph from the resource pack instead of the base item.
+        meta.setItemModel(org.bukkit.NamespacedKey.fromString("ruin:" + card.modelKey()));
         meta.displayName(Component.text(card.displayName(), card.rarity().color()).decoration(TextDecoration.ITALIC, false));
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(card.rarity().label(), card.rarity().color()).decoration(TextDecoration.ITALIC, false));

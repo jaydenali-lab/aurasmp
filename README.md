@@ -48,12 +48,12 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Endurance | +3 hearts of max health |
 | Bulwark | +3 armor |
 | Tough Skin | +4 armor toughness |
-| Swiftness | +15% movement speed |
-| Brutality | +8% melee damage |
-| Onslaught | +15% melee damage |
+| Swiftness | +10% movement speed |
+| Brutality | +3% melee damage |
+| Onslaught | +7% melee damage |
 | Frenzy | +10% attack speed |
 | Steadfast | +40% knockback resistance |
-| Reach | +1 block of attack reach |
+| Reach | +0.5 blocks of attack reach |
 
 **Effect talents (10)** — resolved in the combat listeners:
 
@@ -62,12 +62,12 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Lifesteal | Heal 10% of melee damage you deal |
 | Leech | Heal 1 heart on every melee kill |
 | Ghost | 15% chance when hit to fully vanish (armor too) + Speed II for 3s |
-| Berserker | +20% damage while below 30% health |
+| Berserker | +7% damage while below 30% health |
 | Executioner | +30% damage to targets below 20% health |
 | Feather | Immune to fall damage |
 | Adrenaline | Speed II + Regen I for 4s after a kill |
-| Sharpshooter | +15% projectile damage |
-| Juggernaut | Take 15% less damage from all sources |
+| Sharpshooter | +5% projectile damage |
+| Juggernaut | Take 10% less damage from all sources |
 | Scavenger | +50% Ruin XP from kills |
 
 **Expansion — attribute (3):**
@@ -98,7 +98,7 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Venom | Melee hits apply Poison |
 | Frostbite | Melee hits slow the target |
 | Cleave | Melee hits splash 30% damage to nearby enemies |
-| Crit | 25% chance for melee hits to deal +35% |
+| Crit | 25% chance for melee hits to deal +20% |
 | Bloodlust | Strength I for 3s after a kill |
 | Retribution | Every 5 hits taken, your next melee hit deals +1 heart of true damage |
 
@@ -107,49 +107,49 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Talent | Effect |
 |--------|--------|
 | Steady Feet | +50% knockback resistance |
-| Thresher's Reach | +1.5 blocks of attack reach |
-| Quickdraw | +20% attack speed |
+| Thresher's Reach | +1 block of attack reach |
+| Quickdraw | +15% attack speed |
 | Endurance Runner | +8% movement speed |
 | Kick Off | +6% speed and no short-fall damage |
 | Conditioned Runner | Regenerate while sprinting hurt |
 | Pack Leader | Resistance while an ally is near |
 | Unyielding Inferno | +1.5 hearts to hits on burning foes |
-| Spine Cutter | Backstabs deal +2 damage |
-| Risky Moves | 20% chance to fully negate an incoming hit |
+| Spine Cutter | Backstabs deal +1.5 damage |
+| Risky Moves | 15% chance to fully negate an incoming hit |
 
 **More talents (5):**
 
 | Talent | Effect |
 |--------|--------|
 | Titan | +4 hearts of max health, but 20% slower |
-| Glass Cannon | +30% melee damage, but take 20% more damage |
+| Glass Cannon | +15% melee damage, but take 20% more damage |
 | Fortress | +5 armor |
 | Vampiric | Heal 20% of the melee damage you deal |
-| Second Wind | Below 20% HP: Regen II + Absorption (30s cooldown) |
+| Second Wind | Below 20% HP: Regen II + Absorption (45s cooldown) |
 
 **Conditional & tactical talents (20):**
 
 | Talent | Effect |
 |--------|--------|
-| First Strike | +20% melee damage to full-health targets |
-| Predator | +15% melee damage to debuffed targets (poison, slow, wither, burning, frozen) |
-| Duelist | +10% melee damage while exactly one enemy is near you |
-| Aerial | +15% melee damage while airborne |
-| Warpath | +12% melee damage while sprinting |
-| Combo | Consecutive hits on the same target stack +5% damage each (up to +25%) |
-| Vendetta | +25% melee damage for 6s against the last enemy that hit you |
-| Night Stalker | +15% melee damage to targets standing in darkness |
-| Giant Slayer | +12% melee damage to enemies with more health than you |
-| Shieldbreaker | +25% melee damage to targets with absorption hearts |
+| First Strike | +6% melee damage to full-health targets |
+| Predator | +6% melee damage to debuffed targets (poison, slow, wither, burning, frozen) |
+| Duelist | +4% melee damage while exactly one enemy is near you |
+| Aerial | +6% melee damage while airborne |
+| Warpath | +4% melee damage while sprinting |
+| Combo | Consecutive hits on the same target stack +2% damage each (up to +6%) |
+| Vendetta | +7% melee damage for 6s against the last enemy that hit you |
+| Night Stalker | +6% melee damage to targets standing in darkness |
+| Giant Slayer | +5% melee damage to enemies with more health than you |
+| Shieldbreaker | +7% melee damage to targets with absorption hearts |
 | Mangle | Enemies you hit heal 50% less for 5s |
 | Skirmisher | Hitting an enemy grants Speed I for 2s |
-| Rampage | Kills grant +5% damage for 20s, stacking 3 times |
+| Rampage | Kills grant +2% damage for 20s, stacking 3 times |
 | Attunement | Manifestation cooldowns are 15% shorter |
 | Headhunter | Player kills grant 2 absorption hearts for 30s |
-| Undying | Once per 60s, a killing blow leaves you at 1 HP instead |
-| Bastion | Take 25% less damage while sneaking |
-| Braced | Hits taken at full health deal 30% less |
-| Deflection | Take 30% less projectile damage |
+| Undying | Once per 90s, a killing blow leaves you at 1 HP instead |
+| Bastion | Take 15% less damage while sneaking |
+| Braced | Hits taken at full health deal 15% less |
+| Deflection | Take 20% less projectile damage |
 | Escape Artist | Slowness never sticks to you |
 
 (Note: the original **Thorns** was replaced by **Ghost**.)
@@ -176,7 +176,7 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Fireball | Hurl a fireball that ignites foes on impact | 11s |
 | Updraft | Fling nearby enemies into the air | 13s |
 | Launch | Fire an arrow and ride it through the air | 8s |
-| Berserk | Strength II + Speed + Resistance for 6s | 30s |
+| Berserk | Strength + Speed + Resistance for 6s | 30s |
 | Smoke Bomb | Blind nearby foes; turn invisible for 3s | 22s |
 | Lightning Storm | Strike up to 3 nearby enemies with lightning | 18s |
 | Sanctuary | Regen + Resistance + Absorption for 5s | 28s |
@@ -193,14 +193,14 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Gale Step | Blink-dash on wind; no fall damage after | 8s |
 | Phase Strike | Blink to the enemy you face and strike | 12s |
 | Zelkova | Two ground slams (true dmg) that break cobwebs; the 2nd stuns and locks the camera | 20s |
-| Mook | Dash in and slash rapidly for 12 damage | 12s |
+| Mook | Dash in and slash rapidly for 8 damage | 12s |
 | Shadow Lance | Pierce all enemies in a line of shadow | 14s |
 | Astral Wind | A 5s storm aura that shoves enemies away | 18s |
 | Blood Pact | Sacrifice 2 hearts; reset your other cooldowns | 45s |
 | Riposte | 1.5s stance: parry the next hit and counter it | 16s |
 | Ice Barrier | Raise a wall of ice in front of you for 5s | 15s |
-| Guillotine | Heavy blow: +25% of the target's missing health | 15s |
-| Rewind | Mark yourself; 3s later snap back, restoring health | 25s |
+| Guillotine | Heavy blow: +20% of the target's missing health | 15s |
+| Rewind | Mark yourself; 3s later snap back, healing up to 4 hearts | 25s |
 | Singularity | Collapse a point that drags enemies in for 3s | 16s |
 | Displace | Swap positions with the enemy you face | 12s |
 | Miasma | Leave a lingering poison cloud where you look | 15s |
@@ -291,5 +291,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.9.1.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.10.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

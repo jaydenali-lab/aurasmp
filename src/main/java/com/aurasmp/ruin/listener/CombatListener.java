@@ -127,11 +127,11 @@ public final class CombatListener implements Listener {
 
             PlayerData data = plugin.data().get(aid);
             double damage = event.getDamage();
-            if (data.hasCard(Card.BERSERKER) && healthRatio(attacker) < 0.30) damage *= 1.20;
+            if (data.hasCard(Card.BERSERKER) && healthRatio(attacker) < 0.30) damage *= 1.07;
             if (data.hasCard(Card.EXECUTIONER) && healthRatio(victim) < 0.20) damage *= 1.30;
-            if (projectile && data.hasCard(Card.SHARPSHOOTER)) damage *= 1.15;
+            if (projectile && data.hasCard(Card.SHARPSHOOTER)) damage *= 1.05;
             if (!projectile && data.hasCard(Card.CRIT) && ThreadLocalRandom.current().nextDouble() < 0.25) {
-                damage *= 1.35;
+                damage *= 1.20;
                 attacker.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 12, 0.3, 0.3, 0.3, 0.1);
             }
             // Unyielding Inferno: bonus damage to burning targets.
@@ -140,27 +140,27 @@ public final class CombatListener implements Listener {
             }
             // 1.9.0 conditional melee talents.
             if (!projectile) {
-                if (data.hasCard(Card.FIRST_STRIKE) && healthRatio(victim) >= 0.999) damage *= 1.20;
-                if (data.hasCard(Card.PREDATOR) && isDebuffed(victim)) damage *= 1.15;
-                if (data.hasCard(Card.DUELIST) && nearbyEnemyCount(attacker) == 1) damage *= 1.10;
-                if (data.hasCard(Card.AERIAL) && !attacker.isOnGround()) damage *= 1.15;
-                if (data.hasCard(Card.WARPATH) && attacker.isSprinting()) damage *= 1.12;
+                if (data.hasCard(Card.FIRST_STRIKE) && healthRatio(victim) >= 0.999) damage *= 1.06;
+                if (data.hasCard(Card.PREDATOR) && isDebuffed(victim)) damage *= 1.06;
+                if (data.hasCard(Card.DUELIST) && nearbyEnemyCount(attacker) == 1) damage *= 1.04;
+                if (data.hasCard(Card.AERIAL) && !attacker.isOnGround()) damage *= 1.06;
+                if (data.hasCard(Card.WARPATH) && attacker.isSprinting()) damage *= 1.04;
                 if (data.hasCard(Card.NIGHT_STALKER)
-                        && victim.getLocation().getBlock().getLightLevel() < 7) damage *= 1.15;
-                if (data.hasCard(Card.GIANT_SLAYER) && victim.getHealth() > attacker.getHealth()) damage *= 1.12;
-                if (data.hasCard(Card.SHIELDBREAKER) && victim.getAbsorptionAmount() > 0) damage *= 1.25;
+                        && victim.getLocation().getBlock().getLightLevel() < 7) damage *= 1.06;
+                if (data.hasCard(Card.GIANT_SLAYER) && victim.getHealth() > attacker.getHealth()) damage *= 1.05;
+                if (data.hasCard(Card.SHIELDBREAKER) && victim.getAbsorptionAmount() > 0) damage *= 1.07;
                 if (data.hasCard(Card.VENDETTA)) {
                     Grudge grudge = grudges.get(aid);
                     if (grudge != null && grudge.enemy().equals(victim.getUniqueId())
                             && System.currentTimeMillis() < grudge.until()) {
-                        damage *= 1.25;
+                        damage *= 1.07;
                     }
                 }
                 if (data.hasCard(Card.COMBO)) {
-                    damage *= 1 + 0.05 * comboStacks(aid, victim.getUniqueId());
+                    damage *= 1 + 0.02 * comboStacks(aid, victim.getUniqueId());
                 }
                 if (data.hasCard(Card.RAMPAGE)) {
-                    damage *= 1 + 0.05 * rampageStacks(aid);
+                    damage *= 1 + 0.02 * rampageStacks(aid);
                 }
             }
             event.setDamage(damage);
@@ -201,7 +201,7 @@ public final class CombatListener implements Listener {
                     LivingEntity v = victim;
                     Player atk = attacker;
                     plugin.getServer().getScheduler().runTask(plugin, () -> {
-                        if (!v.isDead() && v.isValid()) plugin.abilities().dealDamage(v, atk, 2.0);
+                        if (!v.isDead() && v.isValid()) plugin.abilities().dealDamage(v, atk, 1.5);
                     });
                     // SFX + visual so the backstab proc is obvious.
                     Location fx = victim.getLocation().add(0, 1, 0);
@@ -266,7 +266,7 @@ public final class CombatListener implements Listener {
         long now = System.currentTimeMillis();
         ComboState state = combos.computeIfAbsent(attacker, k -> new ComboState());
         if (victim.equals(state.target) && now - state.last <= 2_000) {
-            state.stacks = Math.min(state.stacks + 1, 5);
+            state.stacks = Math.min(state.stacks + 1, 3);
         } else {
             state.stacks = 0;
         }
@@ -360,7 +360,7 @@ public final class CombatListener implements Listener {
         }
 
         // Risky Moves: chance to fully negate an incoming hit.
-        if (data.hasCard(Card.RISKY_MOVES) && ThreadLocalRandom.current().nextDouble() < 0.20) {
+        if (data.hasCard(Card.RISKY_MOVES) && ThreadLocalRandom.current().nextDouble() < 0.15) {
             event.setCancelled(true);
             player.getWorld().spawnParticle(Particle.SWEEP_ATTACK, player.getLocation().add(0, 1, 0), 3, 0.4, 0.4, 0.4, 0);
             player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 0.8f, 1.4f);
@@ -374,7 +374,7 @@ public final class CombatListener implements Listener {
             return;
         }
         if (data.hasCard(Card.JUGGERNAUT)) {
-            event.setDamage(event.getDamage() * 0.85);
+            event.setDamage(event.getDamage() * 0.90);
         }
         // Glass Cannon: glass jaw — take 20% more damage from everything.
         if (data.hasCard(Card.GLASS_CANNON)) {
@@ -382,16 +382,16 @@ public final class CombatListener implements Listener {
         }
         // Bastion: hunker down — 25% less damage while sneaking.
         if (data.hasCard(Card.BASTION) && player.isSneaking()) {
-            event.setDamage(event.getDamage() * 0.75);
+            event.setDamage(event.getDamage() * 0.85);
         }
         // Braced: hits taken at full health deal 30% less (anti-burst opener).
         if (data.hasCard(Card.BRACED) && healthRatio(player) >= 0.999) {
-            event.setDamage(event.getDamage() * 0.70);
+            event.setDamage(event.getDamage() * 0.85);
         }
         // Deflection: 30% less projectile damage.
         if (data.hasCard(Card.DEFLECTION)
                 && event.getCause() == EntityDamageEvent.DamageCause.PROJECTILE) {
-            event.setDamage(event.getDamage() * 0.70);
+            event.setDamage(event.getDamage() * 0.80);
         }
         // Ghost: when hit, a chance to fully vanish (armor too) + Speed II for 3s.
         if (data.hasCard(Card.GHOST) && ThreadLocalRandom.current().nextDouble() < plugin.config().ghostChance()) {
@@ -410,7 +410,7 @@ public final class CombatListener implements Listener {
             long now = System.currentTimeMillis();
             Long until = secondWindUntil.get(player.getUniqueId());
             if (until == null || now >= until) {
-                secondWindUntil.put(player.getUniqueId(), now + 30_000);
+                secondWindUntil.put(player.getUniqueId(), now + 45_000);
                 player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80, 1));
                 player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 200, 1));
                 player.playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 0.6f, 1.4f);
@@ -421,7 +421,7 @@ public final class CombatListener implements Listener {
             long now = System.currentTimeMillis();
             Long until = undyingUntil.get(player.getUniqueId());
             if (until == null || now >= until) {
-                undyingUntil.put(player.getUniqueId(), now + 60_000);
+                undyingUntil.put(player.getUniqueId(), now + 90_000);
                 event.setCancelled(true);
                 player.setHealth(1.0);
                 player.getWorld().spawnParticle(Particle.TOTEM_OF_UNDYING,

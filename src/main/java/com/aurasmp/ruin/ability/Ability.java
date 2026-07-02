@@ -29,7 +29,7 @@ public enum Ability {
     FIREBALL("Fireball", Material.MAGMA_CREAM, "Hurl a fireball that explodes on impact.", 11_000, 0xE00B, 0),
     UPDRAFT("Updraft", Material.FEATHER, "Fling nearby enemies into the air.", 13_000, 0xE00C, 0),
     GRAPPLE("Launch", Material.FISHING_ROD, "Fire an arrow and ride it through the air.", 8_000, 0xE00D, 0),
-    BERSERK("Berserk", Material.NETHERITE_AXE, "Strength II + Speed + Resistance for 6s.", 30_000, 0xE00E, 6_000),
+    BERSERK("Berserk", Material.NETHERITE_AXE, "Strength + Speed + Resistance for 6s.", 30_000, 0xE00E, 6_000),
     SMOKE_BOMB("Smoke Bomb", Material.GUNPOWDER, "Blind nearby foes; turn invisible for 3s.", 22_000, 0xE00F, 3_000),
     LIGHTNING_STORM("Lightning Storm", Material.TRIDENT, "Strike up to 3 nearby enemies with lightning.", 18_000, 0xE010, 0),
     SANCTUARY("Sanctuary", Material.TOTEM_OF_UNDYING, "Regen + Resistance + Absorption for 5s.", 28_000, 0xE011, 5_000),
@@ -50,7 +50,7 @@ public enum Ability {
     // ==== More manifestations ====
     PHASE_STRIKE("Phase Strike", Material.ENDER_EYE, "Blink to the enemy you face and strike.", 12_000, 0xE01D, 0),
     ZELKOVA("Zelkova", Material.COBWEB, "Two ground slams (true dmg); the 2nd stuns and locks the camera.", 20_000, 0xE022, 0),
-    MOOK("Mook", Material.IRON_SWORD, "Dash in and slash rapidly for 12 damage.", 12_000, 0xE023, 0),
+    MOOK("Mook", Material.IRON_SWORD, "Dash in and slash rapidly for 8 damage.", 12_000, 0xE023, 0),
 
     // ==== 1.9.0: 10 more manifestations ====
     SHADOW_LANCE("Shadow Lance", Material.ECHO_SHARD, "Pierce all enemies in a line of shadow.", 14_000, 0xE024, 0),
@@ -58,7 +58,7 @@ public enum Ability {
     BLOOD_PACT("Blood Pact", Material.NETHER_WART, "Sacrifice 2 hearts; reset your other cooldowns.", 45_000, 0xE026, 0),
     RIPOSTE("Riposte", Material.SHIELD, "1.5s stance: parry the next hit and counter it.", 16_000, 0xE027, 1_500),
     ICE_BARRIER("Ice Barrier", Material.ICE, "Raise a wall of ice in front of you for 5s.", 15_000, 0xE028, 0),
-    GUILLOTINE("Guillotine", Material.IRON_AXE, "Heavy blow: +25% of the target's missing health.", 15_000, 0xE029, 0),
+    GUILLOTINE("Guillotine", Material.IRON_AXE, "Heavy blow: +20% of the target's missing health.", 15_000, 0xE029, 0),
     REWIND("Rewind", Material.CLOCK, "Mark yourself; 3s later snap back, restoring health.", 25_000, 0xE02A, 3_000),
     SINGULARITY("Singularity", Material.CRYING_OBSIDIAN, "Collapse a point that drags enemies in for 3s.", 16_000, 0xE02B, 0),
     DISPLACE("Displace", Material.CHORUS_FRUIT, "Swap positions with the enemy you face.", 12_000, 0xE02C, 0),
@@ -86,6 +86,8 @@ public enum Ability {
     public String description() { return description; }
     public long cooldownMillis() { return cooldownMillis; }
     public String glyph() { return new String(Character.toChars(glyphCodepoint)); }
+    /** Resource-pack item model that shows this manifestation's glyph as the icon. */
+    public String modelKey() { return "glyph_" + name().toLowerCase(java.util.Locale.ROOT); }
     public long activeDurationMillis() { return activeDurationMillis; }
     public boolean hasActiveState() { return activeDurationMillis > 0; }
 }

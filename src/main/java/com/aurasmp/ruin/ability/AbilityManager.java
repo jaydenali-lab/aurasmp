@@ -320,7 +320,7 @@ public final class AbilityManager {
         center.getWorld().spawnParticle(Particle.EXPLOSION_EMITTER, center, 1, 0, 0, 0, 0);
         center.getWorld().playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 1f, 0.9f);
         for (LivingEntity target : nearbyEnemies(player)) {
-            dealDamage(target, player, 8.0);
+            dealDamage(target, player, 6.0);
         }
     }
 
@@ -382,7 +382,7 @@ public final class AbilityManager {
     }
 
     private void berserk(Player player) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 120, 1));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 120, 0));
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 120, 0));
         player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 120, 0));
         player.getWorld().spawnParticle(Particle.ANGRY_VILLAGER, player.getLocation().add(0, 2, 0), 8, 0.4, 0.4, 0.4, 0);
@@ -405,7 +405,7 @@ public final class AbilityManager {
         int struck = 0;
         for (LivingEntity target : nearbyEnemies(player, 8.0)) {
             world.strikeLightningEffect(target.getLocation());
-            dealDamage(target, player, 7.2); // 18s cd -> 3.6 hearts
+            dealDamage(target, player, 6.0); // up to 3 targets
             if (++struck >= 3) break;
         }
         if (struck == 0) world.strikeLightningEffect(player.getLocation());
@@ -447,7 +447,7 @@ public final class AbilityManager {
                 if (targetable(entity, player)) {
                     LivingEntity le = (LivingEntity) entity;
                     le.setFireTicks(60);
-                    dealDamage(le, player, 8.0);
+                    dealDamage(le, player, 6.0);
                 }
             }
         }, 20L);
@@ -501,7 +501,7 @@ public final class AbilityManager {
         }
         for (LivingEntity target : cone(player, 6.0, 0.3)) {
             target.setFireTicks(100);
-            dealDamage(target, player, 6.0);
+            dealDamage(target, player, 5.0);
         }
     }
 
@@ -635,8 +635,8 @@ public final class AbilityManager {
         center.getWorld().spawnParticle(Particle.GUST_EMITTER_LARGE, center, 1, 0, 0, 0, 0);
         center.getWorld().spawnParticle(Particle.EXPLOSION, center, 3, 1, 0.2, 1, 0);
         center.getWorld().playSound(center, Sound.ENTITY_WIND_CHARGE_WIND_BURST, 1f, 0.8f);
-        // base ~2 hearts, + up to ~5.4 hearts the higher you leapt.
-        double dmg = 4.0 + Math.min(fall, 12.0) * 0.9;
+        // base 1.5 hearts, + up to 3 hearts the higher you leapt.
+        double dmg = 3.0 + Math.min(fall, 10.0) * 0.6;
         for (LivingEntity target : nearbyEnemies(player, 5.0)) {
             Vector push = target.getLocation().toVector().subtract(center.toVector());
             if (push.lengthSquared() < 0.01) push = new Vector(1, 0, 0);
@@ -716,8 +716,8 @@ public final class AbilityManager {
             }
         }
         for (LivingEntity target : nearbyEnemies(player, 4.5)) {
-            dealTrueDamage(target, player, 4.0); // 2 hearts of true damage per slam
-            if (stunning && target instanceof Player victim) stun(victim, 30);
+            dealTrueDamage(target, player, 3.0); // 1.5 hearts of true damage per slam
+            if (stunning && target instanceof Player victim) stun(victim, 20);
         }
     }
 
@@ -765,7 +765,7 @@ public final class AbilityManager {
                     return;
                 }
                 target.setNoDamageTicks(0); // bypass i-frames so every slash lands
-                dealDamage(target, player, 3.0);
+                dealDamage(target, player, 2.0);
                 Location at = target.getLocation().add(0, 1, 0);
                 cloudSlash(world, at, slashes); // alternating diagonal cloud slash
                 world.playSound(at, Sound.ENTITY_PLAYER_ATTACK_STRONG, 0.8f, 1.3f + slashes * 0.1f);
@@ -808,7 +808,7 @@ public final class AbilityManager {
             world.spawnParticle(Particle.SOUL, p, 1, 0.05, 0.05, 0.05, 0.005);
             for (Entity e : world.getNearbyEntities(p, 0.9, 0.9, 0.9)) {
                 if (targetable(e, player) && e instanceof LivingEntity le && pierced.add(e.getUniqueId())) {
-                    dealDamage(le, player, 5.6); // 14s cd -> 2.8 hearts, hits everyone in the line
+                    dealDamage(le, player, 4.0); // pierces everyone in the line
                 }
             }
         }
@@ -867,7 +867,7 @@ public final class AbilityManager {
         Vector away = attacker.getLocation().toVector().subtract(player.getLocation().toVector());
         if (away.lengthSquared() < 0.01) away = new Vector(1, 0, 0);
         attacker.setVelocity(away.normalize().multiply(1.0).setY(0.35));
-        dealDamage(attacker, player, 6.0);
+        dealDamage(attacker, player, 5.0);
     }
 
     private void iceBarrier(Player player) {
@@ -915,7 +915,7 @@ public final class AbilityManager {
         world.spawnParticle(Particle.SWEEP_ATTACK, at, 3, 0.4, 0.4, 0.4, 0);
         world.spawnParticle(Particle.CRIT, at, 15, 0.4, 0.4, 0.4, 0.2);
         world.playSound(at, Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 0.6f);
-        dealDamage(target, player, 4.0 + missing * 0.25); // execute: scales with missing health
+        dealDamage(target, player, 3.0 + missing * 0.20); // execute: scales with missing health
     }
 
     private void rewind(Player player) {
@@ -931,7 +931,8 @@ public final class AbilityManager {
             double max = player.getAttribute(Attribute.MAX_HEALTH) != null
                     ? player.getAttribute(Attribute.MAX_HEALTH).getValue() : 20.0;
             if (player.getHealth() < healthMark) {
-                player.setHealth(Math.min(max, healthMark)); // undo the damage taken since the mark
+                // Undo damage taken since the mark, capped at 4 hearts of healing.
+                player.setHealth(Math.min(max, Math.min(healthMark, player.getHealth() + 8.0)));
             }
             world.spawnParticle(Particle.REVERSE_PORTAL, mark.clone().add(0, 1, 0), 30, 0.4, 0.8, 0.4, 0.02);
             world.playSound(mark, Sound.ENTITY_ENDERMAN_TELEPORT, 1f, 0.6f);

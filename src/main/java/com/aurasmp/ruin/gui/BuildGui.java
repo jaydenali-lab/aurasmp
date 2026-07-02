@@ -86,7 +86,7 @@ public final class BuildGui {
         for (Card card : data.cards()) {
             if (slot > 35) break;
             holder.talentSlots.put(slot, card);
-            inv.setItem(slot, icon(card.icon(), card.displayName(), card.rarity().color(),
+            inv.setItem(slot, icon(card.icon(), card.modelKey(), card.displayName(), card.rarity().color(),
                     card.rarity().label() + " · " + card.description()));
             slot++;
         }
@@ -94,7 +94,7 @@ public final class BuildGui {
         int aslot = 47;
         for (Ability ability : data.abilities()) {
             holder.abilitySlots.put(aslot, ability);
-            inv.setItem(aslot, icon(ability.icon(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
+            inv.setItem(aslot, icon(ability.icon(), ability.modelKey(), ability.displayName(), NamedTextColor.LIGHT_PURPLE,
                     ability.description() + "  (" + (ability.cooldownMillis() / 1000) + "s)"));
             aslot += 2;
         }
@@ -156,9 +156,12 @@ public final class BuildGui {
         for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, pane);
     }
 
-    private ItemStack icon(Material material, String title, NamedTextColor color, String description) {
+    private ItemStack icon(Material material, String modelKey, String title, NamedTextColor color, String description) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
+        if (modelKey != null) {
+            meta.setItemModel(org.bukkit.NamespacedKey.fromString("ruin:" + modelKey));
+        }
         meta.displayName(Component.text(title, color).decoration(TextDecoration.ITALIC, false));
         meta.lore(List.of(Component.text(description, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
         item.setItemMeta(meta);
