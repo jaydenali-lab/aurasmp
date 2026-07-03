@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "ruin:font/wind_slam"
+    "layer0": "ruin:item/ability/wind_slam"
   }
 }

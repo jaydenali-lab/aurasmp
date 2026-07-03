@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "ruin:font/sonic_shriek"
+    "layer0": "ruin:item/ability/sonic_shriek"
   }
 }

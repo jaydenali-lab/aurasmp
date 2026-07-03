@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "ruin:font/levitate"
+    "layer0": "ruin:item/ability/levitate"
   }
 }

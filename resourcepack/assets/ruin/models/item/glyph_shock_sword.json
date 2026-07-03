@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "ruin:font/shock_sword"
+    "layer0": "ruin:item/ability/shock_sword"
   }
 }

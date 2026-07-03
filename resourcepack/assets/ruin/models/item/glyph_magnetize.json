@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "ruin:font/magnet"
+    "layer0": "ruin:item/ability/magnetize"
   }
 }

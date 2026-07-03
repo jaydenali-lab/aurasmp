@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "ruin:font/true_sight"
+    "layer0": "ruin:item/ability/true_sight"
   }
 }
