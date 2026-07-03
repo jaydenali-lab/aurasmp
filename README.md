@@ -225,7 +225,7 @@ dropped** and is **restored when you respawn**. Movement manifestations grant an
 | Lifedrain | Channel 3s: siphon health from the enemy you face | 18s |
 | Warp Beacon | Drop a beacon; recast within 10s to warp back | 20s |
 | Cannonball | Hurl yourself in an arc and detonate on landing | 16s |
-| Silence | Seal the enemy you face: no manifestations for 4s | 20s |
+| Silence | Seal the enemy you face: no manifestations for 4s | 10s |
 | Torrent | A water jet that blasts one enemy far away | 10s |
 | Ember Mine | Bury a fire mine that erupts when stepped on | 18s |
 | Sonic Shriek | A shriek that hurls one enemy away, dazed | 15s |
@@ -338,5 +338,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.12.1.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-1.13.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

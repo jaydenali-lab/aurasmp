@@ -75,7 +75,7 @@ public enum Ability {
     LIFEDRAIN("Lifedrain", Material.GHAST_TEAR, "Channel 3s: siphon health from the enemy you face.", 18_000, 0xE033, 3_000),
     WARP_BEACON("Warp Beacon", Material.BEACON, "Drop a beacon; recast within 10s to warp back.", 20_000, 0xE034, 0),
     CANNONBALL("Cannonball", Material.TNT, "Hurl yourself in an arc and detonate on landing.", 16_000, 0xE035, 0),
-    SILENCE("Silence", Material.SCULK_SHRIEKER, "Seal the enemy you face: no manifestations for 4s.", 20_000, 0xE036, 0),
+    SILENCE("Silence", Material.SCULK_SHRIEKER, "Seal the enemy you face: no manifestations for 4s.", 10_000, 0xE036, 4_000),
     TORRENT("Torrent", Material.WATER_BUCKET, "A water jet that blasts one enemy far away.", 10_000, 0xE037, 0),
     EMBER_MINE("Ember Mine", Material.CAMPFIRE, "Bury a fire mine that erupts when stepped on.", 18_000, 0xE038, 0),
     SONIC_SHRIEK("Sonic Shriek", Material.SCULK_SENSOR, "A shriek that hurls one enemy away, dazed.", 15_000, 0xE039, 0),
