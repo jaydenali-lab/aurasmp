@@ -1,5 +1,5 @@
 name: Ruin
-version: 1.13.1
+version: 2.0.0
 main: com.aurasmp.ruin.RuinPlugin
 api-version: '1.21'
 author: AuraSMP
@@ -15,6 +15,11 @@ commands:
       /ruin give <mirror|catalyst> [player] [amount] - admin give
       /ruin reset [player] - reset progression
       /ruin reload - reload config.yml (admin)
+    permission: ruin.use
+  skilltree:
+    description: Open the skill tree to spend skill points.
+    usage: /skilltree
+    aliases: [st, tree]
     permission: ruin.use
   trust:
     description: Mark a player as a trusted ally (your manifestations spare them).

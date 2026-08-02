@@ -134,7 +134,7 @@ public final class BuildGui {
         } else {
             lore.add(line("XP", data.xp() + " / " + plugin.progression().threshold(data.level())));
         }
-        lore.add(line("Rerolls", data.rerolls() + " / " + PlayerData.DEFAULT_REROLLS));
+        lore.add(line("Skill Points", String.valueOf(data.skillPoints())));
         lore.add(line("Talents", String.valueOf(data.cards().size())));
         lore.add(line("Manifestations", String.valueOf(data.abilities().size())));
         meta.lore(lore);

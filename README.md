@@ -8,22 +8,23 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 - **Earn XP by killing.** Weak/passive mobs give little, hostile mobs give more, strong
   mobs and bosses give a lot, and **players give the most**.
-- **Level up to draft.** Each level-up opens a draft menu — **5 talents** or **4
-  manifestations** to choose from. You're **invincible while it's open** (up to 10s),
-  and you get **5 rerolls per build** (resets on a Mirror Shard wipe).
-  - Levels **1–10** (max level is **10**).
-  - Most levels offer a **Talent** (passive).
-  - **Every 5th level (5 and 10)** offers a **Manifestation** (active cast) instead.
-  - **Level 10 also grants a bonus talent** — a finished build is **8 talents + 2
-    manifestations**.
-  - If you gain several levels at once, the drafts open **one after another**.
-  - Options show their **rarity** (colored pane above each): grey Common, blue Rare,
-    purple Epic, yellow Legendary — rarer talents roll less often.
-- **Cast Manifestations** with the **Ruin Catalyst** (given when you learn your first one):
-  - Right-click = first manifestation
-  - Shift + Right-click = second manifestation
-- **Mirror Shard** resets your level back to 1 and clears all talents/manifestations so you
-  can re-draft a new build. (A default recipe is registered — swap in your own; see below.)
+- **Level up for Skill Points.** Every level-up grants **3 SP** (+3 bonus at max
+  level 10 — **30 SP** for a full build). No more random drafts.
+- **Spend them in the Skill Tree** — `/skilltree` (or `/st`, `/tree`):
+  - Five branches: **Melee**, **Ranged**, **AoE**, **Support**, **Status**.
+  - Every talent and manifestation is a node. **Better nodes cost more SP**
+    (Common 1 · Rare 2 · Epic 3 · Legendary 5; manifestations 3–6 by tier).
+  - **Deeper tiers unlock by investing in the branch**: Tier 2 needs 4 SP spent
+    there, Tier 3 needs 9, Tier 4 needs 15 — specialise or spread wide.
+  - You can carry at most **4 manifestations** at once.
+- **Casting**: every manifestation you unlock becomes **its own item in your
+  inventory** with its glyph icon — **right-click it to cast**. Cast items are
+  soulbound: can't be dropped, stashed, crafted, or lost on death.
+- **Weapon talents** (Melee branch) reward committing to one weapon: Fencer
+  (swords), Spearhead + Skewer (the 1.21.11 **Spear**), and Concussive Blows —
+  every 5th **axe** hit stuns like Zelkova for 1.5s.
+- **Mirror Shard** = full respec: refunds every skill point so you can rebuild.
+  (A default recipe is registered — swap in your own; see below.)
 
 ### XP values (base)
 
@@ -38,7 +39,7 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
-## The 80 Talents (passive)
+## The 84 Talents (passive)
 
 **Attribute talents (10)** — applied as persistent attribute modifiers:
 
@@ -165,11 +166,20 @@ Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 45
 | Medic | Nearby hurt allies slowly regenerate |
 | Escape Plan | Below 30% health you move 10% faster |
 
+**Weapon talents (4):**
+
+| Talent | Effect |
+|--------|--------|
+| Fencer | +7% damage while holding a sword |
+| Spearhead | +10% damage while holding a spear |
+| Skewer | Spear hits from 3.5+ blocks away deal +1.5 bonus damage |
+| Concussive Blows | Every 5th axe hit stuns the target for 1.5s |
+
 (Note: the original **Thorns** was replaced by **Ghost**.)
 
 ## The 60 Manifestations (active)
 
-Cast via the Ruin Catalyst — each on its own cooldown. **Damaging manifestations
+Cast via their own inventory items — each on its own cooldown. **Damaging manifestations
 deal normal damage** (reduced by armour), scaled to cooldown (≈ cooldown ÷ 5
 hearts); ones that also apply a debuff deal 1/5 of that. The **Catalyst can't be
 dropped** and is **restored when you respawn**. Movement manifestations grant an 8s no-fall-damage window.
@@ -338,5 +348,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-1.13.1.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-2.0.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

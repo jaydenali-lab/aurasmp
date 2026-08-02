@@ -138,7 +138,13 @@ public enum Card {
     HAYMAKER("Haymaker", Material.SLIME_BALL, "Your melee hits knock enemies back much further.",
             Attribute.ATTACK_KNOCKBACK, AttributeModifier.Operation.ADD_NUMBER, 0.5),
     MEDIC("Medic", Material.CAKE, "Nearby hurt allies slowly regenerate."),
-    ESCAPE_PLAN("Escape Plan", Material.RABBIT_HIDE, "Below 30% health you move 10% faster.");
+    ESCAPE_PLAN("Escape Plan", Material.RABBIT_HIDE, "Below 30% health you move 10% faster."),
+
+    // ==== 2.0.0: weapon talents ====
+    FENCER("Fencer", Material.IRON_SWORD, "+7% damage while holding a sword."),
+    SPEARHEAD("Spearhead", Material.TRIDENT, "+10% damage while holding a spear."),
+    SKEWER("Skewer", Material.ARROW, "Spear hits from 3.5+ blocks away deal +1.5 bonus damage."),
+    CONCUSSIVE_BLOWS("Concussive Blows", Material.NETHERITE_AXE, "Every 5th axe hit stuns the target for 1.5s.");
 
     private final String displayName;
     private final Material icon;
@@ -175,7 +181,7 @@ public enum Card {
     private static final java.util.EnumMap<Card, Rarity> RARITY = new java.util.EnumMap<>(Card.class);
     static {
         for (Card c : new Card[]{ONSLAUGHT, EXECUTIONER, JUGGERNAUT, GHOST, RISKY_MOVES,
-                GLASS_CANNON, SECOND_WIND, UNDYING}) {
+                GLASS_CANNON, SECOND_WIND, UNDYING, CONCUSSIVE_BLOWS}) {
             RARITY.put(c, Rarity.LEGENDARY);
         }
         for (Card c : new Card[]{ENDURANCE, LIFESTEAL, REGENERATOR, BARRIER, CLEAVE, RETRIBUTION,
@@ -188,7 +194,8 @@ public enum Card {
                 ADRENALINE, HASTE, FIRE_WALKER, VENOM, CRIT, BLOODLUST, STEADY_FEET, QUICKDRAW,
                 KICK_OFF, CONDITIONED_RUNNER, PACK_LEADER, FORTRESS,
                 FIRST_STRIKE, DUELIST, AERIAL, VENDETTA, NIGHT_STALKER, GIANT_SLAYER,
-                SHIELDBREAKER, BRACED, DEFLECTION, CLARITY, SIXTH_SENSE, HAYMAKER, MEDIC}) {
+                SHIELDBREAKER, BRACED, DEFLECTION, CLARITY, SIXTH_SENSE, HAYMAKER, MEDIC,
+                SPEARHEAD, SKEWER}) {
             RARITY.put(c, Rarity.RARE);
         }
     }

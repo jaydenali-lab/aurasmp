@@ -53,6 +53,16 @@ public final class GuiListener implements Listener {
             return;
         }
 
+        // Skill tree menu.
+        if (holder instanceof com.aurasmp.ruin.gui.SkillTreeGui.Holder tree) {
+            event.setCancelled(true);
+            if (!(event.getWhoClicked() instanceof Player p)) return;
+            if (event.getClickedInventory() == null
+                    || !event.getClickedInventory().equals(event.getInventory())) return;
+            plugin.skillTree().handleClick(p, tree, event.getSlot());
+            return;
+        }
+
         if (!(holder instanceof SelectionGui.Session session)) return;
 
         event.setCancelled(true); // draft menus are never editable
@@ -82,16 +92,16 @@ public final class GuiListener implements Listener {
         // Top inventory CRAFTING = plain player view, nothing foreign open.
         if (event.getView().getTopInventory().getType()
                 == org.bukkit.event.inventory.InventoryType.CRAFTING) return;
-        boolean touchesCatalyst = plugin.items().isCatalyst(event.getCurrentItem())
-                || plugin.items().isCatalyst(event.getCursor())
+        boolean touchesCatalyst = plugin.items().isBoundItem(event.getCurrentItem())
+                || plugin.items().isBoundItem(event.getCursor())
                 || (event.getClick() == org.bukkit.event.inventory.ClickType.NUMBER_KEY
-                    && plugin.items().isCatalyst(player.getInventory().getItem(event.getHotbarButton())));
+                    && plugin.items().isBoundItem(player.getInventory().getItem(event.getHotbarButton())));
         if (touchesCatalyst) event.setCancelled(true);
     }
 
     @EventHandler(ignoreCancelled = true)
     public void onCatalystDrag(org.bukkit.event.inventory.InventoryDragEvent event) {
-        if (!plugin.items().isCatalyst(event.getOldCursor())) return;
+        if (!plugin.items().isBoundItem(event.getOldCursor())) return;
         int topSize = event.getView().getTopInventory().getSize();
         if (event.getView().getTopInventory().getType()
                 == org.bukkit.event.inventory.InventoryType.CRAFTING) return;
@@ -106,7 +116,7 @@ public final class GuiListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onCatalystCraft(org.bukkit.event.inventory.PrepareItemCraftEvent event) {
         for (org.bukkit.inventory.ItemStack item : event.getInventory().getMatrix()) {
-            if (plugin.items().isCatalyst(item)) {
+            if (plugin.items().isBoundItem(item)) {
                 event.getInventory().setResult(null);
                 return;
             }

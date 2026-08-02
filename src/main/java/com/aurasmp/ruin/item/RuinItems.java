@@ -24,10 +24,12 @@ public final class RuinItems {
 
     private final RuinPlugin plugin;
     private final NamespacedKey idKey;
+    private final NamespacedKey castKey;
 
     public RuinItems(RuinPlugin plugin) {
         this.plugin = plugin;
         this.idKey = new NamespacedKey(plugin, "item_id");
+        this.castKey = new NamespacedKey(plugin, "cast_ability");
     }
 
     /** Reads our custom-item tag, or null for vanilla/foreign items. */
@@ -38,6 +40,70 @@ public final class RuinItems {
 
     public boolean isMirrorShard(ItemStack item) { return MIRROR_SHARD.equals(idOf(item)); }
     public boolean isCatalyst(ItemStack item) { return CATALYST.equals(idOf(item)); }
+
+    /** The ability a cast item fires, or null for anything else. */
+    public com.aurasmp.ruin.ability.Ability castAbility(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) return null;
+        String name = item.getItemMeta().getPersistentDataContainer()
+                .get(castKey, PersistentDataType.STRING);
+        if (name == null) return null;
+        try {
+            return com.aurasmp.ruin.ability.Ability.valueOf(name);
+        } catch (IllegalArgumentException gone) {
+            return null;
+        }
+    }
+
+    public boolean isCastItem(ItemStack item) { return castAbility(item) != null; }
+
+    /** Soulbound items (Catalyst legacy + cast items) that must never leave the owner. */
+    public boolean isBoundItem(ItemStack item) { return isCatalyst(item) || isCastItem(item); }
+
+    /** One cast item per manifestation — right-click it to cast, shows its own glyph icon. */
+    public ItemStack castItem(Ability ability) {
+        ItemStack item = new ItemStack(ability.icon());
+        var meta = item.getItemMeta();
+        meta.getPersistentDataContainer().set(castKey, PersistentDataType.STRING, ability.name());
+        meta.setItemModel(org.bukkit.NamespacedKey.fromString("ruin:" + ability.modelKey()));
+        meta.displayName(net.kyori.adventure.text.Component.text(ability.displayName(),
+                        net.kyori.adventure.text.format.NamedTextColor.LIGHT_PURPLE)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+        meta.lore(java.util.List.of(
+                net.kyori.adventure.text.Component.text(ability.description(),
+                                net.kyori.adventure.text.format.NamedTextColor.GRAY)
+                        .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false),
+                net.kyori.adventure.text.Component.text("Right-click to cast · "
+                                + (ability.cooldownMillis() / 1000) + "s cooldown",
+                                net.kyori.adventure.text.format.NamedTextColor.GOLD)
+                        .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false)));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Syncs the player's inventory with their unlocked manifestations: strips
+     * stale cast items and legacy Catalysts, then hands out one cast item per
+     * owned ability that's missing.
+     */
+    public void refreshCastItems(org.bukkit.entity.Player player, com.aurasmp.ruin.data.PlayerData data) {
+        java.util.Set<Ability> present = java.util.EnumSet.noneOf(Ability.class);
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack item = contents[i];
+            if (isCatalyst(item)) {
+                player.getInventory().setItem(i, null); // Catalyst retired in 2.0
+                continue;
+            }
+            Ability ability = castAbility(item);
+            if (ability == null) continue;
+            if (!data.hasAbility(ability) || !present.add(ability)) {
+                player.getInventory().setItem(i, null); // no longer owned, or duplicate
+            }
+        }
+        for (Ability ability : data.abilities()) {
+            if (!present.contains(ability)) player.getInventory().addItem(castItem(ability));
+        }
+    }
 
     public ItemStack create(String id) {
         return switch (id) {

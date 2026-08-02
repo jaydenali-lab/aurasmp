@@ -74,19 +74,19 @@ public final class Progression {
             data.setXp(data.xp() - threshold(data.level()));
             data.setLevel(data.level() + 1);
             gained++;
-            // Every 5th level (5 and 10) grants a manifestation; the rest grant talents.
-            boolean ability = data.level() % 5 == 0;
-            plugin.gui().queue(player, ability);
-            // Capstone: reaching max level also grants a bonus talent (8 talents total).
-            if (ability && data.level() == PlayerData.MAX_LEVEL) plugin.gui().queue(player, false);
+            // Skill points instead of random drafts — spend them in /skilltree.
+            data.addSkillPoints(com.aurasmp.ruin.skilltree.SkillTree.SP_PER_LEVEL);
+            if (data.level() == PlayerData.MAX_LEVEL) {
+                data.addSkillPoints(com.aurasmp.ruin.skilltree.SkillTree.SP_MAX_LEVEL_BONUS);
+            }
         }
 
         if (gained > 0) {
             player.showTitle(net.kyori.adventure.title.Title.title(
                     Component.text("Level " + data.level(), NamedTextColor.LIGHT_PURPLE),
-                    Component.text("Choose a talent", NamedTextColor.GRAY)));
+                    Component.text("+" + (com.aurasmp.ruin.skilltree.SkillTree.SP_PER_LEVEL * gained)
+                            + " skill points — /skilltree", NamedTextColor.GRAY)));
             player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-            plugin.gui().openNextIfIdle(player);
         }
         // Pop the XP boss bar (auto-hides after 5s) on every gain.
         plugin.xpBar().show(player, data);
@@ -102,18 +102,17 @@ public final class Progression {
             data.setLevel(data.level() + 1);
             data.setXp(0);
             gained++;
-            boolean ability = data.level() % 5 == 0;
-            plugin.gui().queue(player, ability);
-            // Capstone: reaching max level also grants a bonus talent (8 talents total).
-            if (ability && data.level() == PlayerData.MAX_LEVEL) plugin.gui().queue(player, false);
+            data.addSkillPoints(com.aurasmp.ruin.skilltree.SkillTree.SP_PER_LEVEL);
+            if (data.level() == PlayerData.MAX_LEVEL) {
+                data.addSkillPoints(com.aurasmp.ruin.skilltree.SkillTree.SP_MAX_LEVEL_BONUS);
+            }
         }
         if (gained > 0) {
             player.showTitle(net.kyori.adventure.title.Title.title(
                     Component.text("Level " + data.level(), NamedTextColor.LIGHT_PURPLE),
-                    Component.text("Choose a talent", NamedTextColor.GRAY)));
+                    Component.text("+" + (com.aurasmp.ruin.skilltree.SkillTree.SP_PER_LEVEL * gained)
+                            + " skill points — /skilltree", NamedTextColor.GRAY)));
             player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
-            // Drafts open one after another (the GUI advances to the next on each pick).
-            plugin.gui().openNextIfIdle(player);
         }
         plugin.data().save(player.getUniqueId(), data);
         return gained;

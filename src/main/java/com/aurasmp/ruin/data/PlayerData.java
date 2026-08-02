@@ -14,12 +14,13 @@ import java.util.UUID;
 public final class PlayerData {
 
     public static final int MAX_LEVEL = 10;
-    public static final int MAX_ABILITIES = 2;
+    public static final int MAX_ABILITIES = 4;
     public static final int DEFAULT_REROLLS = 5;
 
     private int level = 1;
     private int xp = 0;
     private int rerolls = DEFAULT_REROLLS;
+    private int skillPoints = 0;
     private final Set<Card> cards = EnumSet.noneOf(Card.class);
     private final List<Ability> abilities = new ArrayList<>(MAX_ABILITIES);
     // Players this player considers allies (one-way; affects only their own effects).
@@ -34,6 +35,10 @@ public final class PlayerData {
 
     public int rerolls() { return rerolls; }
     public void setRerolls(int rerolls) { this.rerolls = rerolls; }
+
+    public int skillPoints() { return skillPoints; }
+    public void setSkillPoints(int skillPoints) { this.skillPoints = Math.max(0, skillPoints); }
+    public void addSkillPoints(int amount) { this.skillPoints = Math.max(0, this.skillPoints + amount); }
 
     public Set<Card> cards() { return cards; }
     public boolean hasCard(Card card) { return cards.contains(card); }
@@ -51,6 +56,7 @@ public final class PlayerData {
         level = 1;
         xp = 0;
         rerolls = DEFAULT_REROLLS;
+        skillPoints = 0;
         cards.clear();
         abilities.clear();
     }

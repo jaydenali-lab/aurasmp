@@ -119,6 +119,11 @@ public final class AbilityManager {
         return true;
     }
 
+    /** Zelkova-style stun, exposed for the Concussive Blows axe talent. */
+    public void stunPlayer(Player victim, int ticks) {
+        stun(victim, ticks);
+    }
+
     /** Battle Rush talent: cut every remaining manifestation cooldown in half. */
     public void halveCooldowns(UUID id) {
         for (Ability ability : Ability.values()) {

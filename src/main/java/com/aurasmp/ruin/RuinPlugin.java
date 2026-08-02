@@ -31,6 +31,7 @@ public final class RuinPlugin extends JavaPlugin {
     private SelectionGui gui;
     private BuildGui buildGui;
     private PickerGui pickerGui;
+    private com.aurasmp.ruin.gui.SkillTreeGui skillTreeGui;
     private RuinItems items;
     private ActionBarHud hud;
     private XpBossBar xpBar;
@@ -46,6 +47,8 @@ public final class RuinPlugin extends JavaPlugin {
         this.gui = new SelectionGui(this);
         this.buildGui = new BuildGui(this);
         this.pickerGui = new PickerGui(this);
+        this.skillTreeGui = new com.aurasmp.ruin.gui.SkillTreeGui(this);
+        com.aurasmp.ruin.skilltree.SkillTree.validate(); // every node must be placed
         this.items = new RuinItems(this);
         this.hud = new ActionBarHud(this);
         this.xpBar = new XpBossBar(this);
@@ -71,6 +74,12 @@ public final class RuinPlugin extends JavaPlugin {
             trust.setExecutor(executor);
             trust.setTabCompleter(executor);
         }
+        PluginCommand skilltree = getCommand("skilltree");
+        if (skilltree != null) {
+            com.aurasmp.ruin.command.SkillTreeCommand executor = new com.aurasmp.ruin.command.SkillTreeCommand(this);
+            skilltree.setExecutor(executor);
+            skilltree.setTabCompleter(executor);
+        }
         PluginCommand untrust = getCommand("untrust");
         if (untrust != null) {
             com.aurasmp.ruin.command.TrustCommand executor = new com.aurasmp.ruin.command.TrustCommand(this, true);
@@ -83,7 +92,9 @@ public final class RuinPlugin extends JavaPlugin {
             cards.recalc(player, data.get(player.getUniqueId()));
         }
 
-        getLogger().info("Ruin enabled — 40 talents, 20 manifestations, max level " + PlayerData.MAX_LEVEL + ".");
+        getLogger().info("Ruin enabled — skill tree with " + com.aurasmp.ruin.card.Card.values().length
+                + " talents and " + com.aurasmp.ruin.ability.Ability.values().length
+                + " manifestations, max level " + PlayerData.MAX_LEVEL + ".");
     }
 
     @Override
@@ -102,7 +113,9 @@ public final class RuinPlugin extends JavaPlugin {
         abilities.cooldowns().clear(player.getUniqueId());
         abilities.clearActive(player.getUniqueId());
         gui.clear(player.getUniqueId());
-        gui.refreshCatalyst(player, playerData); // no abilities -> removes any Catalyst
+        items.refreshCastItems(player, playerData); // strips all cast items + legacy Catalysts
+        // Full respec: every earned skill point comes back.
+        com.aurasmp.ruin.skilltree.SkillTree.reconcile(playerData);
         data.save(player.getUniqueId(), playerData);
     }
 
@@ -114,6 +127,7 @@ public final class RuinPlugin extends JavaPlugin {
     public SelectionGui gui() { return gui; }
     public BuildGui buildGui() { return buildGui; }
     public PickerGui pickerGui() { return pickerGui; }
+    public com.aurasmp.ruin.gui.SkillTreeGui skillTree() { return skillTreeGui; }
     public RuinItems items() { return items; }
     public XpBossBar xpBar() { return xpBar; }
 }

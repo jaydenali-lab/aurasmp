@@ -166,6 +166,13 @@ public final class CombatListener implements Listener {
                 if (data.hasCard(Card.COMBO)) {
                     damage *= 1 + 0.02 * comboStacks(aid, victim.getUniqueId());
                 }
+                // Weapon talents: bonus while holding the matching weapon.
+                if (data.hasCard(Card.FENCER) && holdingWeapon(attacker, "_SWORD")) damage *= 1.07;
+                if (data.hasCard(Card.SPEARHEAD) && holdingWeapon(attacker, "SPEAR")) damage *= 1.10;
+                if (data.hasCard(Card.SKEWER) && holdingWeapon(attacker, "SPEAR")
+                        && attacker.getLocation().distanceSquared(victim.getLocation()) >= 3.5 * 3.5) {
+                    damage += 1.5; // poke from spear range
+                }
                 if (data.hasCard(Card.RAMPAGE)) {
                     damage *= 1 + 0.02 * rampageStacks(aid);
                 }
@@ -190,6 +197,21 @@ public final class CombatListener implements Listener {
                 // Bloodhound: players you hit glow briefly.
                 if (data.hasCard(Card.BLOODHOUND) && victim instanceof Player) {
                     victim.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0));
+                }
+                // Concussive Blows: every 5th axe hit stuns (Zelkova-style) for 1.5s.
+                if (data.hasCard(Card.CONCUSSIVE_BLOWS) && holdingWeapon(attacker, "_AXE")) {
+                    int hits = axeHits.merge(aid, 1, Integer::sum);
+                    if (hits >= 5) {
+                        axeHits.put(aid, 0);
+                        if (victim instanceof Player stunned) {
+                            plugin.abilities().stunPlayer(stunned, 30);
+                        } else {
+                            victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 4));
+                        }
+                        attacker.getWorld().spawnParticle(Particle.CRIT,
+                                victim.getLocation().add(0, 1.6, 0), 15, 0.3, 0.2, 0.3, 0.1);
+                        attacker.getWorld().playSound(victim.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.6f, 1.6f);
+                    }
                 }
                 // Static Charge manifestation: spend an empowered hit.
                 if (plugin.abilities().consumeStaticCharge(aid)) {
@@ -253,6 +275,14 @@ public final class CombatListener implements Listener {
     private final java.util.Map<UUID, Long> mangledUntil = new java.util.HashMap<>();
     /** Undying: per-player cheat-death cooldown. */
     private final java.util.Map<UUID, Long> undyingUntil = new java.util.HashMap<>();
+
+    // Concussive Blows: hit counter per attacker.
+    private final java.util.Map<UUID, Integer> axeHits = new java.util.HashMap<>();
+
+    /** Main-hand weapon check by material-name suffix ("SPEAR" also matches tiered spears). */
+    private boolean holdingWeapon(Player player, String suffix) {
+        return player.getInventory().getItemInMainHand().getType().name().endsWith(suffix);
+    }
 
     /** Backstab = both facing roughly the same horizontal direction. */
     private boolean isBackstab(Player attacker, LivingEntity victim) {

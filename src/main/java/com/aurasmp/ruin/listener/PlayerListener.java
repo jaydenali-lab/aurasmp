@@ -35,20 +35,11 @@ public final class PlayerListener implements Listener {
         Player player = event.getPlayer();
         PlayerData data = plugin.data().get(player.getUniqueId());
         plugin.cards().recalc(player, data);
-        // Hand back a Catalyst if they have abilities but lost the item.
-        if (!data.abilities().isEmpty() && !hasCatalyst(player)) {
-            player.getInventory().addItem(plugin.items().catalyst(data.abilities()));
-        }
-        // Self-heal: re-queue any level-up picks that were lost (e.g. logout mid-draft).
-        int expectedAbilities = data.level() / 5; // manifestations at levels 5 and 10
-        int expectedTalents = (data.level() - 1) - expectedAbilities
-                + (data.level() >= PlayerData.MAX_LEVEL ? 1 : 0); // max-level capstone talent
-        int owedAbilities = Math.max(0,
-                Math.min(expectedAbilities, PlayerData.MAX_ABILITIES) - data.abilities().size());
-        int owedTalents = Math.max(0, expectedTalents - data.cards().size());
-        for (int i = 0; i < owedAbilities; i++) plugin.gui().queue(player, true);
-        for (int i = 0; i < owedTalents; i++) plugin.gui().queue(player, false);
-        plugin.gui().openNextIfIdle(player);
+        // Sync cast items with unlocked manifestations (also retires legacy Catalysts).
+        plugin.items().refreshCastItems(player, data);
+        // Reconcile skill points with level + owned nodes (heals old draft-era builds too).
+        com.aurasmp.ruin.skilltree.SkillTree.reconcile(data);
+        plugin.data().save(player.getUniqueId(), data);
     }
 
     @EventHandler
@@ -75,6 +66,19 @@ public final class PlayerListener implements Listener {
             return;
         }
 
+        // 2.0: each manifestation is its own cast item — right-click fires it.
+        Ability cast = plugin.items().castAbility(item);
+        if (cast != null) {
+            event.setCancelled(true);
+            if (plugin.data().get(player.getUniqueId()).hasAbility(cast)) {
+                plugin.abilities().tryActivate(player, cast);
+            } else {
+                player.getInventory().remove(item); // stale item for an ability they respecced away
+            }
+            return;
+        }
+
+        // Legacy Catalyst still casts (pre-2.0 items in the wild).
         if (plugin.items().isCatalyst(item)) {
             event.setCancelled(true);
             List<Ability> abilities = plugin.data().get(player.getUniqueId()).abilities();
@@ -89,16 +93,16 @@ public final class PlayerListener implements Listener {
 
     @EventHandler
     public void onDrop(PlayerDropItemEvent event) {
-        // The Catalyst can't be dropped.
-        if (plugin.items().isCatalyst(event.getItemDrop().getItemStack())) {
+        // Bound items (cast items + legacy Catalyst) can't be dropped.
+        if (plugin.items().isBoundItem(event.getItemDrop().getItemStack())) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
-        // Don't drop the Catalyst on death — it's restored on respawn instead.
-        event.getDrops().removeIf(item -> plugin.items().isCatalyst(item));
+        // Bound items never drop on death — they're restored on respawn instead.
+        event.getDrops().removeIf(item -> plugin.items().isBoundItem(item));
     }
 
     @EventHandler
@@ -106,10 +110,7 @@ public final class PlayerListener implements Listener {
         Player player = event.getPlayer();
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             if (!player.isOnline()) return;
-            PlayerData data = plugin.data().get(player.getUniqueId());
-            if (!data.abilities().isEmpty() && !hasCatalyst(player)) {
-                player.getInventory().addItem(plugin.items().catalyst(data.abilities()));
-            }
+            plugin.items().refreshCastItems(player, plugin.data().get(player.getUniqueId()));
         });
     }
 
