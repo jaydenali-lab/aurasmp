@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.aurasmp"
-version = "2.0.0"
+version = "2.0.1"
 
 // Paper API version. Targeting the 1.21.x line (api-version "1.21" in plugin.yml
 // covers every 1.21.x server, so this jar runs on 1.21.11 too).

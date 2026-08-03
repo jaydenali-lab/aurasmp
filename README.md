@@ -280,6 +280,12 @@ progress to the next level (`Level 4 — 320 / 900 XP`). It **auto-hides 5 secon
 after your last XP gain; a kill streak keeps refreshing it. It's per-player
 (client-side), so other players don't see yours.
 
+## Icon credits
+
+Talent and manifestation GUI icons are built from [game-icons.net](https://game-icons.net)
+artwork (by Lorc, Delapouite, and contributors), used under
+[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) — recolored and framed for Ruin.
+
 ## Allies — /trust
 
 By default every other player counts as an **enemy**: your damaging
@@ -348,5 +354,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-2.0.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-2.0.1.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.
