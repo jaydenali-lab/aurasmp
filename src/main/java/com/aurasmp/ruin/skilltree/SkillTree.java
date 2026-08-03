@@ -24,12 +24,12 @@ import static com.aurasmp.ruin.card.Card.*;
 public final class SkillTree {
 
     /** Skill points granted per level gained. */
-    public static final int SP_PER_LEVEL = 3;
+    public static final int SP_PER_LEVEL = 2;
     /** Bonus skill points for reaching max level. */
-    public static final int SP_MAX_LEVEL_BONUS = 3;
+    public static final int SP_MAX_LEVEL_BONUS = 2;
 
-    /** Points that must be spent IN a branch before each tier opens. */
-    public static final int[] TIER_THRESHOLDS = {0, 0, 4, 9, 15}; // index = tier
+    // Wynncraft-style progression: the tree grows outward — a tier opens
+    // once you own at least one node of the previous tier in that branch.
 
     public enum Branch {
         MELEE("Melee", "Close-up damage, weapon mastery and duels"),
@@ -237,8 +237,13 @@ public final class SkillTree {
         return spent;
     }
 
+    /** Wynncraft-style: tier 1 is the branch root; deeper tiers extend from an owned node. */
     public static boolean tierUnlocked(PlayerData data, Branch branch, int tier) {
-        return spentInBranch(data, branch) >= TIER_THRESHOLDS[Math.min(tier, TIER_THRESHOLDS.length - 1)];
+        if (tier <= 1) return true;
+        for (Node node : branchNodes(branch)) {
+            if (node.tier() == tier - 1 && owns(data, node)) return true;
+        }
+        return false;
     }
 
     public static boolean owns(PlayerData data, Node node) {

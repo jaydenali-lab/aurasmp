@@ -32,6 +32,8 @@ public final class RuinPlugin extends JavaPlugin {
     private BuildGui buildGui;
     private PickerGui pickerGui;
     private com.aurasmp.ruin.gui.SkillTreeGui skillTreeGui;
+    private com.aurasmp.ruin.hud.LevelTag levelTag;
+    private com.aurasmp.ruin.skilltree.TreeAdvancements treeAdvancements;
     private RuinItems items;
     private ActionBarHud hud;
     private XpBossBar xpBar;
@@ -49,6 +51,8 @@ public final class RuinPlugin extends JavaPlugin {
         this.pickerGui = new PickerGui(this);
         this.skillTreeGui = new com.aurasmp.ruin.gui.SkillTreeGui(this);
         com.aurasmp.ruin.skilltree.SkillTree.validate(); // every node must be placed
+        this.levelTag = new com.aurasmp.ruin.hud.LevelTag(this);
+        this.treeAdvancements = new com.aurasmp.ruin.skilltree.TreeAdvancements(this);
         this.items = new RuinItems(this);
         this.hud = new ActionBarHud(this);
         this.xpBar = new XpBossBar(this);
@@ -57,6 +61,8 @@ public final class RuinPlugin extends JavaPlugin {
         items.registerRecipes();
         hud.start();
         talentAura.start();
+        levelTag.start();
+        treeAdvancements.install();
 
         getServer().getPluginManager().registerEvents(new CombatListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
@@ -99,6 +105,7 @@ public final class RuinPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (levelTag != null) levelTag.stop();
         if (hud != null) hud.stop();
         if (talentAura != null) talentAura.stop();
         if (xpBar != null) xpBar.cleanupAll();
@@ -116,6 +123,7 @@ public final class RuinPlugin extends JavaPlugin {
         items.refreshCastItems(player, playerData); // strips all cast items + legacy Catalysts
         // Full respec: every earned skill point comes back.
         com.aurasmp.ruin.skilltree.SkillTree.reconcile(playerData);
+        treeAdvancements.sync(player);
         data.save(player.getUniqueId(), playerData);
     }
 
@@ -128,6 +136,8 @@ public final class RuinPlugin extends JavaPlugin {
     public BuildGui buildGui() { return buildGui; }
     public PickerGui pickerGui() { return pickerGui; }
     public com.aurasmp.ruin.gui.SkillTreeGui skillTree() { return skillTreeGui; }
+    public com.aurasmp.ruin.hud.LevelTag levelTag() { return levelTag; }
+    public com.aurasmp.ruin.skilltree.TreeAdvancements treeAdvancements() { return treeAdvancements; }
     public RuinItems items() { return items; }
     public XpBossBar xpBar() { return xpBar; }
 }

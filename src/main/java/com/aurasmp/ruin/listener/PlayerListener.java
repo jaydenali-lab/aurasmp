@@ -40,10 +40,14 @@ public final class PlayerListener implements Listener {
         // Reconcile skill points with level + owned nodes (heals old draft-era builds too).
         com.aurasmp.ruin.skilltree.SkillTree.reconcile(data);
         plugin.data().save(player.getUniqueId(), data);
+        // Light up their advancements-screen tree.
+        plugin.getServer().getScheduler().runTask(plugin,
+                () -> { if (player.isOnline()) plugin.treeAdvancements().sync(player); });
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
+        plugin.levelTag().remove(event.getPlayer().getUniqueId());
         plugin.gui().clear(event.getPlayer().getUniqueId());
         // Cooldowns deliberately survive a relog — quitting is not a cooldown reset.
         plugin.abilities().cleanup(event.getPlayer().getUniqueId());
@@ -101,6 +105,7 @@ public final class PlayerListener implements Listener {
 
     @EventHandler
     public void onDeath(PlayerDeathEvent event) {
+        plugin.levelTag().remove(event.getEntity().getUniqueId());
         // Bound items never drop on death — they're restored on respawn instead.
         event.getDrops().removeIf(item -> plugin.items().isBoundItem(item));
     }

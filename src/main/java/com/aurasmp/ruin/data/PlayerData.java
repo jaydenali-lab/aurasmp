@@ -13,7 +13,7 @@ import java.util.UUID;
 /** Mutable per-player progression state. */
 public final class PlayerData {
 
-    public static final int MAX_LEVEL = 10;
+    public static final int MAX_LEVEL = 25;
     public static final int MAX_ABILITIES = 4;
     public static final int DEFAULT_REROLLS = 5;
 

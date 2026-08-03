@@ -81,10 +81,9 @@ public final class SkillTreeGui {
                 List.of("To the branch overview")), "ui_back"));
         inv.setItem(INFO_SLOT, infoItem(data));
         inv.setItem(8, chrome(simple(Material.LADDER, "Tiers", NamedTextColor.AQUA, List.of(
-                "Deeper tiers need points spent in this branch:",
-                "Tier 2: " + SkillTree.TIER_THRESHOLDS[2] + "  ·  Tier 3: " + SkillTree.TIER_THRESHOLDS[3]
-                        + "  ·  Tier 4: " + SkillTree.TIER_THRESHOLDS[4],
-                "Spent here: " + SkillTree.spentInBranch(data, branch))), "ui_tiers"));
+                "The tree grows outward: each tier opens",
+                "once you own a node of the previous tier.",
+                "Spent here: " + SkillTree.spentInBranch(data, branch) + " SP")), "ui_tiers"));
 
         int slot = 9;
         for (Node node : SkillTree.branchNodes(branch)) {
@@ -116,8 +115,8 @@ public final class SkillTreeGui {
             return;
         }
         if (!SkillTree.tierUnlocked(data, node.branch(), node.tier())) {
-            player.sendMessage(Component.text("Tier " + node.tier() + " is locked — spend "
-                    + SkillTree.TIER_THRESHOLDS[node.tier()] + " points in " + node.branch().displayName()
+            player.sendMessage(Component.text("Tier " + node.tier() + " is locked — unlock a Tier "
+                    + (node.tier() - 1) + " node in " + node.branch().displayName()
                     + " first.", NamedTextColor.RED));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
             return;
@@ -146,6 +145,7 @@ public final class SkillTreeGui {
             plugin.cards().recalc(player, data);
         }
         plugin.data().save(player.getUniqueId(), data);
+        plugin.treeAdvancements().sync(player);
         player.sendMessage(Component.text("Unlocked ", NamedTextColor.GRAY)
                 .append(Component.text(node.displayName(), NamedTextColor.GREEN))
                 .append(Component.text("  (-" + node.cost() + " SP, " + data.skillPoints() + " left)",
@@ -223,8 +223,8 @@ public final class SkillTreeGui {
         if (owned) {
             lore.add(Component.text("✔ Unlocked", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
         } else if (!tierOpen) {
-            lore.add(Component.text("Locked — spend " + SkillTree.TIER_THRESHOLDS[node.tier()]
-                    + " SP in this branch", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("Locked — own a Tier " + (node.tier() - 1)
+                    + " node in this branch first", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
         } else {
             lore.add(Component.text("Cost: " + node.cost() + " SP" + (affordable ? "  — click to unlock" : ""),
                     affordable ? NamedTextColor.YELLOW : NamedTextColor.RED)

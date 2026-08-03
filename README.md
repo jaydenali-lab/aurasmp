@@ -8,15 +8,21 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 - **Earn XP by killing.** Weak/passive mobs give little, hostile mobs give more, strong
   mobs and bosses give a lot, and **players give the most**.
-- **Level up for Skill Points.** Every level-up grants **3 SP** (+3 bonus at max
-  level 10 — **30 SP** for a full build). No more random drafts.
+- **Level up for Skill Points.** Every level-up grants **2 SP** (+2 bonus at max
+  level **25** — **50 SP** for a full build). No more random drafts.
 - **Spend them in the Skill Tree** — `/skilltree` (or `/st`, `/tree`):
   - Five branches: **Melee**, **Ranged**, **AoE**, **Support**, **Status**.
+  - **Wynncraft-style progression**: the tree grows outward from the root —
+    each tier only opens once you **own a node of the previous tier** in that
+    branch. No point-thresholds; the path itself is the gate.
   - Every talent and manifestation is a node. **Better nodes cost more SP**
     (Common 1 · Rare 2 · Epic 3 · Legendary 5; manifestations 3–6 by tier).
-  - **Deeper tiers unlock by investing in the branch**: Tier 2 needs 4 SP spent
-    there, Tier 3 needs 9, Tier 4 needs 15 — specialise or spread wide.
   - You can carry at most **4 manifestations** at once.
+- **Full-screen tree view**: the whole web is mirrored into the vanilla
+  **advancements screen** (press **L** → the *Ruin* tab) — a full-screen node
+  map where your unlocked path lights up. Spend points in `/skilltree`.
+- **Level nametag**: your **Lv N** floats above your name for everyone to see —
+  and disappears while you're invisible (Vanish, Ghost, potions).
 - **Casting**: every manifestation you unlock becomes **its own item in your
   inventory** with its glyph icon — **right-click it to cast**. Cast items are
   soulbound: can't be dropped, stashed, crafted, or lost on death.
@@ -223,5 +229,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-2.3.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-2.4.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.
