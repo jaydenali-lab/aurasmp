@@ -19,26 +19,16 @@ public enum Ability {
     VANISH("Vanish", Material.PHANTOM_MEMBRANE, "Invisibility + Speed II for 5s.", 25_000, 0xE003, 5_000),
     BLOODTHIRST("Bloodthirst", Material.REDSTONE, "Instantly heal 3 hearts + Regen II.", 18_000, 0xE004, 4_000),
     SMITE("Smite", Material.LIGHTNING_ROD, "Strike lightning at the enemy you face.", 14_000, 0xE005, 0),
-    LEAP("Leap", Material.RABBIT_FOOT, "Launch into the air, no fall damage.", 8_000, 0xE006, 5_000),
-    WITHER_TOUCH("Wither Touch", Material.WITHER_ROSE, "Wither II to nearby enemies for 6s.", 16_000, 0xE008, 0),
-    MAGNETIZE("Magnetize", Material.LODESTONE, "Pull nearby enemies toward you.", 13_000, 0xE00A, 0),
 
     // ==== Expansion: 10 more manifestations ====
     FIREBALL("Fireball", Material.MAGMA_CREAM, "Hurl a fireball that explodes on impact.", 11_000, 0xE00B, 0),
-    UPDRAFT("Updraft", Material.FEATHER, "Fling nearby enemies into the air.", 13_000, 0xE00C, 0),
-    GRAPPLE("Launch", Material.FISHING_ROD, "Fire an arrow and ride it through the air.", 8_000, 0xE00D, 0),
     BERSERK("Berserk", Material.NETHERITE_AXE, "Strength + Speed + Resistance for 6s.", 30_000, 0xE00E, 6_000),
-    SMOKE_BOMB("Smoke Bomb", Material.GUNPOWDER, "Blind + slow all foes near you.", 22_000, 0xE00F, 0),
-    SANCTUARY("Sanctuary", Material.TOTEM_OF_UNDYING, "Regen + Resistance + Absorption for 5s.", 28_000, 0xE011, 5_000),
     METEOR("Meteor", Material.MAGMA_BLOCK, "Call down a meteor where you look after 1s.", 20_000, 0xE013, 0),
-    DASH("Dash", Material.SUGAR, "Dash forward with a burst of speed.", 7_000, 0xE014, 0),
 
     // ==== Deepwoken mantras (8) ====
     FLAME_GRAB("Flame Grab", Material.BLAZE_ROD, "Lunge, seize a foe in flame and slam them.", 13_000, 0xE015, 0),
     WILDFIRE("Wildfire", Material.FIRE_CHARGE, "Erupt a cone of fire that ignites enemies.", 15_000, 0xE016, 0),
-    FROSTDRAW_SPIKES("Frostdraw Spikes", Material.PACKED_ICE, "Ice spikes impale and chill foes ahead.", 12_000, 0xE017, 0),
     TUNDRA("Tundra", Material.BLUE_ICE, "Freeze a wide zone, slowing all within.", 18_000, 0xE018, 0),
-    SHOCK_SWORD("Shock Sword", Material.LIGHTNING_ROD, "A sweeping arc slash that slows.", 11_000, 0xE019, 0),
     WIND_SLAM("Wind Slam", Material.BREEZE_ROD, "Leap up and slam down, blasting foes back.", 13_000, 0xE01B, 0),
     GALE_STEP("Gale Step", Material.FEATHER, "Blink-dash on wind; no fall damage after.", 8_000, 0xE01C, 0),
 
@@ -49,44 +39,28 @@ public enum Ability {
 
     // ==== 1.9.0: 10 more manifestations ====
     SHADOW_LANCE("Shadow Lance", Material.ECHO_SHARD, "Pierce all enemies in a line of shadow.", 14_000, 0xE024, 0),
-    ASTRAL_WIND("Astral Wind", Material.WIND_CHARGE, "A 5s storm aura that shoves enemies away.", 18_000, 0xE025, 5_000),
     BLOOD_PACT("Blood Pact", Material.NETHER_WART, "Sacrifice 2 hearts; reset your other cooldowns.", 45_000, 0xE026, 0),
     RIPOSTE("Riposte", Material.SHIELD, "1.5s stance: parry the next hit and counter it.", 16_000, 0xE027, 1_500),
     ICE_BARRIER("Ice Barrier", Material.ICE, "Raise a wall of ice in front of you for 5s.", 15_000, 0xE028, 0),
     GUILLOTINE("Guillotine", Material.IRON_AXE, "Heavy blow: +20% of the target's missing health.", 15_000, 0xE029, 0),
     REWIND("Rewind", Material.CLOCK, "Mark yourself; 3s later snap back, restoring health.", 25_000, 0xE02A, 3_000),
     SINGULARITY("Singularity", Material.CRYING_OBSIDIAN, "Collapse a point that drags enemies in for 3s.", 16_000, 0xE02B, 0),
-    DISPLACE("Displace", Material.CHORUS_FRUIT, "Swap positions with the enemy you face.", 12_000, 0xE02C, 0),
-    MIASMA("Miasma", Material.DRAGON_BREATH, "Leave a lingering poison cloud where you look.", 15_000, 0xE02D, 0),
 
     // ==== 1.11.0: replacements for near-duplicates ====
     CRYOSTASIS("Cryostasis", Material.PACKED_ICE, "Encase yourself in ice: 2.5s invulnerable but frozen.", 25_000, 0xE007, 2_500),
     AEGIS("Aegis", Material.SHIELD, "4s ward that stops every projectile aimed at you.", 20_000, 0xE009, 4_000),
-    OVERCHARGE("Overcharge", Material.COPPER_INGOT, "6s: anyone who melees you gets zapped.", 18_000, 0xE010, 6_000),
     HEX("Hex", Material.FERMENTED_SPIDER_EYE, "Curse the enemy you face with Weakness II.", 15_000, 0xE012, 0),
-    STATIC_CHARGE("Static Charge", Material.LIGHTNING_ROD, "Your next 3 melee hits deal +2 shock damage.", 16_000, 0xE01A, 8_000),
 
     // ==== 1.11.0: 19 more manifestations ====
     GRASPING_VINES("Grasping Vines", Material.VINE, "Root the enemy you face in place for 2s.", 14_000, 0xE02E, 0),
-    AFTERIMAGE("Afterimage", Material.ENDER_EYE, "4s: getting hit blinks you backwards, once.", 18_000, 0xE02F, 4_000),
     VOLLEY("Volley", Material.ARROW, "Loose a fan of five arrows.", 12_000, 0xE030, 0),
-    CHAKRAM("Chakram", Material.SHEARS, "A blade arcs out and back, cutting twice.", 13_000, 0xE031, 0),
     FISSURE("Fissure", Material.COARSE_DIRT, "Crack the ground in a line that erupts under foes.", 15_000, 0xE032, 0),
     LIFEDRAIN("Lifedrain", Material.GHAST_TEAR, "Channel 3s: siphon health from the enemy you face.", 18_000, 0xE033, 3_000),
-    WARP_BEACON("Warp Beacon", Material.BEACON, "Drop a beacon; recast within 10s to warp back.", 20_000, 0xE034, 0),
-    CANNONBALL("Cannonball", Material.TNT, "Hurl yourself in an arc and detonate on landing.", 16_000, 0xE035, 0),
     SILENCE("Silence", Material.SCULK_SHRIEKER, "Seal the enemy you face: no manifestations for 4s.", 10_000, 0xE036, 4_000),
-    TORRENT("Torrent", Material.WATER_BUCKET, "A water jet that blasts one enemy far away.", 10_000, 0xE037, 0),
     EMBER_MINE("Ember Mine", Material.CAMPFIRE, "Bury a fire mine that erupts when stepped on.", 18_000, 0xE038, 0),
-    SONIC_SHRIEK("Sonic Shriek", Material.SCULK_SENSOR, "A shriek that hurls one enemy away, dazed.", 15_000, 0xE039, 0),
-    LEVITATE("Levitate", Material.SHULKER_SHELL, "Float the enemy you face helplessly into the air.", 14_000, 0xE03A, 0),
     SUNDER("Sunder", Material.ANVIL, "Crack their guard: target takes +15% damage for 5s.", 15_000, 0xE03B, 0),
-    RALLY("Rally", Material.GOAT_HORN, "Sound the horn: nearby allies gain Speed + Regen.", 22_000, 0xE03C, 0),
     COCOON("Cocoon", Material.STRING, "Wrap the enemy you face in cobwebs.", 16_000, 0xE03D, 0),
-    PURGE("Purge", Material.MILK_BUCKET, "Cleanse every debuff and douse yourself.", 18_000, 0xE03E, 0),
-    TRUE_SIGHT("True Sight", Material.SPYGLASS, "Reveal every player within 20 blocks for 5s.", 20_000, 0xE03F, 0),
-    TETHER("Tether", Material.LEAD, "Leash the enemy you face to the spot for 4s.", 17_000, 0xE040, 0);
-
+    TRUE_SIGHT("True Sight", Material.SPYGLASS, "Reveal every player within 20 blocks for 5s.", 20_000, 0xE03F, 0);
     private final String displayName;
     private final Material icon;
     private final String description;

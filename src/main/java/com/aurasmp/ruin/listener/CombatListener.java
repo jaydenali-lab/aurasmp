@@ -49,14 +49,9 @@ public final class CombatListener implements Listener {
         PlayerData data = plugin.data().get(killer.getUniqueId());
         int xp = plugin.progression().xpFor(dead.getType());
         plugin.progression().award(killer, data, xp);
-
-        if (data.hasCard(Card.LEECH)) heal(killer, 2.0);
         if (data.hasCard(Card.ADRENALINE)) {
             killer.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 80, 1));
             killer.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 80, 0));
-        }
-        if (data.hasCard(Card.BLOODLUST)) {
-            killer.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 60, 0));
         }
         // Rampage: each kill banks a +5% damage stack for 20s (max 3).
         if (data.hasCard(Card.RAMPAGE)) {
@@ -137,10 +132,6 @@ public final class CombatListener implements Listener {
             if (data.hasCard(Card.BERSERKER) && healthRatio(attacker) < 0.30) damage *= 1.07;
             if (data.hasCard(Card.EXECUTIONER) && healthRatio(victim) < 0.20) damage *= 1.30;
             if (projectile && data.hasCard(Card.SHARPSHOOTER)) damage *= 1.05;
-            if (!projectile && data.hasCard(Card.CRIT) && ThreadLocalRandom.current().nextDouble() < 0.25) {
-                damage *= 1.20;
-                attacker.getWorld().spawnParticle(Particle.CRIT, victim.getLocation().add(0, 1, 0), 12, 0.3, 0.3, 0.3, 0.1);
-            }
             // Unyielding Inferno: bonus damage to burning targets.
             if (!projectile && data.hasCard(Card.UNYIELDING_INFERNO) && victim.getFireTicks() > 0) {
                 damage += 3.0;
@@ -148,21 +139,6 @@ public final class CombatListener implements Listener {
             // 1.9.0 conditional melee talents.
             if (!projectile) {
                 if (data.hasCard(Card.FIRST_STRIKE) && healthRatio(victim) >= 0.999) damage *= 1.06;
-                if (data.hasCard(Card.PREDATOR) && isDebuffed(victim)) damage *= 1.06;
-                if (data.hasCard(Card.DUELIST) && nearbyEnemyCount(attacker) == 1) damage *= 1.04;
-                if (data.hasCard(Card.AERIAL) && !attacker.isOnGround()) damage *= 1.06;
-                if (data.hasCard(Card.WARPATH) && attacker.isSprinting()) damage *= 1.04;
-                if (data.hasCard(Card.NIGHT_STALKER)
-                        && victim.getLocation().getBlock().getLightLevel() < 7) damage *= 1.06;
-                if (data.hasCard(Card.GIANT_SLAYER) && victim.getHealth() > attacker.getHealth()) damage *= 1.05;
-                if (data.hasCard(Card.SHIELDBREAKER) && victim.getAbsorptionAmount() > 0) damage *= 1.07;
-                if (data.hasCard(Card.VENDETTA)) {
-                    Grudge grudge = grudges.get(aid);
-                    if (grudge != null && grudge.enemy().equals(victim.getUniqueId())
-                            && System.currentTimeMillis() < grudge.until()) {
-                        damage *= 1.07;
-                    }
-                }
                 if (data.hasCard(Card.COMBO)) {
                     damage *= 1 + 0.02 * comboStacks(aid, victim.getUniqueId());
                 }
@@ -180,23 +156,13 @@ public final class CombatListener implements Listener {
             event.setDamage(damage);
 
             if (!projectile && data.hasCard(Card.LIFESTEAL)) heal(attacker, damage * 0.10);
-            if (!projectile && data.hasCard(Card.VAMPIRIC)) heal(attacker, damage * 0.20);
 
             if (!projectile) {
                 if (data.hasCard(Card.IGNITE)) victim.setFireTicks(60);
-                if (data.hasCard(Card.VENOM)) victim.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 60, 0));
                 if (data.hasCard(Card.FROSTBITE)) victim.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 40, 0));
                 // Mangle: the victim heals 50% less for 5s (see onRegain).
                 if (data.hasCard(Card.MANGLE)) {
                     mangledUntil.put(victim.getUniqueId(), System.currentTimeMillis() + 5_000);
-                }
-                // Skirmisher: hitting grants a short burst of speed to stick to the target.
-                if (data.hasCard(Card.SKIRMISHER)) {
-                    attacker.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 0));
-                }
-                // Bloodhound: players you hit glow briefly.
-                if (data.hasCard(Card.BLOODHOUND) && victim instanceof Player) {
-                    victim.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0));
                 }
                 // Concussive Blows: every 5th axe hit stuns (Zelkova-style) for 1.5s.
                 if (data.hasCard(Card.CONCUSSIVE_BLOWS) && holdingWeapon(attacker, "_AXE")) {
@@ -212,13 +178,6 @@ public final class CombatListener implements Listener {
                                 victim.getLocation().add(0, 1.6, 0), 15, 0.3, 0.2, 0.3, 0.1);
                         attacker.getWorld().playSound(victim.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.6f, 1.6f);
                     }
-                }
-                // Static Charge manifestation: spend an empowered hit.
-                if (plugin.abilities().consumeStaticCharge(aid)) {
-                    event.setDamage(event.getDamage() + 2.0);
-                    attacker.getWorld().spawnParticle(Particle.ELECTRIC_SPARK,
-                            victim.getLocation().add(0, 1, 0), 12, 0.3, 0.4, 0.3, 0.1);
-                    attacker.getWorld().playSound(victim.getLocation(), Sound.ENTITY_BEE_HURT, 0.8f, 1.8f);
                 }
                 if (data.hasCard(Card.CLEAVE)) cleave(attacker, victim, damage);
                 // Retribution: spend the armed counter (every 5 hits taken) as +1.5 hearts of TRUE
@@ -263,9 +222,6 @@ public final class CombatListener implements Listener {
     private final java.util.Set<UUID> cleaving = new java.util.HashSet<>();
 
     // ---- 1.9.0 talent state ----
-    /** Vendetta: the last enemy that hit this player, and until when the grudge lasts. */
-    private record Grudge(UUID enemy, long until) {}
-    private final java.util.Map<UUID, Grudge> grudges = new java.util.HashMap<>();
     /** Combo: consecutive-hit streak against a single target. */
     private static final class ComboState { UUID target; int stacks; long last; }
     private final java.util.Map<UUID, ComboState> combos = new java.util.HashMap<>();
@@ -292,27 +248,7 @@ public final class CombatListener implements Listener {
         return a.normalize().dot(v.normalize()) > 0.5;
     }
 
-    private boolean isDebuffed(LivingEntity victim) {
-        return victim.getFireTicks() > 0 || victim.getFreezeTicks() > 0
-                || victim.hasPotionEffect(PotionEffectType.POISON)
-                || victim.hasPotionEffect(PotionEffectType.SLOWNESS)
-                || victim.hasPotionEffect(PotionEffectType.WITHER)
-                || victim.hasPotionEffect(PotionEffectType.BLINDNESS);
-    }
 
-    /** Players (except trusted allies) and monsters near the attacker — Duelist's "enemies". */
-    private int nearbyEnemyCount(Player player) {
-        PlayerData data = plugin.data().get(player.getUniqueId());
-        int count = 0;
-        for (Entity e : player.getNearbyEntities(8, 8, 8)) {
-            if (e instanceof Player other) {
-                if (!data.isTrusted(other.getUniqueId())) count++;
-            } else if (e instanceof Monster) {
-                count++;
-            }
-        }
-        return count;
-    }
 
     /** Advances the attacker's combo against this victim; returns the stack count (0-5). */
     private int comboStacks(UUID attacker, UUID victim) {
@@ -422,20 +358,6 @@ public final class CombatListener implements Listener {
             return;
         }
 
-        // Overcharge: melee attackers get zapped back.
-        if (event instanceof EntityDamageByEntityEvent zapped
-                && zapped.getDamager() instanceof LivingEntity meleeSource
-                && plugin.abilities().isOvercharged(player.getUniqueId())
-                && !plugin.abilities().isAbilityDamage(player.getUniqueId())) {
-            plugin.abilities().overchargeZap(player, meleeSource);
-        }
-
-        // Afterimage: the first hit in the window blinks you backwards (damage still lands).
-        if (event instanceof EntityDamageByEntityEvent
-                && plugin.abilities().consumeAfterimage(player.getUniqueId())) {
-            plugin.getServer().getScheduler().runTask(plugin,
-                    () -> { if (player.isOnline() && !player.isDead()) plugin.abilities().afterimageBlink(player); });
-        }
 
         // Sunder: cracked guard — take 15% more from everything while marked.
         if (plugin.abilities().isSundered(player.getUniqueId())) {
@@ -443,18 +365,6 @@ public final class CombatListener implements Listener {
         }
 
         PlayerData data = plugin.data().get(player.getUniqueId());
-
-        // Vendetta: remember who last hit you (6s grudge window).
-        if (data.hasCard(Card.VENDETTA) && event instanceof EntityDamageByEntityEvent hitBy) {
-            LivingEntity source = null;
-            if (hitBy.getDamager() instanceof LivingEntity le) source = le;
-            else if (hitBy.getDamager() instanceof Projectile proj
-                    && proj.getShooter() instanceof LivingEntity le) source = le;
-            if (source != null) {
-                grudges.put(player.getUniqueId(),
-                        new Grudge(source.getUniqueId(), System.currentTimeMillis() + 6_000));
-            }
-        }
 
         // Risky Moves: chance to fully negate an incoming hit.
         if (data.hasCard(Card.RISKY_MOVES) && ThreadLocalRandom.current().nextDouble() < 0.15) {
@@ -465,7 +375,6 @@ public final class CombatListener implements Listener {
         }
         if (event.getCause() == EntityDamageEvent.DamageCause.FALL
                 && (data.hasCard(Card.FEATHER)
-                    || (data.hasCard(Card.KICK_OFF) && event.getDamage() <= 6.0)
                     || plugin.abilities().hasNoFall(player.getUniqueId()))) {
             event.setCancelled(true);
             return;
@@ -476,14 +385,6 @@ public final class CombatListener implements Listener {
         // Glass Cannon: glass jaw — take 20% more damage from everything.
         if (data.hasCard(Card.GLASS_CANNON)) {
             event.setDamage(event.getDamage() * 1.20);
-        }
-        // Bastion: hunker down — 25% less damage while sneaking.
-        if (data.hasCard(Card.BASTION) && player.isSneaking()) {
-            event.setDamage(event.getDamage() * 0.85);
-        }
-        // Braced: hits taken at full health deal 30% less (anti-burst opener).
-        if (data.hasCard(Card.BRACED) && healthRatio(player) >= 0.999) {
-            event.setDamage(event.getDamage() * 0.85);
         }
         // Deflection: 30% less projectile damage.
         if (data.hasCard(Card.DEFLECTION)

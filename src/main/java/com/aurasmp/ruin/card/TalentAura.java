@@ -41,10 +41,6 @@ public final class TalentAura {
     private void fastTick() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             PlayerData data = plugin.data().get(player.getUniqueId());
-            // Escape Plan: below 30% health you move faster.
-            if (data.hasCard(Card.ESCAPE_PLAN) && healthRatio(player) < 0.30) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, true, false, false));
-            }
             // Medic: nearby hurt allies slowly regenerate (allies = players you /trust).
             if (data.hasCard(Card.MEDIC)) {
                 for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 8, 8)) {
@@ -54,33 +50,13 @@ public final class TalentAura {
                     }
                 }
             }
-            // Sixth Sense: sneaking enemies nearby are revealed (trusted players are not).
-            if (data.hasCard(Card.SIXTH_SENSE)) {
-                for (org.bukkit.entity.Entity entity : player.getNearbyEntities(10, 10, 10)) {
-                    if (entity instanceof Player sneak && sneak.isSneaking()
-                            && !data.isTrusted(sneak.getUniqueId())) {
-                        sneak.addPotionEffect(new PotionEffect(PotionEffectType.GLOWING, 60, 0, true, false, false));
-                    }
-                }
-            }
         }
     }
 
     private void tick() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             PlayerData data = plugin.data().get(player.getUniqueId());
-            apply(player, data, Card.NIGHT_OWL, PotionEffectType.NIGHT_VISION, 0);
-            apply(player, data, Card.LEAPER, PotionEffectType.JUMP_BOOST, 0);
-            apply(player, data, Card.HASTE, PotionEffectType.HASTE, 0);
-            apply(player, data, Card.AQUATIC, PotionEffectType.WATER_BREATHING, 0);
-            apply(player, data, Card.FIRE_WALKER, PotionEffectType.FIRE_RESISTANCE, 0);
             apply(player, data, Card.REGENERATOR, PotionEffectType.REGENERATION, 0);
-            apply(player, data, Card.BARRIER, PotionEffectType.ABSORPTION, 0);
-
-            // Conditioned Runner (Deepwoken): regen while sprinting and hurt.
-            if (data.hasCard(Card.CONDITIONED_RUNNER) && player.isSprinting() && healthRatio(player) < 0.75) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, DURATION_TICKS, 0, true, false, false));
-            }
             // Pack Leader (Deepwoken): resistance while a trusted ally fights beside you.
             if (data.hasCard(Card.PACK_LEADER) && hasAllyNear(player, data)) {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, DURATION_TICKS, 0, true, false, false));

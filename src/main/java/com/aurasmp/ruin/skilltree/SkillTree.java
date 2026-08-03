@@ -87,73 +87,41 @@ public final class SkillTree {
 
     static {
         // ================= MELEE =================
-        t(BRUTALITY, Branch.MELEE, 1);
         t(FRENZY, Branch.MELEE, 1);
-        t(REACH, Branch.MELEE, 1);
         t(FIRST_STRIKE, Branch.MELEE, 1);
-        t(DUELIST, Branch.MELEE, 1);
-        t(WARPATH, Branch.MELEE, 1);
-        t(SKIRMISHER, Branch.MELEE, 1);
         t(FENCER, Branch.MELEE, 1);
         t(SPEARHEAD, Branch.MELEE, 1);
         t(ONSLAUGHT, Branch.MELEE, 2);
-        t(AERIAL, Branch.MELEE, 2);
         t(COMBO, Branch.MELEE, 2);
         t(SPINE_CUTTER, Branch.MELEE, 2);
-        t(CRIT, Branch.MELEE, 2);
         t(BERSERKER, Branch.MELEE, 2);
-        t(GIANT_SLAYER, Branch.MELEE, 2);
-        t(SHIELDBREAKER, Branch.MELEE, 2);
-        t(VENDETTA, Branch.MELEE, 2);
         t(HAYMAKER, Branch.MELEE, 2);
-        t(BLOODLUST, Branch.MELEE, 2);
         t(SKEWER, Branch.MELEE, 2);
         t(GLASS_CANNON, Branch.MELEE, 3);
         t(EXECUTIONER, Branch.MELEE, 3);
         t(RAMPAGE, Branch.MELEE, 3);
-        t(THRESHERS_REACH, Branch.MELEE, 3);
         t(UNYIELDING_INFERNO, Branch.MELEE, 3);
         t(CONCUSSIVE_BLOWS, Branch.MELEE, 4);
-        a(SHOCK_SWORD, Branch.MELEE, 1);
-        a(DASH, Branch.MELEE, 1);
         a(MOOK, Branch.MELEE, 2);
         a(PHASE_STRIKE, Branch.MELEE, 2);
         a(FLAME_GRAB, Branch.MELEE, 2);
-        a(STATIC_CHARGE, Branch.MELEE, 2);
         a(GUILLOTINE, Branch.MELEE, 3);
         a(RIPOSTE, Branch.MELEE, 3);
         a(BERSERK, Branch.MELEE, 4);
 
         // ================= RANGED =================
         t(SHARPSHOOTER, Branch.RANGED, 1);
-        t(QUICKDRAW, Branch.RANGED, 1);
-        t(BLOODHOUND, Branch.RANGED, 1);
-        t(NIGHT_OWL, Branch.RANGED, 1);
         t(SCAVENGER, Branch.RANGED, 1);
         t(SWIFTNESS, Branch.RANGED, 1);
-        t(ENDURANCE_RUNNER, Branch.RANGED, 1);
-        t(KICK_OFF, Branch.RANGED, 1);
-        t(SURE_FOOTED, Branch.RANGED, 1);
-        t(ESCAPE_PLAN, Branch.RANGED, 1);
-        t(LEAPER, Branch.RANGED, 1);
         t(DEFLECTION, Branch.RANGED, 2);
-        t(SIXTH_SENSE, Branch.RANGED, 2);
-        t(LUCKY, Branch.RANGED, 2);
         t(ADRENALINE, Branch.RANGED, 2);
         a(VOLLEY, Branch.RANGED, 1);
         a(FIREBALL, Branch.RANGED, 1);
-        a(TORRENT, Branch.RANGED, 1);
-        a(GRAPPLE, Branch.RANGED, 1);
         a(BLINK, Branch.RANGED, 1);
-        a(LEAP, Branch.RANGED, 1);
         a(SMITE, Branch.RANGED, 2);
         a(SHADOW_LANCE, Branch.RANGED, 2);
-        a(CHAKRAM, Branch.RANGED, 2);
-        a(SONIC_SHRIEK, Branch.RANGED, 2);
-        a(LEVITATE, Branch.RANGED, 2);
         a(EMBER_MINE, Branch.RANGED, 2);
         a(GALE_STEP, Branch.RANGED, 2);
-        a(AFTERIMAGE, Branch.RANGED, 3);
         a(METEOR, Branch.RANGED, 3);
         a(TRUE_SIGHT, Branch.RANGED, 3);
 
@@ -161,47 +129,24 @@ public final class SkillTree {
         t(IGNITE, Branch.AOE, 1);
         t(CLEAVE, Branch.AOE, 2);
         a(SHOCKWAVE, Branch.AOE, 1);
-        a(FROSTDRAW_SPIKES, Branch.AOE, 1);
-        a(MAGNETIZE, Branch.AOE, 1);
-        a(UPDRAFT, Branch.AOE, 1);
-        a(WITHER_TOUCH, Branch.AOE, 2);
         a(FISSURE, Branch.AOE, 2);
         a(WILDFIRE, Branch.AOE, 2);
         a(WIND_SLAM, Branch.AOE, 2);
-        a(MIASMA, Branch.AOE, 2);
-        a(SMOKE_BOMB, Branch.AOE, 2);
         a(TUNDRA, Branch.AOE, 3);
-        a(ASTRAL_WIND, Branch.AOE, 3);
-        a(CANNONBALL, Branch.AOE, 3);
         a(SINGULARITY, Branch.AOE, 3);
-        a(OVERCHARGE, Branch.AOE, 3);
         a(ZELKOVA, Branch.AOE, 4);
 
         // ================= SUPPORT =================
         t(VITALITY, Branch.SUPPORT, 1);
         t(BULWARK, Branch.SUPPORT, 1);
-        t(TOUGH_SKIN, Branch.SUPPORT, 1);
         t(STEADFAST, Branch.SUPPORT, 1);
-        t(DEEP_LUNGS, Branch.SUPPORT, 1);
-        t(AQUATIC, Branch.SUPPORT, 1);
-        t(LEECH, Branch.SUPPORT, 1);
-        t(FIRE_WALKER, Branch.SUPPORT, 1);
-        t(ENDURANCE, Branch.SUPPORT, 2);
-        t(STEADY_FEET, Branch.SUPPORT, 2);
-        t(HASTE, Branch.SUPPORT, 2);
-        t(CONDITIONED_RUNNER, Branch.SUPPORT, 2);
         t(PACK_LEADER, Branch.SUPPORT, 2);
         t(FEATHER, Branch.SUPPORT, 2);
         t(LIFESTEAL, Branch.SUPPORT, 2);
         t(MEDIC, Branch.SUPPORT, 2);
-        t(BRACED, Branch.SUPPORT, 2);
-        t(BASTION, Branch.SUPPORT, 2);
         t(CLARITY, Branch.SUPPORT, 2);
         t(TITAN, Branch.SUPPORT, 3);
-        t(FORTRESS, Branch.SUPPORT, 3);
-        t(BARRIER, Branch.SUPPORT, 3);
         t(REGENERATOR, Branch.SUPPORT, 3);
-        t(VAMPIRIC, Branch.SUPPORT, 3);
         t(OVERHEAL, Branch.SUPPORT, 3);
         t(JUGGERNAUT, Branch.SUPPORT, 4);
         t(SECOND_WIND, Branch.SUPPORT, 4);
@@ -210,21 +155,14 @@ public final class SkillTree {
         t(GHOST, Branch.SUPPORT, 4);
         a(BLOODTHIRST, Branch.SUPPORT, 1);
         a(ICE_BARRIER, Branch.SUPPORT, 1);
-        a(PURGE, Branch.SUPPORT, 2);
-        a(RALLY, Branch.SUPPORT, 2);
-        a(WARP_BEACON, Branch.SUPPORT, 2);
         a(VANISH, Branch.SUPPORT, 2);
         a(AEGIS, Branch.SUPPORT, 3);
         a(CRYOSTASIS, Branch.SUPPORT, 3);
         a(REWIND, Branch.SUPPORT, 3);
         a(BLOOD_PACT, Branch.SUPPORT, 3);
-        a(SANCTUARY, Branch.SUPPORT, 4);
 
         // ================= STATUS =================
-        t(VENOM, Branch.STATUS, 1);
         t(FROSTBITE, Branch.STATUS, 1);
-        t(PREDATOR, Branch.STATUS, 2);
-        t(NIGHT_STALKER, Branch.STATUS, 2);
         t(MANGLE, Branch.STATUS, 2);
         t(RETRIBUTION, Branch.STATUS, 3);
         t(ESCAPE_ARTIST, Branch.STATUS, 3);
@@ -235,8 +173,6 @@ public final class SkillTree {
         a(SUNDER, Branch.STATUS, 2);
         a(COCOON, Branch.STATUS, 2);
         a(GRASPING_VINES, Branch.STATUS, 2);
-        a(TETHER, Branch.STATUS, 2);
-        a(DISPLACE, Branch.STATUS, 2);
         a(SILENCE, Branch.STATUS, 3);
         a(LIFEDRAIN, Branch.STATUS, 3);
     }

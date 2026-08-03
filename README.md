@@ -39,246 +39,114 @@ draft **Talents** (passive perks) and **Manifestations** (active casts).
 
 Level thresholds: `100 → 250 → 500 → 900 → 1500 → 2300 → 3300 → 4500 → 6000`.
 
-## The 84 Talents (passive)
+## The Skill Tree — 45 Talents · 35 Manifestations
 
-**Attribute talents (10)** — applied as persistent attribute modifiers:
+Curated set: every node is mechanically unique. Organized by branch and tier below.
 
-| Talent | Effect |
-|--------|--------|
-| Vitality | +2 hearts of max health |
-| Endurance | +3 hearts of max health |
-| Bulwark | +3 armor |
-| Tough Skin | +4 armor toughness |
-| Swiftness | +10% movement speed |
-| Brutality | +3% melee damage |
-| Onslaught | +7% melee damage |
-| Frenzy | +10% attack speed |
-| Steadfast | +40% knockback resistance |
-| Reach | +0.5 blocks of attack reach |
+### Melee
 
-**Effect talents (10)** — resolved in the combat listeners:
+| Tier | Node | Type | Effect |
+|------|------|------|--------|
+| 1 | Fencer | Talent | +7% damage while holding a sword. |
+| 1 | First Strike | Talent | +6% melee damage to full-health targets. |
+| 1 | Frenzy | Talent | +10% attack speed. |
+| 1 | Spearhead | Talent | +10% damage while holding a spear. |
+| 2 | Berserker | Talent | +7% damage while below 30% health. |
+| 2 | Combo | Talent | Consecutive hits on the same target stack +2% damage (up to +6%). |
+| 2 | Haymaker | Talent | Your melee hits knock enemies back much further. |
+| 2 | Onslaught | Talent | +7% melee damage. |
+| 2 | Skewer | Talent | Spear hits from 3.5+ blocks away deal +1.5 bonus damage. |
+| 2 | Spine Cutter | Talent | Backstabs deal +1.5 damage. |
+| 2 | Flame Grab | Manifestation (13s cd) | Lunge, seize a foe in flame and slam them. |
+| 2 | Mook | Manifestation (12s cd) | Dash in and slash rapidly for 8 damage. |
+| 2 | Phase Strike | Manifestation (12s cd) | Blink to the enemy you face and strike. |
+| 3 | Executioner | Talent | +30% damage to targets below 20% health. |
+| 3 | Glass Cannon | Talent | +15% melee damage, but take 20% more damage. |
+| 3 | Rampage | Talent | Kills grant +2% damage for 20s, stacking 3 times. |
+| 3 | Unyielding Inferno | Talent | +1.5 hearts to hits on burning foes. |
+| 3 | Guillotine | Manifestation (15s cd) | Heavy blow: +20% of the target's missing health. |
+| 3 | Riposte | Manifestation (16s cd) | 1.5s stance: parry the next hit and counter it. |
+| 4 | Concussive Blows | Talent | Every 5th axe hit stuns the target for 1.5s. |
+| 4 | Berserk | Manifestation (30s cd) | Strength + Speed + Resistance for 6s. |
 
-| Talent | Effect |
-|--------|--------|
-| Lifesteal | Heal 10% of melee damage you deal |
-| Leech | Heal 1 heart on every melee kill |
-| Ghost | 15% chance when hit to fully vanish (armor too) + Speed II for 3s |
-| Berserker | +7% damage while below 30% health |
-| Executioner | +30% damage to targets below 20% health |
-| Feather | Immune to fall damage |
-| Adrenaline | Speed II + Regen I for 4s after a kill |
-| Sharpshooter | +5% projectile damage |
-| Juggernaut | Take 10% less damage from all sources |
-| Scavenger | +50% Ruin XP from kills |
+### Ranged
 
-**Expansion — attribute (3):**
+| Tier | Node | Type | Effect |
+|------|------|------|--------|
+| 1 | Scavenger | Talent | +50% Ruin XP from kills. |
+| 1 | Sharpshooter | Talent | +5% projectile damage. |
+| 1 | Swiftness | Talent | +10% movement speed. |
+| 1 | Blink | Manifestation (9s cd) | Teleport ~8 blocks where you look. |
+| 1 | Fireball | Manifestation (11s cd) | Hurl a fireball that explodes on impact. |
+| 1 | Volley | Manifestation (12s cd) | Loose a fan of five arrows. |
+| 2 | Adrenaline | Talent | Speed II + Regen I for 4s after a kill. |
+| 2 | Deflection | Talent | Take 20% less projectile damage. |
+| 2 | Ember Mine | Manifestation (18s cd) | Bury a fire mine that erupts when stepped on. |
+| 2 | Gale Step | Manifestation (8s cd) | Blink-dash on wind; no fall damage after. |
+| 2 | Shadow Lance | Manifestation (14s cd) | Pierce all enemies in a line of shadow. |
+| 2 | Smite | Manifestation (14s cd) | Strike lightning at the enemy you face. |
+| 3 | Meteor | Manifestation (20s cd) | Call down a meteor where you look after 1s. |
+| 3 | True Sight | Manifestation (20s cd) | Reveal every player within 20 blocks for 5s. |
 
-| Talent | Effect |
-|--------|--------|
-| Sure-Footed | Step up full blocks without jumping |
-| Deep Lungs | Hold your breath far longer underwater |
-| Lucky | +3 Luck (better loot rolls) |
+### AoE
 
-**Expansion — aura (7):** kept refreshed automatically.
+| Tier | Node | Type | Effect |
+|------|------|------|--------|
+| 1 | Ignite | Talent | Melee hits set the target on fire. |
+| 1 | Shockwave | Manifestation (12s cd) | Damage + knock back nearby enemies. |
+| 2 | Cleave | Talent | Melee hits splash 30% damage to nearby enemies. |
+| 2 | Fissure | Manifestation (15s cd) | Crack the ground in a line that erupts under foes. |
+| 2 | Wildfire | Manifestation (15s cd) | Erupt a cone of fire that ignites enemies. |
+| 2 | Wind Slam | Manifestation (13s cd) | Leap up and slam down, blasting foes back. |
+| 3 | Singularity | Manifestation (16s cd) | Collapse a point that drags enemies in for 3s. |
+| 3 | Tundra | Manifestation (18s cd) | Freeze a wide zone, slowing all within. |
+| 4 | Zelkova | Manifestation (20s cd) | Two ground slams (true dmg); the 2nd stuns and locks the camera. |
 
-| Talent | Effect |
-|--------|--------|
-| Night Owl | Permanent Night Vision |
-| Leaper | Permanent Jump Boost |
-| Haste | Permanent Haste |
-| Aquatic | Breathe underwater freely |
-| Fire Walker | Permanent Fire Resistance |
-| Regenerator | Constantly regenerate health |
-| Barrier | A constant 2-heart absorption shield |
+### Support
 
-**Expansion — combat triggers (7):**
+| Tier | Node | Type | Effect |
+|------|------|------|--------|
+| 1 | Bulwark | Talent | +3 armor. |
+| 1 | Steadfast | Talent | +40% knockback resistance. |
+| 1 | Vitality | Talent | +2 hearts of max health. |
+| 1 | Bloodthirst | Manifestation (18s cd) | Instantly heal 3 hearts + Regen II. |
+| 1 | Ice Barrier | Manifestation (15s cd) | Raise a wall of ice in front of you for 5s. |
+| 2 | Clarity | Talent | Blindness, nausea and darkness never stick to you. |
+| 2 | Feather | Talent | Immune to fall damage. |
+| 2 | Lifesteal | Talent | Heal 10% of melee damage you deal. |
+| 2 | Medic | Talent | Nearby hurt allies slowly regenerate. |
+| 2 | Pack Leader | Talent | Resistance while an ally fights beside you. |
+| 2 | Vanish | Manifestation (25s cd) | Invisibility + Speed II for 5s. |
+| 3 | Overheal | Talent | Healing past full health becomes absorption (up to 2 hearts). |
+| 3 | Regenerator | Talent | Constantly regenerate health. |
+| 3 | Titan | Talent | +4 hearts of max health, but 20% slower. |
+| 3 | Aegis | Manifestation (20s cd) | 4s ward that stops every projectile aimed at you. |
+| 3 | Blood Pact | Manifestation (45s cd) | Sacrifice 2 hearts; reset your other cooldowns. |
+| 3 | Cryostasis | Manifestation (25s cd) | Encase yourself in ice: 2.5s invulnerable but frozen. |
+| 3 | Rewind | Manifestation (25s cd) | Mark yourself; 3s later snap back, restoring health. |
+| 4 | Ghost | Talent | 15% chance when hit to fully vanish (armor too) + Speed II for 3s. |
+| 4 | Juggernaut | Talent | Take 10% less damage from all sources. |
+| 4 | Risky Moves | Talent | 15% chance to fully negate an incoming hit. |
+| 4 | Second Wind | Talent | Below 20% HP: Regen II + Absorption (45s cd). |
+| 4 | Undying | Talent | Once per 90s, a killing blow leaves you at 1 HP instead. |
 
-| Talent | Effect |
-|--------|--------|
-| Ignite | Melee hits set the target on fire |
-| Venom | Melee hits apply Poison |
-| Frostbite | Melee hits slow the target |
-| Cleave | Melee hits splash 30% damage to nearby enemies |
-| Crit | 25% chance for melee hits to deal +20% |
-| Bloodlust | Strength I for 3s after a kill |
-| Retribution | Every 5 hits taken, your next melee hit deals +1 heart of true damage |
+### Status
 
-**Deepwoken talents (10):**
-
-| Talent | Effect |
-|--------|--------|
-| Steady Feet | +50% knockback resistance |
-| Thresher's Reach | +1 block of attack reach |
-| Quickdraw | +15% attack speed |
-| Endurance Runner | +8% movement speed |
-| Kick Off | +6% speed and no short-fall damage |
-| Conditioned Runner | Regenerate while sprinting hurt |
-| Pack Leader | Resistance while an ally is near |
-| Unyielding Inferno | +1.5 hearts to hits on burning foes |
-| Spine Cutter | Backstabs deal +1.5 damage |
-| Risky Moves | 15% chance to fully negate an incoming hit |
-
-**More talents (5):**
-
-| Talent | Effect |
-|--------|--------|
-| Titan | +4 hearts of max health, but 20% slower |
-| Glass Cannon | +15% melee damage, but take 20% more damage |
-| Fortress | +5 armor |
-| Vampiric | Heal 20% of the melee damage you deal |
-| Second Wind | Below 20% HP: Regen II + Absorption (45s cooldown) |
-
-**Conditional & tactical talents (20):**
-
-| Talent | Effect |
-|--------|--------|
-| First Strike | +6% melee damage to full-health targets |
-| Predator | +6% melee damage to debuffed targets (poison, slow, wither, burning, frozen) |
-| Duelist | +4% melee damage while exactly one enemy is near you |
-| Aerial | +6% melee damage while airborne |
-| Warpath | +4% melee damage while sprinting |
-| Combo | Consecutive hits on the same target stack +2% damage each (up to +6%) |
-| Vendetta | +7% melee damage for 6s against the last enemy that hit you |
-| Night Stalker | +6% melee damage to targets standing in darkness |
-| Giant Slayer | +5% melee damage to enemies with more health than you |
-| Shieldbreaker | +7% melee damage to targets with absorption hearts |
-| Mangle | Enemies you hit heal 50% less for 5s |
-| Skirmisher | Hitting an enemy grants Speed I for 2s |
-| Rampage | Kills grant +2% damage for 20s, stacking 3 times |
-| Attunement | Manifestation cooldowns are 15% shorter |
-| Headhunter | Player kills grant 2 absorption hearts for 30s |
-| Undying | Once per 90s, a killing blow leaves you at 1 HP instead |
-| Bastion | Take 15% less damage while sneaking |
-| Braced | Hits taken at full health deal 15% less |
-| Deflection | Take 20% less projectile damage |
-| Escape Artist | Slowness never sticks to you |
-
-**Instinct talents (8):**
-
-| Talent | Effect |
-|--------|--------|
-| Clarity | Blindness, nausea and darkness never stick to you |
-| Battle Rush | Player kills refund half your manifestation cooldowns |
-| Sixth Sense | Sneaking enemies within 10 blocks are revealed |
-| Bloodhound | Players you hit glow for 3s |
-| Overheal | Healing past full health becomes absorption (up to 2 hearts) |
-| Haymaker | Your melee hits knock enemies back much further |
-| Medic | Nearby hurt allies slowly regenerate |
-| Escape Plan | Below 30% health you move 10% faster |
-
-**Weapon talents (4):**
-
-| Talent | Effect |
-|--------|--------|
-| Fencer | +7% damage while holding a sword |
-| Spearhead | +10% damage while holding a spear |
-| Skewer | Spear hits from 3.5+ blocks away deal +1.5 bonus damage |
-| Concussive Blows | Every 5th axe hit stuns the target for 1.5s |
-
-(Note: the original **Thorns** was replaced by **Ghost**.)
-
-## The 60 Manifestations (active)
-
-Cast via their own inventory items — each on its own cooldown. **Damaging manifestations
-deal normal damage** (reduced by armour), scaled to cooldown (≈ cooldown ÷ 5
-hearts); ones that also apply a debuff deal 1/5 of that. The **Catalyst can't be
-dropped** and is **restored when you respawn**. Movement manifestations grant an 8s no-fall-damage window.
-
-| Manifestation | Effect | Cooldown |
-|---------------|--------|----------|
-| Blink | Teleport ~8 blocks where you look | 9s |
-| Shockwave | Damage + knock back nearby enemies | 12s |
-| Vanish | Invisibility + Speed II for 5s | 25s |
-| Bloodthirst | Instantly heal 3 hearts + Regen II | 18s |
-| Smite | Strike lightning at the enemy you face | 14s |
-| Leap | Launch into the air, no fall damage | 8s |
-| Wither Touch | Wither II to nearby enemies for 6s | 16s |
-| Magnetize | Pull nearby enemies toward you | 13s |
-| Fireball | Hurl a fireball that ignites foes on impact | 11s |
-| Updraft | Fling nearby enemies into the air | 13s |
-| Launch | Fire an arrow and ride it through the air | 8s |
-| Berserk | Strength + Speed + Resistance for 6s | 30s |
-| Smoke Bomb | Blind + slow all foes near you | 22s |
-| Sanctuary | Regen + Resistance + Absorption for 5s | 28s |
-| Meteor | Call down a meteor where you look after 1s | 20s |
-| Dash | Dash forward with a burst of speed | 7s |
-| Flame Grab | Lunge, seize a foe in flame and slam them | 13s |
-| Wildfire | Erupt a cone of fire that ignites enemies | 15s |
-| Frostdraw Spikes | Ice spikes impale and chill foes ahead | 12s |
-| Tundra | Freeze a wide zone, slowing all within | 18s |
-| Shock Sword | A sweeping arc slash that slows | 11s |
-| Wind Slam | Leap up and slam down, blasting foes back | 13s |
-| Gale Step | Blink-dash on wind; no fall damage after | 8s |
-| Phase Strike | Blink to the enemy you face and strike | 12s |
-| Zelkova | Two ground slams (true dmg) that break cobwebs; the 2nd stuns and locks the camera | 20s |
-| Mook | Dash in and slash rapidly for 8 damage | 12s |
-| Shadow Lance | Pierce all enemies in a line of shadow | 14s |
-| Astral Wind | A 5s storm aura that shoves enemies away | 18s |
-| Blood Pact | Sacrifice 2 hearts; reset your other cooldowns | 45s |
-| Riposte | 1.5s stance: parry the next hit and counter it | 16s |
-| Ice Barrier | Raise a wall of ice in front of you for 5s | 15s |
-| Guillotine | Heavy blow: +20% of the target's missing health | 15s |
-| Rewind | Mark yourself; 3s later snap back, healing up to 4 hearts | 25s |
-| Singularity | Collapse a point that drags enemies in for 3s | 16s |
-| Displace | Swap positions with the enemy you face | 12s |
-| Miasma | Leave a lingering poison cloud where you look | 15s |
-| Cryostasis | Encase yourself in ice: 2.5s invulnerable but frozen | 25s |
-| Aegis | 4s ward that stops every projectile aimed at you | 20s |
-| Overcharge | 6s: anyone who melees you gets zapped | 18s |
-| Hex | Curse the enemy you face with Weakness II | 15s |
-| Static Charge | Your next 3 melee hits deal +2 shock damage | 16s |
-| Grasping Vines | Root the enemy you face in place for 2s | 14s |
-| Afterimage | 4s: getting hit blinks you backwards, once | 18s |
-| Volley | Loose a fan of five arrows | 12s |
-| Chakram | A blade arcs out and back, cutting twice | 13s |
-| Fissure | Crack the ground in a line that erupts under foes | 15s |
-| Lifedrain | Channel 3s: siphon health from the enemy you face | 18s |
-| Warp Beacon | Drop a beacon; recast within 10s to warp back | 20s |
-| Cannonball | Hurl yourself in an arc and detonate on landing | 16s |
-| Silence | Seal the enemy you face: no manifestations for 4s | 10s |
-| Torrent | A water jet that blasts one enemy far away | 10s |
-| Ember Mine | Bury a fire mine that erupts when stepped on | 18s |
-| Sonic Shriek | A shriek that hurls one enemy away, dazed | 15s |
-| Levitate | Float the enemy you face helplessly into the air | 14s |
-| Sunder | Crack their guard: target takes +15% damage for 5s | 15s |
-| Rally | Sound the horn: nearby allies gain Speed + Regen | 22s |
-| Cocoon | Wrap the enemy you face in cobwebs | 16s |
-| Purge | Cleanse every debuff and douse yourself | 18s |
-| True Sight | Reveal every player within 20 blocks for 5s | 20s |
-| Tether | Leash the enemy you face to the spot for 4s | 17s |
-
-*Flame Grab through Gale Step are real Deepwoken mantras. Mook and Guillotine
-refund most of their cooldown if the opener misses.*
-
-## HUD & custom icons
-
-A live HUD sits **on top of the hotbar** (the action bar), refreshed twice a
-second. Each learned Manifestation shows as `{icon} Name {status}`, entries
-joined by a dark-grey pipe:
-
-```
-[icon] Blink READY  |  [icon] Vanish ACTIVE
-```
-
-- **READY** (green) — castable now
-- **Ns** (red) — seconds left on cooldown
-- **ACTIVE** (yellow) — its self-buff is currently running (Vanish, Leap, Bloodthirst)
-
-Level/XP isn't shown here — that's what the XP boss bar is for.
-
-The icons are custom glyphs from the **`ruin:icons`** resource-pack font
-(`assets/ruin/font/icons.json` + `assets/ruin/textures/font/*.png`) — one per
-manifestation, plus a Ruin sigil used in place of the old `✦` emoji. **They only
-render with the resource pack applied;** without it you'll see blank boxes in the
-HUD text (the rest still works).
-
-### XP boss bar
-
-On every kill that grants XP, a per-player **boss bar** — styled like the Ender
-Dragon's health bar (pink, solid) — pops up at the top of the screen showing your
-progress to the next level (`Level 4 — 320 / 900 XP`). It **auto-hides 5 seconds**
-after your last XP gain; a kill streak keeps refreshing it. It's per-player
-(client-side), so other players don't see yours.
+| Tier | Node | Type | Effect |
+|------|------|------|--------|
+| 1 | Frostbite | Talent | Melee hits slow the target. |
+| 1 | Hex | Manifestation (15s cd) | Curse the enemy you face with Weakness II. |
+| 2 | Mangle | Talent | Enemies you hit heal 50% less for 5s. |
+| 2 | Cocoon | Manifestation (16s cd) | Wrap the enemy you face in cobwebs. |
+| 2 | Grasping Vines | Manifestation (14s cd) | Root the enemy you face in place for 2s. |
+| 2 | Sunder | Manifestation (15s cd) | Crack their guard: target takes +15% damage for 5s. |
+| 3 | Attunement | Talent | Your manifestation cooldowns are 15% shorter. |
+| 3 | Battle Rush | Talent | Player kills refund half your manifestation cooldowns. |
+| 3 | Escape Artist | Talent | Slowness never sticks to you. |
+| 3 | Headhunter | Talent | Player kills grant 2 absorption hearts for 30s. |
+| 3 | Retribution | Talent | Every 5 hits taken, your next melee hit deals +1 heart of true damage. |
+| 3 | Lifedrain | Manifestation (18s cd) | Channel 3s: siphon health from the enemy you face. |
+| 3 | Silence | Manifestation (10s cd) | Seal the enemy you face: no manifestations for 4s. |
 
 ## Icon credits
 
@@ -354,5 +222,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-2.1.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-2.2.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.
