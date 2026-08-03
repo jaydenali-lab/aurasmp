@@ -153,6 +153,32 @@ public final class AbilityManager {
     }
 
     /**
+     * Deals ability damage that counts as a projectile: Aegis stops it outright,
+     * Deflection shaves 20% off, and Projectile Protection reduces it like an
+     * arrow would be (2% per protection point, capped at 40%).
+     */
+    public void dealProjectileDamage(LivingEntity victim, Player source, double amount) {
+        if (victim instanceof Player hit) {
+            if (hasAegis(hit.getUniqueId())) {
+                hit.getWorld().spawnParticle(Particle.END_ROD, hit.getLocation().add(0, 1, 0), 8, 0.4, 0.5, 0.4, 0.02);
+                hit.getWorld().playSound(hit.getLocation(), Sound.BLOCK_BEACON_DEACTIVATE, 0.5f, 1.9f);
+                return;
+            }
+            if (plugin.data().get(hit.getUniqueId()).hasCard(com.aurasmp.ruin.card.Card.DEFLECTION)) {
+                amount *= 0.80;
+            }
+            int epf = 0;
+            for (org.bukkit.inventory.ItemStack armor : hit.getInventory().getArmorContents()) {
+                if (armor != null) {
+                    epf += armor.getEnchantmentLevel(org.bukkit.enchantments.Enchantment.PROJECTILE_PROTECTION) * 2;
+                }
+            }
+            amount *= 1.0 - Math.min(20, epf) * 0.02;
+        }
+        dealDamage(victim, source, amount);
+    }
+
+    /**
      * Deals true (armour-bypassing) damage from an ability. Triggers the hurt
      * flash/knockback, then next tick corrects the victim's health so exactly
      * {@code amount} is lost regardless of armour.
@@ -1069,7 +1095,10 @@ public final class AbilityManager {
                         if (targetable(e, player) && pierced.add(e.getUniqueId())) {
                             LivingEntity le = (LivingEntity) e;
                             le.setNoDamageTicks(0);
-                            dealDamage(le, player, 8.0); // the T4 payoff: pierces the whole line
+                            // The T4 payoff pierces the whole line, but it's a
+                            // projectile: Aegis, Deflection and Projectile
+                            // Protection all answer it.
+                            dealProjectileDamage(le, player, 8.0);
                         }
                     }
                 }

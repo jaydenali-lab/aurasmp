@@ -80,9 +80,10 @@ public final class SkillTreeGui {
         inv.setItem(BACK_SLOT, chrome(simple(Material.ARROW, "◀ Back", NamedTextColor.YELLOW,
                 List.of("To the branch overview")), "ui_back"));
         inv.setItem(INFO_SLOT, infoItem(data));
-        inv.setItem(8, chrome(simple(Material.LADDER, "Tiers", NamedTextColor.AQUA, List.of(
-                "The tree grows outward: each tier opens",
-                "once you own a node of the previous tier.",
+        inv.setItem(8, chrome(simple(Material.LADDER, "Paths", NamedTextColor.AQUA, List.of(
+                "The tree grows outward in paths: each",
+                "node opens once you own the node",
+                "it chains from.",
                 "Spent here: " + SkillTree.spentInBranch(data, branch) + " SP")), "ui_tiers"));
 
         int slot = 9;
@@ -114,10 +115,9 @@ public final class SkillTreeGui {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.5f, 1.2f);
             return;
         }
-        if (!SkillTree.tierUnlocked(data, node.branch(), node.tier())) {
-            player.sendMessage(Component.text("Tier " + node.tier() + " is locked — unlock a Tier "
-                    + (node.tier() - 1) + " node in " + node.branch().displayName()
-                    + " first.", NamedTextColor.RED));
+        if (!SkillTree.pathOpen(data, node)) {
+            player.sendMessage(Component.text(node.displayName() + " is locked — unlock "
+                    + node.parent().displayName() + " first.", NamedTextColor.RED));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
             return;
         }
@@ -192,7 +192,7 @@ public final class SkillTreeGui {
 
     private ItemStack nodeItem(PlayerData data, Node node) {
         boolean owned = SkillTree.owns(data, node);
-        boolean tierOpen = SkillTree.tierUnlocked(data, node.branch(), node.tier());
+        boolean tierOpen = SkillTree.pathOpen(data, node);
         boolean affordable = data.skillPoints() >= node.cost();
 
         ItemStack item = new ItemStack(node.isAbility() ? node.ability().icon() : node.card().icon());
@@ -212,6 +212,10 @@ public final class SkillTreeGui {
                 : node.card().rarity().label() + " Talent";
         lore.add(Component.text("Tier " + node.tier() + " · " + kind, NamedTextColor.DARK_AQUA)
                 .decoration(TextDecoration.ITALIC, false));
+        if (node.parent() != null) {
+            lore.add(Component.text("Path: after " + node.parent().displayName(), NamedTextColor.BLUE)
+                    .decoration(TextDecoration.ITALIC, false));
+        }
         for (String line : wrap(node.description(), 34)) {
             lore.add(Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         }
@@ -223,8 +227,8 @@ public final class SkillTreeGui {
         if (owned) {
             lore.add(Component.text("✔ Unlocked", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
         } else if (!tierOpen) {
-            lore.add(Component.text("Locked — own a Tier " + (node.tier() - 1)
-                    + " node in this branch first", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("Locked — unlock " + node.parent().displayName() + " first",
+                    NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
         } else {
             lore.add(Component.text("Cost: " + node.cost() + " SP" + (affordable ? "  — click to unlock" : ""),
                     affordable ? NamedTextColor.YELLOW : NamedTextColor.RED)

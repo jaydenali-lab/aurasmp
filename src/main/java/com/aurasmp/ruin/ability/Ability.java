@@ -61,7 +61,7 @@ public enum Ability {
     SUNDER("Sunder", Material.ANVIL, "Crack their guard: target takes +15% damage for 5s.", 15_000, 0xE03B, 0),
     COCOON("Cocoon", Material.STRING, "Wrap the enemy you face in cobwebs.", 16_000, 0xE03D, 0),
     TRUE_SIGHT("True Sight", Material.SPYGLASS, "Reveal every player within 20 blocks for 5s.", 20_000, 0xE03F, 0),
-    RAILGUN("Railgun", Material.AMETHYST_SHARD, "Charge 1s, then fire a piercing hyper-beam.", 22_000, 0xE041, 0);
+    RAILGUN("Railgun", Material.AMETHYST_SHARD, "Charge 1s, then fire a piercing hyper-beam. Counts as a projectile.", 22_000, 0xE041, 0);
     private final String displayName;
     private final Material icon;
     private final String description;

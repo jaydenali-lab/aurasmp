@@ -50,8 +50,8 @@ public final class SkillTree {
         public String description() { return description; }
     }
 
-    /** A talent or manifestation placed in the tree. */
-    public record Node(Card card, Ability ability, Branch branch, int tier) {
+    /** A talent or manifestation placed in the tree, chained to the node it grows from. */
+    public record Node(Card card, Ability ability, Branch branch, int tier, Node parent) {
         public boolean isAbility() { return ability != null; }
 
         public String displayName() {
@@ -77,105 +77,144 @@ public final class SkillTree {
     private static final Map<Card, Node> CARDS = new EnumMap<>(Card.class);
     private static final Map<Ability, Node> ABILITIES = new EnumMap<>(Ability.class);
 
-    private static void t(Card card, Branch branch, int tier) {
-        CARDS.put(card, new Node(card, null, branch, tier));
+    private static Node parentNode(Object parent) {
+        if (parent == null) return null;
+        Node node = parent instanceof Card c ? CARDS.get(c) : ABILITIES.get((Ability) parent);
+        if (node == null) throw new IllegalStateException("Parent registered after child: " + parent);
+        return node;
     }
 
-    private static void a(Ability ability, Branch branch, int tier) {
-        ABILITIES.put(ability, new Node(null, ability, branch, tier));
+    private static void t(Card card, Branch branch, int tier) { t(card, branch, tier, null); }
+
+    private static void t(Card card, Branch branch, int tier, Object parent) {
+        CARDS.put(card, new Node(card, null, branch, tier, parentNode(parent)));
+    }
+
+    private static void a(Ability ability, Branch branch, int tier) { a(ability, branch, tier, null); }
+
+    private static void a(Ability ability, Branch branch, int tier, Object parent) {
+        ABILITIES.put(ability, new Node(null, ability, branch, tier, parentNode(parent)));
     }
 
     static {
+        // Every node chains off a specific parent, so each talent sits on a
+        // themed path and manifestations cap the path that builds toward them.
+
         // ================= MELEE =================
         t(FRENZY, Branch.MELEE, 1);
         t(FIRST_STRIKE, Branch.MELEE, 1);
         t(FENCER, Branch.MELEE, 1);
         t(SPEARHEAD, Branch.MELEE, 1);
-        t(ONSLAUGHT, Branch.MELEE, 2);
-        t(COMBO, Branch.MELEE, 2);
-        t(SPINE_CUTTER, Branch.MELEE, 2);
-        t(BERSERKER, Branch.MELEE, 2);
-        t(HAYMAKER, Branch.MELEE, 2);
-        t(SKEWER, Branch.MELEE, 2);
-        t(GLASS_CANNON, Branch.MELEE, 3);
-        t(EXECUTIONER, Branch.MELEE, 3);
-        t(RAMPAGE, Branch.MELEE, 3);
-        t(UNYIELDING_INFERNO, Branch.MELEE, 3);
-        t(CONCUSSIVE_BLOWS, Branch.MELEE, 4);
-        a(MOOK, Branch.MELEE, 2);
-        a(PHASE_STRIKE, Branch.MELEE, 2);
-        a(FLAME_GRAB, Branch.MELEE, 2);
-        a(GUILLOTINE, Branch.MELEE, 3);
-        a(RIPOSTE, Branch.MELEE, 3);
-        a(BERSERK, Branch.MELEE, 4);
+        // Fury path: attack speed -> raw damage -> kill streaks -> Berserk.
+        t(ONSLAUGHT, Branch.MELEE, 2, FRENZY);
+        t(RAMPAGE, Branch.MELEE, 3, ONSLAUGHT);
+        a(BERSERK, Branch.MELEE, 4, RAMPAGE);
+        // Reckless offshoot of the fury path.
+        t(BERSERKER, Branch.MELEE, 2, FRENZY);
+        // Burning-hands path: grab them in flame, then punish burning foes.
+        a(FLAME_GRAB, Branch.MELEE, 2, FRENZY);
+        t(UNYIELDING_INFERNO, Branch.MELEE, 3, FLAME_GRAB);
+        // Assassin path: open hard, backstab, go all-in.
+        t(SPINE_CUTTER, Branch.MELEE, 2, FIRST_STRIKE);
+        t(GLASS_CANNON, Branch.MELEE, 3, SPINE_CUTTER);
+        // Ambush path: blink behind them, finish the wounded.
+        a(PHASE_STRIKE, Branch.MELEE, 2, FIRST_STRIKE);
+        t(EXECUTIONER, Branch.MELEE, 3, PHASE_STRIKE);
+        t(HAYMAKER, Branch.MELEE, 2, FIRST_STRIKE);
+        // Duelist path: swordplay -> combos -> the parry.
+        t(COMBO, Branch.MELEE, 2, FENCER);
+        a(RIPOSTE, Branch.MELEE, 3, COMBO);
+        a(MOOK, Branch.MELEE, 2, FENCER);
+        // Impale path: spear reach -> executions -> the stunning axe.
+        t(SKEWER, Branch.MELEE, 2, SPEARHEAD);
+        a(GUILLOTINE, Branch.MELEE, 3, SKEWER);
+        t(CONCUSSIVE_BLOWS, Branch.MELEE, 4, GUILLOTINE);
 
         // ================= RANGED =================
         t(SHARPSHOOTER, Branch.RANGED, 1);
         t(SCAVENGER, Branch.RANGED, 1);
         t(SWIFTNESS, Branch.RANGED, 1);
-        t(DEFLECTION, Branch.RANGED, 2);
-        t(ADRENALINE, Branch.RANGED, 2);
         a(VOLLEY, Branch.RANGED, 1);
         a(FIREBALL, Branch.RANGED, 1);
         a(BLINK, Branch.RANGED, 1);
-        a(SMITE, Branch.RANGED, 2);
-        a(SHADOW_LANCE, Branch.RANGED, 2);
-        a(EMBER_MINE, Branch.RANGED, 2);
-        a(GALE_STEP, Branch.RANGED, 2);
-        a(METEOR, Branch.RANGED, 3);
-        a(TRUE_SIGHT, Branch.RANGED, 3);
-        a(RAILGUN, Branch.RANGED, 4);
+        // Marksman path: precision -> piercing line -> spotting -> the Railgun.
+        a(SHADOW_LANCE, Branch.RANGED, 2, SHARPSHOOTER);
+        a(TRUE_SIGHT, Branch.RANGED, 3, SHADOW_LANCE);
+        a(RAILGUN, Branch.RANGED, 4, TRUE_SIGHT);
+        // Called shots from the sky.
+        a(SMITE, Branch.RANGED, 2, SHARPSHOOTER);
+        // Arrow-duelist path: master arrows, shrug them off.
+        t(DEFLECTION, Branch.RANGED, 2, VOLLEY);
+        // Fire path: fireball -> traps -> the meteor.
+        a(EMBER_MINE, Branch.RANGED, 2, FIREBALL);
+        a(METEOR, Branch.RANGED, 3, EMBER_MINE);
+        // Mobility paths.
+        a(GALE_STEP, Branch.RANGED, 2, BLINK);
+        t(ADRENALINE, Branch.RANGED, 2, SWIFTNESS);
 
         // ================= AOE =================
         t(IGNITE, Branch.AOE, 1);
-        t(CLEAVE, Branch.AOE, 2);
         a(SHOCKWAVE, Branch.AOE, 1);
-        a(FISSURE, Branch.AOE, 2);
-        a(WILDFIRE, Branch.AOE, 2);
-        a(WIND_SLAM, Branch.AOE, 2);
-        a(TUNDRA, Branch.AOE, 3);
-        a(SINGULARITY, Branch.AOE, 3);
-        a(ZELKOVA, Branch.AOE, 4);
+        // Wildfire path: sparks -> the blaze; Cleave rides the same flame.
+        a(WILDFIRE, Branch.AOE, 2, IGNITE);
+        t(CLEAVE, Branch.AOE, 2, IGNITE);
+        // Earthbreaker path: shockwave -> fissure -> singularity -> Zelkova.
+        a(FISSURE, Branch.AOE, 2, SHOCKWAVE);
+        a(SINGULARITY, Branch.AOE, 3, FISSURE);
+        a(ZELKOVA, Branch.AOE, 4, SINGULARITY);
+        // Storm path: wind slam -> the blizzard.
+        a(WIND_SLAM, Branch.AOE, 2, SHOCKWAVE);
+        a(TUNDRA, Branch.AOE, 3, WIND_SLAM);
 
         // ================= SUPPORT =================
         t(VITALITY, Branch.SUPPORT, 1);
         t(BULWARK, Branch.SUPPORT, 1);
         t(STEADFAST, Branch.SUPPORT, 1);
-        t(PACK_LEADER, Branch.SUPPORT, 2);
-        t(FEATHER, Branch.SUPPORT, 2);
-        t(LIFESTEAL, Branch.SUPPORT, 2);
-        t(MEDIC, Branch.SUPPORT, 2);
-        t(CLARITY, Branch.SUPPORT, 2);
-        t(TITAN, Branch.SUPPORT, 3);
-        t(REGENERATOR, Branch.SUPPORT, 3);
-        t(OVERHEAL, Branch.SUPPORT, 3);
-        t(JUGGERNAUT, Branch.SUPPORT, 4);
-        t(SECOND_WIND, Branch.SUPPORT, 4);
-        t(UNDYING, Branch.SUPPORT, 4);
-        t(RISKY_MOVES, Branch.SUPPORT, 4);
-        t(GHOST, Branch.SUPPORT, 4);
         a(BLOODTHIRST, Branch.SUPPORT, 1);
         a(ICE_BARRIER, Branch.SUPPORT, 1);
-        a(VANISH, Branch.SUPPORT, 2);
-        a(AEGIS, Branch.SUPPORT, 3);
-        a(CRYOSTASIS, Branch.SUPPORT, 3);
-        a(REWIND, Branch.SUPPORT, 3);
-        a(BLOOD_PACT, Branch.SUPPORT, 3);
+        // Healer path: health -> mending -> overheal -> the clutch.
+        t(MEDIC, Branch.SUPPORT, 2, VITALITY);
+        t(OVERHEAL, Branch.SUPPORT, 3, MEDIC);
+        t(SECOND_WIND, Branch.SUPPORT, 4, OVERHEAL);
+        // Evasion path: light feet -> vanish -> the Ghost.
+        t(FEATHER, Branch.SUPPORT, 2, VITALITY);
+        a(VANISH, Branch.SUPPORT, 3, FEATHER);
+        t(GHOST, Branch.SUPPORT, 4, VANISH);
+        // Blood path: drink deep -> steal life -> pact / endless regen -> Undying.
+        t(LIFESTEAL, Branch.SUPPORT, 2, BLOODTHIRST);
+        a(BLOOD_PACT, Branch.SUPPORT, 3, LIFESTEAL);
+        t(REGENERATOR, Branch.SUPPORT, 3, LIFESTEAL);
+        t(UNDYING, Branch.SUPPORT, 4, REGENERATOR);
+        // Tank path: armor -> allies -> titan -> the Juggernaut.
+        t(PACK_LEADER, Branch.SUPPORT, 2, BULWARK);
+        t(TITAN, Branch.SUPPORT, 3, PACK_LEADER);
+        t(JUGGERNAUT, Branch.SUPPORT, 4, TITAN);
+        // Clear-mind path: unshakable -> unclouded -> rewind time.
+        t(CLARITY, Branch.SUPPORT, 2, STEADFAST);
+        a(REWIND, Branch.SUPPORT, 3, CLARITY);
+        // Barrier path: ice wall -> projectile ward -> full encasement -> untouchable.
+        a(AEGIS, Branch.SUPPORT, 2, ICE_BARRIER);
+        a(CRYOSTASIS, Branch.SUPPORT, 3, AEGIS);
+        t(RISKY_MOVES, Branch.SUPPORT, 4, CRYOSTASIS);
 
         // ================= STATUS =================
         t(FROSTBITE, Branch.STATUS, 1);
-        t(MANGLE, Branch.STATUS, 2);
-        t(RETRIBUTION, Branch.STATUS, 3);
-        t(ESCAPE_ARTIST, Branch.STATUS, 3);
-        t(BATTLE_RUSH, Branch.STATUS, 3);
-        t(ATTUNEMENT, Branch.STATUS, 3);
-        t(HEADHUNTER, Branch.STATUS, 3);
         a(HEX, Branch.STATUS, 1);
-        a(SUNDER, Branch.STATUS, 2);
-        a(COCOON, Branch.STATUS, 2);
-        a(GRASPING_VINES, Branch.STATUS, 2);
-        a(SILENCE, Branch.STATUS, 3);
-        a(LIFEDRAIN, Branch.STATUS, 3);
+        // Binding path: slow -> root -> and slipping every bind yourself.
+        a(GRASPING_VINES, Branch.STATUS, 2, FROSTBITE);
+        t(ESCAPE_ARTIST, Branch.STATUS, 3, GRASPING_VINES);
+        a(COCOON, Branch.STATUS, 2, FROSTBITE);
+        // Wither path: curse -> anti-heal -> siphon / trophy hunting.
+        t(MANGLE, Branch.STATUS, 2, HEX);
+        a(LIFEDRAIN, Branch.STATUS, 3, MANGLE);
+        t(HEADHUNTER, Branch.STATUS, 3, MANGLE);
+        // Breaker path: crack their guard -> seal their power / punish theirs.
+        a(SUNDER, Branch.STATUS, 2, HEX);
+        a(SILENCE, Branch.STATUS, 3, SUNDER);
+        t(RETRIBUTION, Branch.STATUS, 3, SUNDER);
+        // Arcane path: attune -> chain your manifestations off kills.
+        t(ATTUNEMENT, Branch.STATUS, 2, HEX);
+        t(BATTLE_RUSH, Branch.STATUS, 3, ATTUNEMENT);
     }
 
     private SkillTree() {}
@@ -190,6 +229,25 @@ public final class SkillTree {
         for (Ability ability : Ability.values()) {
             if (!ABILITIES.containsKey(ability)) {
                 throw new IllegalStateException("Ability not in skill tree: " + ability);
+            }
+        }
+        // Path invariants: tier-1 nodes are roots; everything else chains one
+        // tier down within its own branch.
+        List<Node> all = new ArrayList<>(CARDS.values());
+        all.addAll(ABILITIES.values());
+        for (Node node : all) {
+            if (node.tier() == 1) {
+                if (node.parent() != null) {
+                    throw new IllegalStateException("Tier-1 node has a parent: " + node.displayName());
+                }
+                continue;
+            }
+            if (node.parent() == null) {
+                throw new IllegalStateException("Node has no path parent: " + node.displayName());
+            }
+            if (node.parent().branch() != node.branch() || node.parent().tier() != node.tier() - 1) {
+                throw new IllegalStateException("Bad path parent for " + node.displayName()
+                        + " (parent " + node.parent().displayName() + ")");
             }
         }
     }
@@ -237,13 +295,9 @@ public final class SkillTree {
         return spent;
     }
 
-    /** Wynncraft-style: tier 1 is the branch root; deeper tiers extend from an owned node. */
-    public static boolean tierUnlocked(PlayerData data, Branch branch, int tier) {
-        if (tier <= 1) return true;
-        for (Node node : branchNodes(branch)) {
-            if (node.tier() == tier - 1 && owns(data, node)) return true;
-        }
-        return false;
+    /** Wynncraft-style paths: tier-1 nodes are open; deeper nodes need the node they chain from. */
+    public static boolean pathOpen(PlayerData data, Node node) {
+        return node.parent() == null || owns(data, node.parent());
     }
 
     public static boolean owns(PlayerData data, Node node) {

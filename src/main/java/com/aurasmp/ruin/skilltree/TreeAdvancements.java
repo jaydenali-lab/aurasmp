@@ -25,6 +25,14 @@ public final class TreeAdvancements {
 
     private static final String CRITERION = "unlocked";
 
+    /**
+     * Bump whenever the tree's shape (parents, tiers, text) changes. Bukkit
+     * persists loaded advancements into the world datapack and an existing key
+     * can't be replaced while the server runs, so on a revision change we purge
+     * the stored files — the fresh layout loads on the next restart.
+     */
+    private static final int TREE_REVISION = 2;
+
     private final RuinPlugin plugin;
     private final Map<String, NamespacedKey> nodeKeys = new HashMap<>();
     private boolean available = false;
@@ -62,9 +70,49 @@ public final class TreeAdvancements {
                 + "\"criteria\":{\"" + CRITERION + "\":{\"trigger\":\"minecraft:impossible\"}}}";
     }
 
+    /** True when the stored tree revision matches; refreshes the marker file. */
+    @SuppressWarnings("deprecation")
+    private boolean revisionCurrent() {
+        java.io.File marker = new java.io.File(plugin.getDataFolder(), "tree-revision.txt");
+        try {
+            if (marker.isFile()
+                    && java.nio.file.Files.readString(marker.toPath()).trim()
+                            .equals(String.valueOf(TREE_REVISION))) {
+                return true;
+            }
+            plugin.getDataFolder().mkdirs();
+            java.nio.file.Files.writeString(marker.toPath(), String.valueOf(TREE_REVISION));
+        } catch (java.io.IOException e) {
+            plugin.getLogger().warning("Couldn't read/write tree-revision marker: " + e.getMessage());
+        }
+        return false;
+    }
+
+    /** Deletes every stored ruin advancement so the new layout loads next boot. */
+    @SuppressWarnings("deprecation")
+    private void purgeStored() {
+        List<NamespacedKey> keys = new ArrayList<>();
+        keys.add(new NamespacedKey("ruin", "root"));
+        for (SkillTree.Branch branch : SkillTree.Branch.values()) {
+            keys.add(new NamespacedKey("ruin", "branch_" + branch.name().toLowerCase(java.util.Locale.ROOT)));
+            for (SkillTree.Node node : SkillTree.branchNodes(branch)) {
+                String enumName = node.isAbility() ? node.ability().name() : node.card().name();
+                keys.add(new NamespacedKey("ruin", "node_" + enumName.toLowerCase(java.util.Locale.ROOT)));
+            }
+        }
+        for (NamespacedKey key : keys) Bukkit.getUnsafe().removeAdvancement(key);
+        plugin.getLogger().warning("Skill-tree layout changed — the advancements tab (press L) shows the "
+                + "new paths after ONE more server restart.");
+    }
+
     /** Builds the whole tab: root -> branch entries -> tier chains. */
     public void install() {
         try {
+            // Layout changed since this world last saw it: purge the stale stored
+            // copy (an existing key can't be replaced live; next boot loads fresh).
+            if (!revisionCurrent() && Bukkit.getAdvancement(new NamespacedKey("ruin", "root")) != null) {
+                purgeStored();
+            }
             NamespacedKey rootKey = new NamespacedKey("ruin", "root");
             load(rootKey, body(display("ruin:ui_points", "Ruin",
                     "The skill tree. Spend points with /skilltree.",
@@ -76,32 +124,25 @@ public final class TreeAdvancements {
                 load(branchKey, body(display("ruin:ui_branch_" + branch.name().toLowerCase(java.util.Locale.ROOT),
                         branch.displayName(), branch.description(), "task", null), "ruin:root"));
 
-                // chain: tier 1 hangs off the branch entry; tier N hangs off the
-                // first node of tier N-1 so the web grows outward.
-                List<SkillTree.Node> nodes = SkillTree.branchNodes(branch);
-                Map<Integer, String> tierAnchor = new HashMap<>();
-                tierAnchor.put(0, "ruin:" + branchId);
-                for (int tier = 1; tier <= 4; tier++) {
-                    List<SkillTree.Node> tierNodes = new ArrayList<>();
-                    for (SkillTree.Node n : nodes) if (n.tier() == tier) tierNodes.add(n);
-                    if (tierNodes.isEmpty()) continue;
-                    String parent = tierAnchor.get(tier - 1);
-                    for (SkillTree.Node node : tierNodes) {
-                        String enumName = node.isAbility() ? node.ability().name() : node.card().name();
-                        String id = "node_" + enumName.toLowerCase(java.util.Locale.ROOT);
-                        String model = "ruin:" + (node.isAbility()
-                                ? node.ability().modelKey() : node.card().modelKey());
-                        String frame = node.isAbility() ? "challenge"
-                                : node.card().rarity() == com.aurasmp.ruin.card.Rarity.LEGENDARY ? "goal" : "task";
-                        String desc = node.description() + " (Tier " + node.tier()
-                                + ", " + node.cost() + " SP)";
-                        NamespacedKey key = new NamespacedKey("ruin", id);
-                        load(key, body(display(model, node.displayName(), desc, frame, null), parent));
-                        nodeKeys.put(enumName, key);
-                    }
-                    String firstEnum = tierNodes.get(0).isAbility()
-                            ? tierNodes.get(0).ability().name() : tierNodes.get(0).card().name();
-                    tierAnchor.put(tier, "ruin:node_" + firstEnum.toLowerCase(java.util.Locale.ROOT));
+                // Real paths: every node hangs off its actual path parent
+                // (tier-1 nodes hang off the branch entry). branchNodes() is
+                // tier-sorted, so parents always load before their children.
+                for (SkillTree.Node node : SkillTree.branchNodes(branch)) {
+                    String enumName = node.isAbility() ? node.ability().name() : node.card().name();
+                    String id = "node_" + enumName.toLowerCase(java.util.Locale.ROOT);
+                    String model = "ruin:" + (node.isAbility()
+                            ? node.ability().modelKey() : node.card().modelKey());
+                    String frame = node.isAbility() ? "challenge"
+                            : node.card().rarity() == com.aurasmp.ruin.card.Rarity.LEGENDARY ? "goal" : "task";
+                    String desc = node.description() + " (Tier " + node.tier()
+                            + ", " + node.cost() + " SP)";
+                    String parent = node.parent() == null ? "ruin:" + branchId
+                            : "ruin:node_" + (node.parent().isAbility()
+                                    ? node.parent().ability().name() : node.parent().card().name())
+                                    .toLowerCase(java.util.Locale.ROOT);
+                    NamespacedKey key = new NamespacedKey("ruin", id);
+                    load(key, body(display(model, node.displayName(), desc, frame, null), parent));
+                    nodeKeys.put(enumName, key);
                 }
             }
             available = true;
