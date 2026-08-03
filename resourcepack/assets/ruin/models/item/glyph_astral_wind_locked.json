@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ruin:item/ability/astral_wind_locked"
+  }
+}

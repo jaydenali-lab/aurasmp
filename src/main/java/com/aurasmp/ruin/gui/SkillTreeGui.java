@@ -77,14 +77,14 @@ public final class SkillTreeGui {
         holder.inventory = inv;
         fill(inv);
 
-        inv.setItem(BACK_SLOT, simple(Material.ARROW, "◀ Back", NamedTextColor.YELLOW,
-                List.of("To the branch overview")));
+        inv.setItem(BACK_SLOT, chrome(simple(Material.ARROW, "◀ Back", NamedTextColor.YELLOW,
+                List.of("To the branch overview")), "ui_back"));
         inv.setItem(INFO_SLOT, infoItem(data));
-        inv.setItem(8, simple(Material.LADDER, "Tiers", NamedTextColor.AQUA, List.of(
+        inv.setItem(8, chrome(simple(Material.LADDER, "Tiers", NamedTextColor.AQUA, List.of(
                 "Deeper tiers need points spent in this branch:",
                 "Tier 2: " + SkillTree.TIER_THRESHOLDS[2] + "  ·  Tier 3: " + SkillTree.TIER_THRESHOLDS[3]
                         + "  ·  Tier 4: " + SkillTree.TIER_THRESHOLDS[4],
-                "Spent here: " + SkillTree.spentInBranch(data, branch))));
+                "Spent here: " + SkillTree.spentInBranch(data, branch))), "ui_tiers"));
 
         int slot = 9;
         for (Node node : SkillTree.branchNodes(branch)) {
@@ -156,12 +156,20 @@ public final class SkillTreeGui {
 
     // ---- items ----
 
+    /** Applies one of the ruin:ui_* resource-pack models to a menu item. */
+    private ItemStack chrome(ItemStack item, String modelKey) {
+        ItemMeta meta = item.getItemMeta();
+        meta.setItemModel(NamespacedKey.fromString("ruin:" + modelKey));
+        item.setItemMeta(meta);
+        return item;
+    }
+
     private ItemStack infoItem(PlayerData data) {
-        return simple(Material.NETHER_STAR,
+        return chrome(simple(Material.NETHER_STAR,
                 data.skillPoints() + " Skill Points", NamedTextColor.LIGHT_PURPLE, List.of(
                         "Level " + data.level() + "  ·  " + SkillTree.SP_PER_LEVEL + " SP per level-up",
                         "Spent: " + SkillTree.spentPoints(data) + " SP",
-                        "Mirror Shard refunds everything."));
+                        "Mirror Shard refunds everything.")), "ui_points");
     }
 
     private ItemStack branchItem(PlayerData data, Branch branch, Material icon) {
@@ -170,11 +178,16 @@ public final class SkillTreeGui {
             total++;
             if (SkillTree.owns(data, node)) owned++;
         }
-        return simple(icon, branch.displayName(), NamedTextColor.AQUA, List.of(
+        ItemStack item = simple(icon, branch.displayName(), NamedTextColor.AQUA, List.of(
                 branch.description(),
                 "Unlocked: " + owned + " / " + total,
                 "Spent here: " + SkillTree.spentInBranch(data, branch) + " SP",
                 "Click to open"));
+        ItemMeta meta = item.getItemMeta();
+        meta.setItemModel(NamespacedKey.fromString("ruin:ui_branch_"
+                + branch.name().toLowerCase(java.util.Locale.ROOT)));
+        item.setItemMeta(meta);
+        return item;
     }
 
     private ItemStack nodeItem(PlayerData data, Node node) {
@@ -185,6 +198,7 @@ public final class SkillTreeGui {
         ItemStack item = new ItemStack(node.isAbility() ? node.ability().icon() : node.card().icon());
         ItemMeta meta = item.getItemMeta();
         String modelKey = node.isAbility() ? node.ability().modelKey() : node.card().modelKey();
+        if (!owned && !tierOpen) modelKey += "_locked"; // dimmed art with a padlock
         meta.setItemModel(NamespacedKey.fromString("ruin:" + modelKey));
 
         NamedTextColor titleColor = owned ? NamedTextColor.GREEN
@@ -238,6 +252,7 @@ public final class SkillTreeGui {
         ItemStack pane = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
         ItemMeta meta = pane.getItemMeta();
         meta.displayName(Component.text(" "));
+        meta.setItemModel(NamespacedKey.fromString("ruin:ui_fill"));
         pane.setItemMeta(meta);
         for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, pane);
     }

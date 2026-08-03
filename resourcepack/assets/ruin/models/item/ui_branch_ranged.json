@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ruin:item/ui/ui_branch_ranged"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ruin:item/ability/phase_strike_locked"
+  }
+}

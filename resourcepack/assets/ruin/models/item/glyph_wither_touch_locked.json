@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ruin:item/ability/wither_touch_locked"
+  }
+}
