@@ -87,6 +87,7 @@ Curated set: every node is mechanically unique. Organized by branch and tier bel
 | 2 | Smite | Manifestation (14s cd) | Strike lightning at the enemy you face. |
 | 3 | Meteor | Manifestation (20s cd) | Call down a meteor where you look after 1s. |
 | 3 | True Sight | Manifestation (20s cd) | Reveal every player within 20 blocks for 5s. |
+| 4 | Railgun | Manifestation (22s cd) | Charge 1s, then fire a piercing hyper-beam. |
 
 ### AoE
 
@@ -222,5 +223,5 @@ boss-bar:
 gradle build
 ```
 
-Output: `build/libs/Ruin-2.2.0.jar` → drop into your server's `plugins/` folder.
+Output: `build/libs/Ruin-2.3.0.jar` → drop into your server's `plugins/` folder.
 Requires Java 21.

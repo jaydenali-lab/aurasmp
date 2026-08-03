@@ -124,6 +124,7 @@ public final class SkillTree {
         a(GALE_STEP, Branch.RANGED, 2);
         a(METEOR, Branch.RANGED, 3);
         a(TRUE_SIGHT, Branch.RANGED, 3);
+        a(RAILGUN, Branch.RANGED, 4);
 
         // ================= AOE =================
         t(IGNITE, Branch.AOE, 1);

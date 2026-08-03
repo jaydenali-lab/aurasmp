@@ -257,6 +257,7 @@ public final class AbilityManager {
             case SUNDER -> sunder(player);
             case COCOON -> cocoon(player);
             case TRUE_SIGHT -> trueSight(player);
+            case RAILGUN -> railgun(player);
         }
     }
 
@@ -1031,6 +1032,49 @@ public final class AbilityManager {
         world.spawnParticle(Particle.END_ROD, player.getEyeLocation(), 15, 0.4, 0.3, 0.4, 0.05);
         world.playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.4f, 1.8f);
         if (revealed == 0) refundCooldown(player, Ability.TRUE_SIGHT, 5_000);
+    }
+
+    private void railgun(Player player) {
+        World world = player.getWorld();
+        // Charge: 1s of building whine and sparks, then the beam fires where you're looking.
+        world.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.9f);
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                ticks += 2;
+                if (!player.isOnline() || player.isDead()) { cancel(); return; }
+                if (ticks < 20) {
+                    world.spawnParticle(Particle.ELECTRIC_SPARK,
+                            player.getEyeLocation().add(player.getEyeLocation().getDirection()),
+                            4, 0.15, 0.15, 0.15, 0.02);
+                    return;
+                }
+                cancel();
+                Location eye = player.getEyeLocation();
+                Vector dir = eye.getDirection().normalize();
+                world.playSound(eye, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 1f, 1.8f);
+                world.playSound(eye, Sound.ENTITY_WARDEN_SONIC_BOOM, 0.7f, 1.6f);
+                java.util.Set<UUID> pierced = new java.util.HashSet<>();
+                for (double d = 1.0; d <= 24.0; d += 0.5) {
+                    Location at = eye.clone().add(dir.clone().multiply(d));
+                    if (!at.getBlock().isPassable()) {
+                        world.spawnParticle(Particle.EXPLOSION, at, 1, 0, 0, 0, 0);
+                        break;
+                    }
+                    world.spawnParticle(Particle.END_ROD, at, 2, 0.03, 0.03, 0.03, 0.005);
+                    world.spawnParticle(Particle.ELECTRIC_SPARK, at, 2, 0.06, 0.06, 0.06, 0.01);
+                    for (Entity e : world.getNearbyEntities(at, 0.9, 0.9, 0.9)) {
+                        if (targetable(e, player) && pierced.add(e.getUniqueId())) {
+                            LivingEntity le = (LivingEntity) e;
+                            le.setNoDamageTicks(0);
+                            dealDamage(le, player, 8.0); // the T4 payoff: pierces the whole line
+                        }
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 2L);
     }
 
     /** Enemies within {@code radius} that fall inside the look-direction cone (dot > minDot). */
