@@ -1,6 +1,6 @@
 {
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "ruin:item/talent/tough_skin"
-  }
+ "parent": "minecraft:item/generated",
+ "textures": {
+  "layer0": "ruin:item/talent/tough_skin"
+ }
 }

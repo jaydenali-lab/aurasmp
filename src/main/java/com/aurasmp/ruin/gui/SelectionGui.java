@@ -27,11 +27,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Builds and drives the level-up draft menu (5 talents / 4 manifestations, pick one). */
+/** Builds and drives the hand-draw menu (3 talents / 3 manifestations, pick one). */
 public final class SelectionGui {
 
-    private static final int[] CARD_SLOTS = {11, 12, 13, 14, 15};   // 5 talent options
-    private static final int[] ABILITY_SLOTS = {10, 12, 14, 16};    // 4 manifestation options
+    // A hand draws 3 options of its kind — pick one.
+    private static final int[] CARD_SLOTS = {11, 13, 15};
+    private static final int[] ABILITY_SLOTS = {11, 13, 15};
     private static final int REROLL_SLOT = 22;
 
     private final RuinPlugin plugin;
@@ -96,7 +97,10 @@ public final class SelectionGui {
     private Session buildCardMenu(PlayerData data, int remaining) {
         List<Card> pool = new ArrayList<>();
         for (Card card : Card.values()) {
-            if (!data.hasCard(card)) pool.add(card);
+            // Only talents the player's stats qualify for can be drawn.
+            if (!data.hasCard(card) && data.meetsRequirement(card.stat(), card.requirement())) {
+                pool.add(card);
+            }
         }
         if (pool.isEmpty()) return null;
         List<Card> chosen = weightedPick(pool, CARD_SLOTS.length);
@@ -119,10 +123,13 @@ public final class SelectionGui {
     }
 
     private Session buildAbilityMenu(PlayerData data, int remaining) {
-        if (data.abilities().size() >= PlayerData.MAX_ABILITIES) return null;
         List<Ability> pool = new ArrayList<>();
         for (Ability ability : Ability.values()) {
-            if (!data.hasAbility(ability)) pool.add(ability);
+            // Anything already learned (equipped or stashed) can't be re-drawn.
+            if (!data.hasUnlocked(ability)
+                    && data.meetsRequirement(ability.stat(), ability.requirement())) {
+                pool.add(ability);
+            }
         }
         if (pool.isEmpty()) return null;
         Collections.shuffle(pool);
@@ -230,11 +237,18 @@ public final class SelectionGui {
 
     private void applyAbility(Player player, Ability ability) {
         PlayerData data = plugin.data().get(player.getUniqueId());
-        if (!data.abilities().contains(ability)) data.abilities().add(ability);
-        refreshCatalyst(player, data);
+        data.unlocked().add(ability);
+        boolean equipped = false;
+        if (data.abilities().size() < PlayerData.MAX_EQUIPPED) {
+            data.abilities().add(ability);
+            equipped = true;
+            plugin.items().refreshCastItems(player, data);
+        }
         plugin.data().save(player.getUniqueId(), data);
-        player.sendMessage(Component.text("You picked ", NamedTextColor.GRAY)
-                .append(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE)));
+        player.sendMessage(Component.text("You learned ", NamedTextColor.GRAY)
+                .append(Component.text(ability.displayName(), NamedTextColor.LIGHT_PURPLE))
+                .append(Component.text(equipped ? "  (equipped)" : "  (stashed — /manifest to equip)",
+                        NamedTextColor.DARK_GRAY)));
         player.playSound(player.getLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, 1f, 1.2f);
     }
 
@@ -291,9 +305,8 @@ public final class SelectionGui {
         lore.add(Component.text(""));
         lore.add(Component.text("Cooldown: " + (ability.cooldownMillis() / 1000) + "s", NamedTextColor.GOLD)
                 .decoration(TextDecoration.ITALIC, false));
-        String bind = data.abilities().isEmpty() ? "Right-click" : "Shift + Right-click";
-        lore.add(Component.text("Binds to: " + bind, NamedTextColor.AQUA)
-                .decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text(ability.stat().displayName() + " " + ability.requirement(),
+                ability.stat().color()).decoration(TextDecoration.ITALIC, false));
         lore.add(Component.text("Click to pick", NamedTextColor.YELLOW)
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
@@ -331,6 +344,8 @@ public final class SelectionGui {
         meta.displayName(Component.text(card.displayName(), card.rarity().color()).decoration(TextDecoration.ITALIC, false));
         List<Component> lore = new ArrayList<>();
         lore.add(Component.text(card.rarity().label(), card.rarity().color()).decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text(card.stat().displayName() + " " + card.requirement(),
+                card.stat().color()).decoration(TextDecoration.ITALIC, false));
         for (String line : wrap(card.description(), 32)) {
             lore.add(Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         }

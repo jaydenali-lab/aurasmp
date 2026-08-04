@@ -35,14 +35,13 @@ public final class PlayerListener implements Listener {
         Player player = event.getPlayer();
         PlayerData data = plugin.data().get(player.getUniqueId());
         plugin.cards().recalc(player, data);
-        // Sync cast items with unlocked manifestations (also retires legacy Catalysts).
+        plugin.stats().recalc(player, data);
+        // Sync cast items with equipped manifestations (also retires legacy Catalysts).
         plugin.items().refreshCastItems(player, data);
-        // Reconcile skill points with level + owned nodes (heals old draft-era builds too).
-        com.aurasmp.ruin.skilltree.SkillTree.reconcile(data);
+        // Reconcile unspent stat points with what the level has earned.
+        data.setStatPoints(Math.max(0,
+                com.aurasmp.ruin.stat.Stat.earnedPoints(data.level()) - data.allocatedPoints()));
         plugin.data().save(player.getUniqueId(), data);
-        // Light up their advancements-screen tree.
-        plugin.getServer().getScheduler().runTask(plugin,
-                () -> { if (player.isOnline()) plugin.treeAdvancements().sync(player); });
     }
 
     @EventHandler
@@ -67,6 +66,13 @@ public final class PlayerListener implements Listener {
         if (plugin.items().isMirrorShard(item)) {
             event.setCancelled(true);
             useMirrorShard(player, item);
+            return;
+        }
+
+        // Hands: right-click to draw. Caps hold even for smuggled hands.
+        if (plugin.items().isHand(item)) {
+            event.setCancelled(true);
+            useHand(player, item);
             return;
         }
 
@@ -117,6 +123,34 @@ public final class PlayerListener implements Listener {
             if (!player.isOnline()) return;
             plugin.items().refreshCastItems(player, plugin.data().get(player.getUniqueId()));
         });
+    }
+
+    private void useHand(Player player, ItemStack item) {
+        PlayerData data = plugin.data().get(player.getUniqueId());
+        boolean manifest = plugin.items().isManifestHand(item);
+        if (manifest) {
+            if (data.manifestHandsUsed() >= PlayerData.MAX_MANIFEST_HANDS) {
+                player.sendMessage(net.kyori.adventure.text.Component.text(
+                        "You've already opened " + PlayerData.MAX_MANIFEST_HANDS
+                        + " manifestation hands this run.", NamedTextColor.RED));
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+                return;
+            }
+            data.setManifestHandsUsed(data.manifestHandsUsed() + 1);
+        } else {
+            if (data.talentHandsUsed() >= PlayerData.MAX_TALENT_HANDS) {
+                player.sendMessage(net.kyori.adventure.text.Component.text(
+                        "You've already opened " + PlayerData.MAX_TALENT_HANDS
+                        + " talent hands this run.", NamedTextColor.RED));
+                player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+                return;
+            }
+            data.setTalentHandsUsed(data.talentHandsUsed() + 1);
+        }
+        item.setAmount(item.getAmount() - 1);
+        plugin.data().save(player.getUniqueId(), data);
+        plugin.gui().queue(player, manifest);
+        plugin.gui().openNextIfIdle(player);
     }
 
     private void useMirrorShard(Player player, ItemStack item) {

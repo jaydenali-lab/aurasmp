@@ -1,9 +1,9 @@
 name: Ruin
-version: 2.5.0
+version: 3.0.0
 main: com.aurasmp.ruin.RuinPlugin
 api-version: '1.21'
 author: AuraSMP
-description: Kill-to-level progression with talent and manifestation drafting.
+description: "Deepwoken-style kill-to-level progression: stats, talent hands and manifestations."
 commands:
   ruin:
     description: Ruin progression commands.
@@ -16,10 +16,15 @@ commands:
       /ruin reset [player] - reset progression
       /ruin reload - reload config.yml (admin)
     permission: ruin.use
-  skilltree:
-    description: Open the skill tree to spend skill points.
-    usage: /skilltree
-    aliases: [st, tree]
+  stats:
+    description: Open the stats menu to invest stat points.
+    usage: /stats
+    aliases: [st, attributes]
+    permission: ruin.use
+  manifest:
+    description: Equip and unequip your learned manifestations.
+    usage: /manifest
+    aliases: [mani, equip]
     permission: ruin.use
   trust:
     description: Mark a player as a trusted ally (your manifestations spare them).

@@ -1,6 +1,6 @@
 {
-  "model": {
-    "type": "minecraft:model",
-    "model": "ruin:item/glyph_smoke_bomb"
-  }
+ "model": {
+  "type": "minecraft:model",
+  "model": "ruin:item/glyph_smoke_bomb"
+ }
 }

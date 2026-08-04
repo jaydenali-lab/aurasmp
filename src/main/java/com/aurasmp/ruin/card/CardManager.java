@@ -36,6 +36,9 @@ public final class CardManager {
         for (Card card : Card.values()) {
             if (card.isAttribute()) touched.add(card.attribute());
         }
+        for (var riders : Passives.EXTRA_ATTR.values()) {
+            for (var rider : riders) touched.add(rider.attribute());
+        }
 
         // 1. Strip every modifier we previously added.
         for (Attribute attribute : touched) {
@@ -56,6 +59,20 @@ public final class CardManager {
             instance.addModifier(new AttributeModifier(keyFor(card), card.amount(), card.operation()));
         }
 
+        // Secondary attribute riders (Bulkhead's slow, Featherweight's swing speed, ...).
+        for (var entry : Passives.EXTRA_ATTR.entrySet()) {
+            if (!data.hasCard(entry.getKey())) continue;
+            int i = 0;
+            for (var rider : entry.getValue()) {
+                AttributeInstance instance = player.getAttribute(rider.attribute());
+                if (instance != null) {
+                    instance.addModifier(new AttributeModifier(
+                            new NamespacedKey(plugin, "rider_" + entry.getKey().name().toLowerCase(Locale.ROOT) + "_" + i++),
+                            rider.amount(), rider.operation()));
+                }
+            }
+        }
+
         // Titan's trade-off: +4 hearts but 20% slower. The health is its attribute card;
         // the slow is a separate movement-speed modifier applied here.
         if (data.hasCard(Card.TITAN)) {
@@ -66,6 +83,10 @@ public final class CardManager {
                         AttributeModifier.Operation.ADD_SCALAR));
             }
         }
+
+        // Stat-backed modifiers (Agility speed) share the namespace and were just
+        // stripped with everything else — re-apply them.
+        plugin.stats().recalc(player, data);
 
         // Clamp health if max health shrank (e.g. after a reset).
         AttributeInstance maxHealth = player.getAttribute(Attribute.MAX_HEALTH);

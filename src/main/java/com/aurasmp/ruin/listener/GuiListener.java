@@ -53,13 +53,23 @@ public final class GuiListener implements Listener {
             return;
         }
 
-        // Skill tree menu.
-        if (holder instanceof com.aurasmp.ruin.gui.SkillTreeGui.Holder tree) {
+        // Stats menu.
+        if (holder instanceof com.aurasmp.ruin.gui.StatsGui.Holder statsMenu) {
             event.setCancelled(true);
             if (!(event.getWhoClicked() instanceof Player p)) return;
             if (event.getClickedInventory() == null
                     || !event.getClickedInventory().equals(event.getInventory())) return;
-            plugin.skillTree().handleClick(p, tree, event.getSlot());
+            plugin.statsGui().handleClick(p, statsMenu, event.getSlot(), event.isShiftClick());
+            return;
+        }
+
+        // Manifestation equip menu.
+        if (holder instanceof com.aurasmp.ruin.gui.ManifestGui.Holder manifest) {
+            event.setCancelled(true);
+            if (!(event.getWhoClicked() instanceof Player p)) return;
+            if (event.getClickedInventory() == null
+                    || !event.getClickedInventory().equals(event.getInventory())) return;
+            plugin.manifestGui().handleClick(p, manifest, event.getSlot());
             return;
         }
 

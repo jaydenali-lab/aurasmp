@@ -95,7 +95,7 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
         }
         int gained = plugin.progression().awardLevels(target, plugin.data().get(target.getUniqueId()), amount);
         sender.sendMessage(Component.text("Added " + gained + " level(s) to " + target.getName()
-                + " — skill points added, spend them in /skilltree.", NamedTextColor.GREEN));
+                + " — stat points and hands roll in per level.", NamedTextColor.GREEN));
     }
 
     private void handleLevelGive(CommandSender sender, String[] args) {
@@ -121,7 +121,7 @@ public final class RuinCommand implements CommandExecutor, TabCompleter {
         }
         int gained = plugin.progression().awardLevels(target, plugin.data().get(target.getUniqueId()), amount);
         sender.sendMessage(Component.text("Gave " + gained + " level(s) to " + target.getName()
-                + " — skill points added, spend them in /skilltree.", NamedTextColor.GREEN));
+                + " — stat points and hands roll in per level.", NamedTextColor.GREEN));
     }
 
     private void handleGive(CommandSender sender, String[] args) {

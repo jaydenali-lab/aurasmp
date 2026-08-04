@@ -1,6 +1,6 @@
 {
-  "model": {
-    "type": "minecraft:model",
-    "model": "ruin:item/glyph_dash"
-  }
+ "model": {
+  "type": "minecraft:model",
+  "model": "ruin:item/glyph_dash"
+ }
 }

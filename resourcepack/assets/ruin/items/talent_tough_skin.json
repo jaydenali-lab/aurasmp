@@ -1,6 +1,6 @@
 {
-  "model": {
-    "type": "minecraft:model",
-    "model": "ruin:item/talent_tough_skin"
-  }
+ "model": {
+  "type": "minecraft:model",
+  "model": "ruin:item/talent_tough_skin"
+ }
 }

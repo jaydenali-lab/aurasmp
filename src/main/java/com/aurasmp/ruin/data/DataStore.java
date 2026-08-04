@@ -3,6 +3,7 @@ package com.aurasmp.ruin.data;
 import com.aurasmp.ruin.RuinPlugin;
 import com.aurasmp.ruin.ability.Ability;
 import com.aurasmp.ruin.card.Card;
+import com.aurasmp.ruin.stat.Stat;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -46,8 +47,13 @@ public final class DataStore {
         data.setLevel(Math.max(1, cfg.getInt(base + ".level", 1)));
         data.setXp(Math.max(0, cfg.getInt(base + ".xp", 0)));
         data.setRerolls(Math.max(0, cfg.getInt(base + ".rerolls", PlayerData.DEFAULT_REROLLS)));
-        data.setSkillPoints(Math.max(0, cfg.getInt(base + ".skillPoints", 0)));
+        data.setStatPoints(Math.max(0, cfg.getInt(base + ".statPoints", 0)));
+        data.setTalentHandsUsed(cfg.getInt(base + ".talentHandsUsed", 0));
+        data.setManifestHandsUsed(cfg.getInt(base + ".manifestHandsUsed", 0));
 
+        for (Stat stat : Stat.values()) {
+            data.setStat(stat, cfg.getInt(base + ".stats." + stat.name(), 0));
+        }
         for (String raw : cfg.getStringList(base + ".trusted")) {
             try {
                 data.trusted().add(UUID.fromString(raw));
@@ -61,10 +67,20 @@ public final class DataStore {
                 // Card was renamed/removed — skip silently.
             }
         }
+        for (String name : cfg.getStringList(base + ".unlocked")) {
+            try {
+                data.unlocked().add(Ability.valueOf(name));
+            } catch (IllegalArgumentException ignored) {
+            }
+        }
         for (String name : cfg.getStringList(base + ".abilities")) {
             try {
                 Ability ability = Ability.valueOf(name);
-                if (!data.abilities().contains(ability)) data.abilities().add(ability);
+                if (!data.abilities().contains(ability)
+                        && data.abilities().size() < PlayerData.MAX_EQUIPPED) {
+                    data.abilities().add(ability);
+                }
+                data.unlocked().add(ability); // pre-3.0 data: equipped implies unlocked
             } catch (IllegalArgumentException ignored) {
                 // Ability was renamed/removed — skip silently.
             }
@@ -80,9 +96,15 @@ public final class DataStore {
         cfg.set(base + ".level", data.level());
         cfg.set(base + ".xp", data.xp());
         cfg.set(base + ".rerolls", data.rerolls());
-        cfg.set(base + ".skillPoints", data.skillPoints());
+        cfg.set(base + ".statPoints", data.statPoints());
+        cfg.set(base + ".talentHandsUsed", data.talentHandsUsed());
+        cfg.set(base + ".manifestHandsUsed", data.manifestHandsUsed());
+        for (Stat stat : Stat.values()) {
+            cfg.set(base + ".stats." + stat.name(), data.stat(stat));
+        }
         cfg.set(base + ".trusted", data.trusted().stream().map(UUID::toString).toList());
         cfg.set(base + ".cards", data.cards().stream().map(Enum::name).toList());
+        cfg.set(base + ".unlocked", data.unlocked().stream().map(Enum::name).toList());
         cfg.set(base + ".abilities", data.abilities().stream().map(Enum::name).toList());
         try {
             if (!plugin.getDataFolder().exists()) plugin.getDataFolder().mkdirs();

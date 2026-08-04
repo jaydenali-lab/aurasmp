@@ -37,10 +37,51 @@ public final class TalentAura {
         if (fastTask != null) fastTask.cancel();
     }
 
-    /** Every 2s: Escape Plan, Medic and Sixth Sense. */
+    /** Every 2s: the reactive/situational auras. */
     private void fastTick() {
         for (Player player : plugin.getServer().getOnlinePlayers()) {
             PlayerData data = plugin.data().get(player.getUniqueId());
+            // Mindful: regenerate while no enemies are near.
+            if (data.hasCard(Card.MINDFUL) && !enemyNear(player, data, 10)) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 0, true, false, false));
+            }
+            // Evergreen: regenerate in open sunlight.
+            if (data.hasCard(Card.EVERGREEN) && player.getWorld().isDayTime()
+                    && player.getLocation().getBlock().getLightFromSky() >= 15) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 60, 0, true, false, false));
+            }
+            // Aegis Soul: 2 absorption hearts after 8s unhit.
+            if (data.hasCard(Card.AEGIS_SOUL)
+                    && plugin.passives().sinceLastHit(player.getUniqueId()) > 8_000
+                    && !player.hasPotionEffect(PotionEffectType.ABSORPTION)) {
+                player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 20 * 3600, 0, true, false, false));
+            }
+            // Dread Aura: enemies within 5 blocks wilt.
+            if (data.hasCard(Card.DREAD_AURA)) {
+                for (org.bukkit.entity.Entity entity : player.getNearbyEntities(5, 5, 5)) {
+                    if (entity instanceof Player enemy && !data.isTrusted(enemy.getUniqueId())) {
+                        enemy.addPotionEffect(new PotionEffect(PotionEffectType.WEAKNESS, 60, 0, true, false, false));
+                    }
+                }
+            }
+            // Ringleader: nearby trusted allies pick up the pace.
+            if (data.hasCard(Card.RINGLEADER)) {
+                for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 8, 8)) {
+                    if (entity instanceof Player ally && data.isTrusted(ally.getUniqueId())) {
+                        ally.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 0, true, false, false));
+                    }
+                }
+            }
+            // Seer: invisible players nearby shimmer (visible to the seer only).
+            if (data.hasCard(Card.SEER)) {
+                for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 8, 8)) {
+                    if (entity instanceof Player hidden
+                            && hidden.hasPotionEffect(PotionEffectType.INVISIBILITY)) {
+                        player.spawnParticle(org.bukkit.Particle.END_ROD,
+                                hidden.getLocation().add(0, 1, 0), 8, 0.25, 0.6, 0.25, 0.01);
+                    }
+                }
+            }
             // Medic: nearby hurt allies slowly regenerate (allies = players you /trust).
             if (data.hasCard(Card.MEDIC)) {
                 for (org.bukkit.entity.Entity entity : player.getNearbyEntities(8, 8, 8)) {
@@ -61,6 +102,13 @@ public final class TalentAura {
             if (data.hasCard(Card.PACK_LEADER) && hasAllyNear(player, data)) {
                 player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, DURATION_TICKS, 0, true, false, false));
             }
+            // Data-driven permanent effects (Spring Step, Parkour, Wind Sprint, ...).
+            for (var entry : Passives.PERM.entrySet()) {
+                if (data.hasCard(entry.getKey())) {
+                    player.addPotionEffect(new PotionEffect(entry.getValue().effect(),
+                            DURATION_TICKS, entry.getValue().amplifier(), true, false, false));
+                }
+            }
         }
     }
 
@@ -74,6 +122,14 @@ public final class TalentAura {
         var attr = player.getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH);
         double max = attr != null ? attr.getValue() : 20.0;
         return max <= 0 ? 1.0 : player.getHealth() / max;
+    }
+
+    private boolean enemyNear(Player player, PlayerData data, double range) {
+        for (org.bukkit.entity.Entity entity : player.getNearbyEntities(range, range, range)) {
+            if (entity instanceof Player other && !data.isTrusted(other.getUniqueId())) return true;
+            if (entity instanceof org.bukkit.entity.Monster) return true;
+        }
+        return false;
     }
 
     private boolean hasAllyNear(Player player, PlayerData data) {

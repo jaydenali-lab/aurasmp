@@ -58,6 +58,32 @@ public final class Progression {
         return plugin.config().threshold(level);
     }
 
+    /** Everything that happens on gaining one level: stat points + hands. */
+    private void onLevelUp(Player player, PlayerData data) {
+        int level = data.level();
+        int gainedPoints = com.aurasmp.ruin.stat.Stat.earnedPoints(level)
+                - com.aurasmp.ruin.stat.Stat.earnedPoints(level - 1);
+        data.addStatPoints(gainedPoints);
+        // Quiet, Deepwoken-style: a chat line, no title in your face.
+        player.sendMessage(Component.text("You leveled up to level " + level
+                + " and gained " + gainedPoints + " stat points.", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text("  (/stats to invest)", NamedTextColor.DARK_GRAY)));
+        player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.8f, 1.4f);
+
+        // Hands: a talent hand every level (first 20), plus a manifestation hand
+        // every 2nd level through 20. Stash them or open them on the spot.
+        if (level >= 2 && level <= 21) {
+            player.getInventory().addItem(plugin.items().talentHand());
+            player.sendMessage(Component.text("You received a Talent Hand.", NamedTextColor.AQUA)
+                    .append(Component.text("  Right-click it to draw 3 talents.", NamedTextColor.DARK_GRAY)));
+        }
+        if (level % 2 == 0 && level <= 20) {
+            player.getInventory().addItem(plugin.items().manifestHand());
+            player.sendMessage(Component.text("You received a Manifestation Hand.", NamedTextColor.LIGHT_PURPLE)
+                    .append(Component.text("  Right-click it to draw 3 manifestations.", NamedTextColor.DARK_GRAY)));
+        }
+    }
+
     /** Award XP and resolve any level-ups. Returns the number of levels gained. */
     public int award(Player player, PlayerData data, int amount) {
         amount = Math.max(0, amount); // never drive XP negative (e.g. /ruin xp -999)
@@ -67,6 +93,9 @@ public final class Progression {
         if (data.hasCard(Card.SCAVENGER)) {
             amount = (int) Math.round(amount * plugin.config().scavengerMultiplier());
         }
+        if (data.hasCard(Card.STUDIOUS)) {
+            amount = (int) Math.round(amount * 1.25);
+        }
         data.addXp(amount);
 
         int gained = 0;
@@ -74,19 +103,7 @@ public final class Progression {
             data.setXp(data.xp() - threshold(data.level()));
             data.setLevel(data.level() + 1);
             gained++;
-            // Skill points instead of random drafts — spend them in /skilltree.
-            data.addSkillPoints(com.aurasmp.ruin.skilltree.SkillTree.SP_PER_LEVEL);
-            if (data.level() == PlayerData.MAX_LEVEL) {
-                data.addSkillPoints(com.aurasmp.ruin.skilltree.SkillTree.SP_MAX_LEVEL_BONUS);
-            }
-        }
-
-        if (gained > 0) {
-            player.showTitle(net.kyori.adventure.title.Title.title(
-                    Component.text("Level " + data.level(), NamedTextColor.LIGHT_PURPLE),
-                    Component.text("+" + (com.aurasmp.ruin.skilltree.SkillTree.SP_PER_LEVEL * gained)
-                            + " skill points — /skilltree", NamedTextColor.GRAY)));
-            player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+            onLevelUp(player, data);
         }
         // Pop the XP boss bar (auto-hides after 5s) on every gain.
         plugin.xpBar().show(player, data);
@@ -95,24 +112,14 @@ public final class Progression {
         return gained;
     }
 
-    /** Directly grant N levels (admin/testing), queuing one draft per level gained. */
+    /** Directly grant N levels (admin/testing), stat points + hands roll in per level. */
     public int awardLevels(Player player, PlayerData data, int levels) {
         int gained = 0;
         for (int i = 0; i < levels && !data.isMaxLevel(); i++) {
             data.setLevel(data.level() + 1);
             data.setXp(0);
             gained++;
-            data.addSkillPoints(com.aurasmp.ruin.skilltree.SkillTree.SP_PER_LEVEL);
-            if (data.level() == PlayerData.MAX_LEVEL) {
-                data.addSkillPoints(com.aurasmp.ruin.skilltree.SkillTree.SP_MAX_LEVEL_BONUS);
-            }
-        }
-        if (gained > 0) {
-            player.showTitle(net.kyori.adventure.title.Title.title(
-                    Component.text("Level " + data.level(), NamedTextColor.LIGHT_PURPLE),
-                    Component.text("+" + (com.aurasmp.ruin.skilltree.SkillTree.SP_PER_LEVEL * gained)
-                            + " skill points — /skilltree", NamedTextColor.GRAY)));
-            player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
+            onLevelUp(player, data);
         }
         plugin.data().save(player.getUniqueId(), data);
         return gained;

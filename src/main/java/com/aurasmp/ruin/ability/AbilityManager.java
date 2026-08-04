@@ -48,6 +48,12 @@ public final class AbilityManager {
     private final Map<UUID, Long> silencedUntil = new HashMap<>();
     private final Map<UUID, Long> sunderedUntil = new HashMap<>();
     private final Map<UUID, Long> aegisUntil = new HashMap<>();
+    // 3.0.0 manifestation state.
+    private final Map<UUID, Long> tempoUntil = new HashMap<>();
+    private final Map<UUID, Long> reflectUntil = new HashMap<>();
+    private final Map<UUID, Long> seismicUntil = new HashMap<>();
+    private final Map<UUID, Long> secondSoulUntil = new HashMap<>();
+    private final Map<UUID, Long> tacticianUntil = new HashMap<>();
     private final NamespacedKey fireballKey;
 
     public AbilityManager(RuinPlugin plugin) {
@@ -56,6 +62,11 @@ public final class AbilityManager {
     }
 
     public Cooldowns cooldowns() { return cooldowns; }
+
+    /** Shaves {@code millis} off all of a player's running manifestation cooldowns. */
+    public void reduceCooldowns(java.util.UUID id, long millis) {
+        cooldowns.reduceAll(id, millis);
+    }
 
     public boolean isAbilityDamage(UUID id) { return abilityDamaging.contains(id); }
 
@@ -84,10 +95,38 @@ public final class AbilityManager {
         activeUntil.remove(id);
         silencedUntil.remove(id);
         aegisUntil.remove(id);
+        tempoUntil.remove(id);
+        reflectUntil.remove(id);
+        seismicUntil.remove(id);
+        secondSoulUntil.remove(id);
+        tacticianUntil.remove(id);
     }
 
     /** Aegis wards cancel incoming projectiles (combat listener). */
     public boolean hasAegis(UUID id) { return activeNow(aegisUntil, id); }
+
+    /** Reflect Ward: melee attackers eat their own damage. */
+    public boolean hasReflectWard(UUID id) { return activeNow(reflectUntil, id); }
+
+    /** Seismic Guard: melee attackers get hurled away. */
+    public boolean hasSeismicGuard(UUID id) { return activeNow(seismicUntil, id); }
+
+    /** Tactician talent window: 3s of bonus melee after any cast. */
+    public boolean hasTacticianBuff(UUID id) { return activeNow(tacticianUntil, id); }
+
+    /** Tempo: consume the stored +3 strike if the rhythm is running. */
+    public boolean consumeTempo(UUID id) {
+        if (!activeNow(tempoUntil, id)) return false;
+        tempoUntil.remove(id);
+        return true;
+    }
+
+    /** Second Soul: consume the armed pact if it's still running. */
+    public boolean consumeSecondSoul(UUID id) {
+        if (!activeNow(secondSoulUntil, id)) return false;
+        secondSoulUntil.remove(id);
+        return true;
+    }
 
     private boolean activeNow(Map<UUID, Long> map, UUID id) {
         Long until = map.get(id);
@@ -132,6 +171,24 @@ public final class AbilityManager {
                 || !plugin.data().get(caster.getUniqueId()).isTrusted(other.getUniqueId());
     }
 
+    /** Intellect + magic talents scale manifestation damage; Dampen resists it. */
+    private double manifestDamageMult(Player source, LivingEntity victim) {
+        double mult = plugin.stats().intellectDamageMult(source);
+        com.aurasmp.ruin.data.PlayerData data = plugin.data().get(source.getUniqueId());
+        if (data.hasCard(com.aurasmp.ruin.card.Card.ARCANIST)) mult += 0.05;
+        if (data.hasCard(com.aurasmp.ruin.card.Card.OVERMIND)) mult += 0.10;
+        if (data.hasCard(com.aurasmp.ruin.card.Card.PRODIGY)) mult += 0.05;
+        if (data.hasCard(com.aurasmp.ruin.card.Card.STARGAZER)) {
+            long time = source.getWorld().getTime();
+            if (time >= 13_000 && time <= 23_000) mult += 0.15;
+        }
+        if (victim instanceof Player hit
+                && plugin.data().get(hit.getUniqueId()).hasCard(com.aurasmp.ruin.card.Card.DAMPEN)) {
+            mult -= 0.15;
+        }
+        return Math.max(0, mult);
+    }
+
     public boolean isRuinFireball(Entity entity) {
         return entity != null
                 && entity.getPersistentDataContainer().has(fireballKey, PersistentDataType.BYTE);
@@ -143,6 +200,7 @@ public final class AbilityManager {
      */
     public void dealDamage(LivingEntity victim, Player source, double amount) {
         if (victim.isDead() || amount <= 0) return;
+        amount *= manifestDamageMult(source, victim);
         UUID id = source.getUniqueId();
         abilityDamaging.add(id);
         try {
@@ -234,12 +292,25 @@ public final class AbilityManager {
             return;
         }
         activate(player, ability);
-        long cooldown = ability.cooldownMillis();
-        // Attunement talent: manifestation cooldowns are 15% shorter.
-        if (plugin.data().get(id).hasCard(com.aurasmp.ruin.card.Card.ATTUNEMENT)) {
-            cooldown = (long) (cooldown * 0.85);
+        com.aurasmp.ruin.data.PlayerData casterData = plugin.data().get(id);
+        double cooldown = ability.cooldownMillis();
+        // Cooldown talents stack multiplicatively, then Intellect shaves its share.
+        if (casterData.hasCard(com.aurasmp.ruin.card.Card.ATTUNEMENT)) cooldown *= 0.85;
+        if (casterData.hasCard(com.aurasmp.ruin.card.Card.CHANNELER)) cooldown *= 0.95;
+        if (casterData.hasCard(com.aurasmp.ruin.card.Card.GLASS_MIND)) cooldown *= 0.90;
+        if (casterData.hasCard(com.aurasmp.ruin.card.Card.PRODIGY)) cooldown *= 0.95;
+        cooldown *= plugin.stats().intellectCooldownMult(player);
+        // Echo: 10% chance the cast leaves no cooldown at all.
+        if (casterData.hasCard(com.aurasmp.ruin.card.Card.ECHO)
+                && java.util.concurrent.ThreadLocalRandom.current().nextDouble() < 0.10) {
+            cooldown = 0;
+            player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1f, 1.8f);
         }
-        cooldowns.set(id, ability.name(), cooldown);
+        if (cooldown > 0) cooldowns.set(id, ability.name(), (long) cooldown);
+        // Tactician: open the 3s melee window on every cast.
+        if (casterData.hasCard(com.aurasmp.ruin.card.Card.TACTICIAN)) {
+            tacticianUntil.put(id, System.currentTimeMillis() + 3_000);
+        }
         if (ability.hasActiveState()) {
             activeUntil.computeIfAbsent(id, k -> new HashMap<>())
                     .put(ability, System.currentTimeMillis() + ability.activeDurationMillis());
@@ -284,6 +355,31 @@ public final class AbilityManager {
             case COCOON -> cocoon(player);
             case TRUE_SIGHT -> trueSight(player);
             case RAILGUN -> railgun(player);
+            // ---- 3.0.0 ----
+            case EARTHSPLITTER -> earthsplitter(player);
+            case DASH -> dash(player);
+            case UPDRAFT -> updraft(player);
+            case SMOKE_BOMB -> smokeBomb(player);
+            case FLICKER -> flicker(player);
+            case TEMPO -> tempo(player);
+            case AFTERIMAGE -> afterimage(player);
+            case STONE_SKIN -> stoneSkin(player);
+            case SEISMIC_GUARD -> seismicGuard(player);
+            case CHALLENGE -> challenge(player);
+            case FORTIFY -> fortify(player);
+            case BRACE -> brace(player);
+            case REFLECT_WARD -> reflectWard(player);
+            case IRON_DOME -> ironDome(player);
+            case PURGE -> purge(player);
+            case COMMUNION -> communion(player);
+            case VITAL_SURGE -> vitalSurge(player);
+            case VAMPIRIC_BURST -> vampiricBurst(player);
+            case PACT_OF_PAIN -> pactOfPain(player);
+            case SECOND_SOUL -> secondSoul(player);
+            case CHARM -> charm(player);
+            case TERROR -> terror(player);
+            case MASS_HEX -> massHex(player);
+            case WARCRY -> warcry(player);
         }
     }
 
@@ -963,7 +1059,12 @@ public final class AbilityManager {
             return;
         }
         if (target instanceof Player victim) {
-            silencedUntil.put(victim.getUniqueId(), System.currentTimeMillis() + 4_000);
+            // Charisma stretches the seal; Willpower and Focus shrink it.
+            long duration = plugin.stats().debuffTicks(player, victim, 80) * 50L;
+            if (plugin.data().get(victim.getUniqueId()).hasCard(com.aurasmp.ruin.card.Card.FOCUS)) {
+                duration /= 2;
+            }
+            silencedUntil.put(victim.getUniqueId(), System.currentTimeMillis() + duration);
             victim.playSound(victim.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 1f, 1.2f);
         }
         world.spawnParticle(Particle.SCULK_CHARGE_POP, target.getLocation().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.02);
@@ -1139,4 +1240,322 @@ public final class AbilityManager {
                 : 20.0;
         player.setHealth(Math.min(max, player.getHealth() + amount));
     }
+    // ================= 3.0.0 manifestations =================
+
+    private static final PotionEffectType[] CLEANSABLE = {
+            PotionEffectType.POISON, PotionEffectType.WITHER, PotionEffectType.SLOWNESS,
+            PotionEffectType.WEAKNESS, PotionEffectType.BLINDNESS, PotionEffectType.NAUSEA,
+            PotionEffectType.MINING_FATIGUE, PotionEffectType.DARKNESS, PotionEffectType.LEVITATION,
+            PotionEffectType.HUNGER, PotionEffectType.UNLUCK};
+
+    private void cleanse(LivingEntity target) {
+        for (PotionEffectType type : CLEANSABLE) target.removePotionEffect(type);
+    }
+
+    /** Charisma/Willpower-scaled debuff, credited to the caster. */
+    private void debuff(Player caster, LivingEntity victim, PotionEffectType type, int baseTicks, int amp) {
+        victim.addPotionEffect(new PotionEffect(type,
+                plugin.stats().debuffTicks(caster, victim, baseTicks), amp));
+    }
+
+    private void earthsplitter(Player player) {
+        World world = player.getWorld();
+        world.playSound(player.getLocation(), Sound.ITEM_MACE_SMASH_GROUND_HEAVY, 1f, 0.9f);
+        world.spawnParticle(Particle.BLOCK, player.getLocation(),
+                40, 2.0, 0.2, 2.0, 0.1, Material.DEEPSLATE.createBlockData());
+        for (LivingEntity target : cone(player, 5.0, 0.45)) {
+            dealDamage(target, player, 7.0);
+            target.setVelocity(target.getVelocity().setY(0.9));
+        }
+    }
+
+    private void dash(Player player) {
+        grantNoFall(player);
+        Vector dir = player.getEyeLocation().getDirection().setY(0);
+        if (dir.lengthSquared() < 0.01) dir = new Vector(0, 0, 1);
+        player.setVelocity(dir.normalize().multiply(1.8).setY(0.25));
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_SHOOT, 0.9f, 1.5f);
+        player.getWorld().spawnParticle(Particle.CLOUD, player.getLocation(), 12, 0.2, 0.1, 0.2, 0.05);
+    }
+
+    private void updraft(Player player) {
+        grantNoFall(player);
+        player.setVelocity(player.getVelocity().setY(1.5));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 100, 0, true, false, true));
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_BREEZE_IDLE_AIR, 1f, 1.2f);
+        player.getWorld().spawnParticle(Particle.GUST, player.getLocation(), 3, 0.2, 0.1, 0.2, 0);
+    }
+
+    private void smokeBomb(Player player) {
+        World world = player.getWorld();
+        Location at = player.getLocation();
+        world.playSound(at, Sound.ENTITY_SPLASH_POTION_BREAK, 1f, 0.8f);
+        world.spawnParticle(Particle.LARGE_SMOKE, at.clone().add(0, 1, 0), 120, 2.0, 1.2, 2.0, 0.02);
+        world.spawnParticle(Particle.SMOKE, at.clone().add(0, 1, 0), 80, 2.0, 1.2, 2.0, 0.05);
+        for (LivingEntity target : nearbyEnemies(player, 4.0)) {
+            debuff(player, target, PotionEffectType.BLINDNESS, 60, 0);
+        }
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 60, 1, true, false, true));
+    }
+
+    private void flicker(Player player) {
+        RayTraceResult hit = rayTraceLos(player, 12.0, 1.0);
+        if (hit == null || !(hit.getHitEntity() instanceof LivingEntity target)) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+            refundCooldown(player, Ability.FLICKER, 6_000);
+            return;
+        }
+        grantNoFall(player);
+        World world = player.getWorld();
+        world.spawnParticle(Particle.PORTAL, player.getLocation().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.3);
+        Vector behind = target.getLocation().getDirection().setY(0).normalize().multiply(-1.5);
+        Location dest = target.getLocation().add(behind);
+        dest.setDirection(target.getEyeLocation().toVector().subtract(dest.toVector().add(new Vector(0, 1.6, 0))));
+        player.teleport(dest);
+        world.playSound(dest, Sound.ENTITY_ENDERMAN_TELEPORT, 0.9f, 1.5f);
+        world.spawnParticle(Particle.PORTAL, dest.clone().add(0, 1, 0), 20, 0.3, 0.5, 0.3, 0.3);
+    }
+
+    private void tempo(Player player) {
+        tempoUntil.put(player.getUniqueId(), System.currentTimeMillis() + 5_000);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.HASTE, 100, 1, true, false, true));
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BELL, 1f, 1.6f);
+        player.getWorld().spawnParticle(Particle.NOTE, player.getEyeLocation(), 6, 0.4, 0.3, 0.4, 1);
+    }
+
+    private void afterimage(Player player) {
+        grantNoFall(player);
+        World world = player.getWorld();
+        Location from = player.getLocation();
+        // The decoy puff stays where you were; you dash backward, briefly unseen.
+        world.spawnParticle(Particle.LARGE_SMOKE, from.clone().add(0, 1, 0), 40, 0.3, 0.8, 0.3, 0.02);
+        world.playSound(from, Sound.ENTITY_ILLUSIONER_MIRROR_MOVE, 1f, 1.2f);
+        Vector back = from.getDirection().setY(0).normalize().multiply(-1.5);
+        player.setVelocity(back.setY(0.3));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 30, 0, true, false, false));
+    }
+
+    private void stoneSkin(Player player) {
+        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 100, 1, true, false, true));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 0, true, false, true));
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_STONE_PLACE, 1f, 0.6f);
+        player.getWorld().spawnParticle(Particle.BLOCK, player.getLocation().add(0, 1, 0),
+                30, 0.4, 0.8, 0.4, 0.1, Material.STONE.createBlockData());
+    }
+
+    private void seismicGuard(Player player) {
+        seismicUntil.put(player.getUniqueId(), System.currentTimeMillis() + 4_000);
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_DEEPSLATE_PLACE, 1f, 0.5f);
+        player.getWorld().spawnParticle(Particle.BLOCK, player.getLocation(),
+                25, 0.6, 0.2, 0.6, 0.1, Material.DEEPSLATE.createBlockData());
+    }
+
+    private void challenge(Player player) {
+        World world = player.getWorld();
+        world.playSound(player.getLocation(), Sound.EVENT_RAID_HORN, 0.6f, 1.2f);
+        int marked = 0;
+        for (LivingEntity target : nearbyEnemies(player, 10.0)) {
+            debuff(player, target, PotionEffectType.GLOWING, 100, 0);
+            marked++;
+        }
+        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 60, 0, true, false, true));
+        if (marked == 0) refundCooldown(player, Ability.CHALLENGE, 6_000);
+    }
+
+    private void fortify(Player player) {
+        if (player.getHealth() <= 4.5) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+            refundCooldown(player, Ability.FORTIFY, 15_000);
+            return;
+        }
+        player.setHealth(player.getHealth() - 4.0);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.ABSORPTION, 20 * 30, 1, true, false, true));
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ANVIL_USE, 0.7f, 1.4f);
+        player.getWorld().spawnParticle(Particle.WAX_ON, player.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.5);
+    }
+
+    private void brace(Player player) {
+        UUID id = player.getUniqueId();
+        var kb = player.getAttribute(Attribute.KNOCKBACK_RESISTANCE);
+        NamespacedKey key = new NamespacedKey(plugin, "brace_kb");
+        if (kb != null) {
+            kb.addModifier(new org.bukkit.attribute.AttributeModifier(key, 1.0,
+                    org.bukkit.attribute.AttributeModifier.Operation.ADD_NUMBER));
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                var late = player.getAttribute(Attribute.KNOCKBACK_RESISTANCE);
+                if (late != null) {
+                    for (var mod : late.getModifiers()) {
+                        if (mod.getKey().equals(key)) late.removeModifier(mod);
+                    }
+                }
+            }, 80L);
+        }
+        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 80, 0, true, false, true));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 80, 1, true, false, true));
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.8f, 0.8f);
+    }
+
+    private void reflectWard(Player player) {
+        reflectUntil.put(player.getUniqueId(), System.currentTimeMillis() + 3_000);
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_PLACE, 1f, 0.9f);
+        player.getWorld().spawnParticle(Particle.END_ROD, player.getLocation().add(0, 1, 0), 15, 0.4, 0.6, 0.4, 0.03);
+    }
+
+    private void ironDome(Player player) {
+        World world = player.getWorld();
+        world.playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1f, 0.8f);
+        new BukkitRunnable() {
+            int ticks = 0;
+
+            @Override
+            public void run() {
+                ticks += 5;
+                if (ticks > 100 || !player.isOnline() || player.isDead()) { cancel(); return; }
+                Location at = player.getLocation();
+                world.spawnParticle(Particle.END_ROD, at.clone().add(0, 1.2, 0), 8, 2.2, 1.4, 2.2, 0.01);
+                for (Entity entity : world.getNearbyEntities(at, 4.0, 3.0, 4.0)) {
+                    if (entity instanceof org.bukkit.entity.Projectile projectile
+                            && !(projectile.getShooter() instanceof Player shooter && shooter.equals(player))) {
+                        world.spawnParticle(Particle.WAX_OFF, projectile.getLocation(), 4, 0.1, 0.1, 0.1, 0.2);
+                        projectile.remove();
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 5L);
+    }
+
+    private void purge(Player player) {
+        World world = player.getWorld();
+        cleanse(player);
+        player.setFireTicks(0);
+        for (Entity entity : player.getNearbyEntities(6, 6, 6)) {
+            if (entity instanceof Player ally
+                    && plugin.data().get(player.getUniqueId()).isTrusted(ally.getUniqueId())) {
+                cleanse(ally);
+                ally.setFireTicks(0);
+                world.spawnParticle(Particle.SPLASH, ally.getLocation().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0);
+            }
+        }
+        world.playSound(player.getLocation(), Sound.ITEM_BUCKET_EMPTY, 1f, 1.4f);
+        world.spawnParticle(Particle.SPLASH, player.getLocation().add(0, 1, 0), 30, 0.4, 0.7, 0.4, 0);
+    }
+
+    private void communion(Player player) {
+        World world = player.getWorld();
+        RayTraceResult hit = world.rayTraceEntities(player.getEyeLocation(),
+                player.getEyeLocation().getDirection(), 16.0, 1.2,
+                e -> e instanceof Player other && !other.equals(player)
+                        && plugin.data().get(player.getUniqueId()).isTrusted(other.getUniqueId()));
+        if (hit == null || !(hit.getHitEntity() instanceof Player ally)) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+            refundCooldown(player, Ability.COMMUNION, 10_000);
+            return;
+        }
+        var max = ally.getAttribute(Attribute.MAX_HEALTH);
+        ally.setHealth(Math.min(max != null ? max.getValue() : 20.0, ally.getHealth() + 8.0));
+        world.playSound(ally.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1f, 1.4f);
+        world.spawnParticle(Particle.HEART, ally.getLocation().add(0, 1.6, 0), 8, 0.4, 0.4, 0.4, 0);
+    }
+
+    private void vitalSurge(Player player) {
+        cleanse(player);
+        player.setFireTicks(0);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 1, true, false, true));
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.7f, 1.8f);
+        player.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, player.getLocation().add(0, 1, 0), 15, 0.4, 0.6, 0.4, 0);
+    }
+
+    private void vampiricBurst(Player player) {
+        World world = player.getWorld();
+        world.playSound(player.getLocation(), Sound.ENTITY_PHANTOM_BITE, 1f, 0.8f);
+        world.spawnParticle(Particle.CRIMSON_SPORE, player.getLocation().add(0, 1, 0), 60, 2.0, 1.0, 2.0, 0.02);
+        int hits = 0;
+        for (LivingEntity target : nearbyEnemies(player, 4.0)) {
+            dealDamage(target, player, 3.0);
+            hits++;
+        }
+        if (hits == 0) {
+            refundCooldown(player, Ability.VAMPIRIC_BURST, 8_000);
+            return;
+        }
+        var max = player.getAttribute(Attribute.MAX_HEALTH);
+        player.setHealth(Math.min(max != null ? max.getValue() : 20.0, player.getHealth() + hits * 2.0));
+    }
+
+    private void pactOfPain(Player player) {
+        if (player.getHealth() <= 6.5) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+            refundCooldown(player, Ability.PACT_OF_PAIN, 17_000);
+            return;
+        }
+        player.setHealth(player.getHealth() - 6.0);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 160, 1, true, false, true));
+        player.getWorld().playSound(player.getLocation(), Sound.ENTITY_WITHER_HURT, 0.6f, 1.4f);
+        player.getWorld().spawnParticle(Particle.DAMAGE_INDICATOR, player.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.1);
+    }
+
+    private void secondSoul(Player player) {
+        secondSoulUntil.put(player.getUniqueId(), System.currentTimeMillis() + 30_000);
+        player.getWorld().playSound(player.getLocation(), Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, 1f, 1.5f);
+        player.getWorld().spawnParticle(Particle.SOUL, player.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.04);
+    }
+
+    private void charm(Player player) {
+        RayTraceResult hit = rayTraceLos(player, 14.0, 1.0);
+        if (hit == null || !(hit.getHitEntity() instanceof LivingEntity target)) {
+            player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.7f);
+            refundCooldown(player, Ability.CHARM, 11_000);
+            return;
+        }
+        debuff(player, target, PotionEffectType.NAUSEA, 80, 0);
+        debuff(player, target, PotionEffectType.WEAKNESS, 80, 0);
+        debuff(player, target, PotionEffectType.GLOWING, 80, 0);
+        World world = player.getWorld();
+        world.playSound(target.getLocation(), Sound.ENTITY_ALLAY_ITEM_GIVEN, 1f, 0.8f);
+        world.spawnParticle(Particle.HEART, target.getLocation().add(0, 2, 0), 6, 0.3, 0.3, 0.3, 0);
+        world.spawnParticle(Particle.WITCH, target.getLocation().add(0, 1, 0), 20, 0.3, 0.6, 0.3, 0.02);
+    }
+
+    private void terror(Player player) {
+        World world = player.getWorld();
+        world.playSound(player.getLocation(), Sound.ENTITY_WARDEN_ROAR, 0.5f, 1.4f);
+        world.spawnParticle(Particle.SCULK_SOUL, player.getEyeLocation()
+                .add(player.getEyeLocation().getDirection()), 30, 1.0, 0.6, 1.0, 0.05);
+        int feared = 0;
+        for (LivingEntity target : cone(player, 7.0, 0.4)) {
+            debuff(player, target, PotionEffectType.BLINDNESS, 60, 0);
+            debuff(player, target, PotionEffectType.SLOWNESS, 60, 1);
+            feared++;
+        }
+        if (feared == 0) refundCooldown(player, Ability.TERROR, 8_000);
+    }
+
+    private void massHex(Player player) {
+        World world = player.getWorld();
+        world.playSound(player.getLocation(), Sound.ENTITY_ELDER_GUARDIAN_CURSE, 0.7f, 1.2f);
+        int cursed = 0;
+        for (LivingEntity target : nearbyEnemies(player, 6.0)) {
+            debuff(player, target, PotionEffectType.WEAKNESS, 120, 1);
+            world.spawnParticle(Particle.WITCH, target.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3, 0.02);
+            cursed++;
+        }
+        if (cursed == 0) refundCooldown(player, Ability.MASS_HEX, 10_000);
+    }
+
+    private void warcry(Player player) {
+        World world = player.getWorld();
+        world.playSound(player.getLocation(), Sound.EVENT_RAID_HORN, 0.8f, 0.9f);
+        world.spawnParticle(Particle.NOTE, player.getLocation().add(0, 2, 0), 10, 0.5, 0.4, 0.5, 1);
+        player.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 120, 0, true, false, true));
+        player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 120, 0, true, false, true));
+        for (Entity entity : player.getNearbyEntities(8, 8, 8)) {
+            if (entity instanceof Player ally
+                    && plugin.data().get(player.getUniqueId()).isTrusted(ally.getUniqueId())) {
+                ally.addPotionEffect(new PotionEffect(PotionEffectType.STRENGTH, 120, 0, true, false, true));
+                ally.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 120, 0, true, false, true));
+                world.spawnParticle(Particle.NOTE, ally.getLocation().add(0, 2, 0), 5, 0.3, 0.3, 0.3, 1);
+            }
+        }
+    }
+
 }

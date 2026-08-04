@@ -25,6 +25,13 @@ public final class Cooldowns {
         data.computeIfAbsent(player, k -> new HashMap<>()).put(key, System.currentTimeMillis() + millis);
     }
 
+    /** Shaves {@code millis} off every running cooldown this player has. */
+    public void reduceAll(UUID player, long millis) {
+        Map<String, Long> m = data.get(player);
+        if (m == null) return;
+        m.replaceAll((key, until) -> until - millis);
+    }
+
     public void clear(UUID player) {
         data.remove(player);
     }

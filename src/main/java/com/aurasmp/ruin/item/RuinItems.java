@@ -21,6 +21,8 @@ public final class RuinItems {
 
     public static final String MIRROR_SHARD = "mirror_shard";
     public static final String CATALYST = "catalyst";
+    public static final String TALENT_HAND = "hand_talent";
+    public static final String MANIFEST_HAND = "hand_manifest";
 
     private final RuinPlugin plugin;
     private final NamespacedKey idKey;
@@ -40,6 +42,9 @@ public final class RuinItems {
 
     public boolean isMirrorShard(ItemStack item) { return MIRROR_SHARD.equals(idOf(item)); }
     public boolean isCatalyst(ItemStack item) { return CATALYST.equals(idOf(item)); }
+    public boolean isTalentHand(ItemStack item) { return TALENT_HAND.equals(idOf(item)); }
+    public boolean isManifestHand(ItemStack item) { return MANIFEST_HAND.equals(idOf(item)); }
+    public boolean isHand(ItemStack item) { return isTalentHand(item) || isManifestHand(item); }
 
     /** The ability a cast item fires, or null for anything else. */
     public com.aurasmp.ruin.ability.Ability castAbility(ItemStack item) {
@@ -56,8 +61,54 @@ public final class RuinItems {
 
     public boolean isCastItem(ItemStack item) { return castAbility(item) != null; }
 
-    /** Soulbound items (Catalyst legacy + cast items) that must never leave the owner. */
-    public boolean isBoundItem(ItemStack item) { return isCatalyst(item) || isCastItem(item); }
+    /** Soulbound items (hands, cast items, legacy Catalyst) that must never leave the owner. */
+    public boolean isBoundItem(ItemStack item) {
+        return isCatalyst(item) || isCastItem(item) || isHand(item);
+    }
+
+    /** A stashable talent hand: right-click to draw 3 talents and pick one. */
+    public ItemStack talentHand() {
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(name("Talent Hand", NamedTextColor.AQUA));
+        meta.lore(List.of(
+                lore("A fan of possible selves."),
+                lore(""),
+                line("Right-click", NamedTextColor.YELLOW, " to draw 3 talents and pick one."),
+                lore("Only talents your stats qualify for appear."),
+                lore(""),
+                line("Soulbound.", NamedTextColor.DARK_GRAY, " Stash it, but it can't leave you.")));
+        meta.setItemModel(NamespacedKey.fromString("ruin:hand_talent"));
+        meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, TALENT_HAND);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** A stashable manifestation hand: right-click to draw 3 manifestations. */
+    public ItemStack manifestHand() {
+        ItemStack item = new ItemStack(Material.MAP);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(name("Manifestation Hand", NamedTextColor.LIGHT_PURPLE));
+        meta.lore(List.of(
+                lore("A fan of latent power."),
+                lore(""),
+                line("Right-click", NamedTextColor.YELLOW, " to draw 3 manifestations and learn one."),
+                lore("Only manifestations your stats qualify for appear."),
+                lore(""),
+                line("Soulbound.", NamedTextColor.DARK_GRAY, " Stash it, but it can't leave you.")));
+        meta.setItemModel(NamespacedKey.fromString("ruin:hand_manifest"));
+        meta.getPersistentDataContainer().set(idKey, PersistentDataType.STRING, MANIFEST_HAND);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Strips every hand from an inventory (mirror shard wipe). */
+    public void removeHands(org.bukkit.entity.Player player) {
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) {
+            if (isHand(contents[i])) player.getInventory().setItem(i, null);
+        }
+    }
 
     /** One cast item per manifestation — right-click it to cast, shows its own glyph icon. */
     public ItemStack castItem(Ability ability) {

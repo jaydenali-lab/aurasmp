@@ -141,10 +141,11 @@ public final class PickerGui {
                 list.remove(chosen);                // and any duplicate of the chosen
                 int insert = Math.max(0, Math.min(idx < 0 ? list.size() : idx, list.size()));
                 list.add(insert, chosen);
-            } else if (!list.contains(chosen) && list.size() < PlayerData.MAX_ABILITIES) {
+            } else if (!list.contains(chosen) && list.size() < PlayerData.MAX_EQUIPPED) {
                 list.add(chosen);
             }
-            if (target != null) plugin.gui().refreshCatalyst(target, data);
+            data.unlocked().add(chosen); // admin grants imply learning it
+            if (target != null) plugin.items().refreshCastItems(target, data);
         } else {
             Card chosen = holder.cardSlots.get(slot);
             if (chosen == null) return;

@@ -31,13 +31,15 @@ public final class RuinPlugin extends JavaPlugin {
     private SelectionGui gui;
     private BuildGui buildGui;
     private PickerGui pickerGui;
-    private com.aurasmp.ruin.gui.SkillTreeGui skillTreeGui;
+    private com.aurasmp.ruin.gui.StatsGui statsGui;
+    private com.aurasmp.ruin.gui.ManifestGui manifestGui;
+    private com.aurasmp.ruin.stat.StatManager stats;
     private com.aurasmp.ruin.hud.LevelTag levelTag;
-    private com.aurasmp.ruin.skilltree.TreeAdvancements treeAdvancements;
     private RuinItems items;
     private ActionBarHud hud;
     private XpBossBar xpBar;
     private TalentAura talentAura;
+    private com.aurasmp.ruin.card.PassiveListener passives;
 
     @Override
     public void onEnable() {
@@ -49,10 +51,10 @@ public final class RuinPlugin extends JavaPlugin {
         this.gui = new SelectionGui(this);
         this.buildGui = new BuildGui(this);
         this.pickerGui = new PickerGui(this);
-        this.skillTreeGui = new com.aurasmp.ruin.gui.SkillTreeGui(this);
-        com.aurasmp.ruin.skilltree.SkillTree.validate(); // every node must be placed
+        this.statsGui = new com.aurasmp.ruin.gui.StatsGui(this);
+        this.manifestGui = new com.aurasmp.ruin.gui.ManifestGui(this);
+        this.stats = new com.aurasmp.ruin.stat.StatManager(this);
         this.levelTag = new com.aurasmp.ruin.hud.LevelTag(this);
-        this.treeAdvancements = new com.aurasmp.ruin.skilltree.TreeAdvancements(this);
         this.items = new RuinItems(this);
         this.hud = new ActionBarHud(this);
         this.xpBar = new XpBossBar(this);
@@ -62,11 +64,11 @@ public final class RuinPlugin extends JavaPlugin {
         hud.start();
         talentAura.start();
         levelTag.start();
-        treeAdvancements.install();
 
         getServer().getPluginManager().registerEvents(new CombatListener(this), this);
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
         getServer().getPluginManager().registerEvents(new GuiListener(this), this);
+        getServer().getPluginManager().registerEvents(passives = new com.aurasmp.ruin.card.PassiveListener(this), this);
 
         PluginCommand command = getCommand("ruin");
         if (command != null) {
@@ -80,11 +82,19 @@ public final class RuinPlugin extends JavaPlugin {
             trust.setExecutor(executor);
             trust.setTabCompleter(executor);
         }
-        PluginCommand skilltree = getCommand("skilltree");
-        if (skilltree != null) {
-            com.aurasmp.ruin.command.SkillTreeCommand executor = new com.aurasmp.ruin.command.SkillTreeCommand(this);
-            skilltree.setExecutor(executor);
-            skilltree.setTabCompleter(executor);
+        PluginCommand statsCmd = getCommand("stats");
+        if (statsCmd != null) {
+            statsCmd.setExecutor((sender, cmd, label, args) -> {
+                if (sender instanceof Player player) statsGui.open(player);
+                return true;
+            });
+        }
+        PluginCommand manifestCmd = getCommand("manifest");
+        if (manifestCmd != null) {
+            manifestCmd.setExecutor((sender, cmd, label, args) -> {
+                if (sender instanceof Player player) manifestGui.open(player);
+                return true;
+            });
         }
         PluginCommand untrust = getCommand("untrust");
         if (untrust != null) {
@@ -95,11 +105,14 @@ public final class RuinPlugin extends JavaPlugin {
 
         // Players already online during a /reload need their state (re)loaded.
         for (Player player : getServer().getOnlinePlayers()) {
-            cards.recalc(player, data.get(player.getUniqueId()));
+            PlayerData online = data.get(player.getUniqueId());
+            cards.recalc(player, online);
+            stats.recalc(player, online);
         }
 
-        getLogger().info("Ruin enabled — skill tree with " + com.aurasmp.ruin.card.Card.values().length
-                + " talents and " + com.aurasmp.ruin.ability.Ability.values().length
+        getLogger().info("Ruin enabled — " + com.aurasmp.ruin.stat.Stat.values().length
+                + " stats, " + com.aurasmp.ruin.card.Card.values().length
+                + " talents, " + com.aurasmp.ruin.ability.Ability.values().length
                 + " manifestations, max level " + PlayerData.MAX_LEVEL + ".");
     }
 
@@ -112,18 +125,17 @@ public final class RuinPlugin extends JavaPlugin {
         if (data != null) data.saveAll();
     }
 
-    /** Full progression wipe: clears data, strips attribute modifiers, removes the Catalyst. */
+    /** Full progression wipe: clears data, stats, hands, cast items — a fresh run. */
     public void resetPlayer(Player player) {
         PlayerData playerData = data.get(player.getUniqueId());
         playerData.reset();
         cards.recalc(player, playerData);
+        stats.recalc(player, playerData);
         abilities.cooldowns().clear(player.getUniqueId());
         abilities.clearActive(player.getUniqueId());
         gui.clear(player.getUniqueId());
         items.refreshCastItems(player, playerData); // strips all cast items + legacy Catalysts
-        // Full respec: every earned skill point comes back.
-        com.aurasmp.ruin.skilltree.SkillTree.reconcile(playerData);
-        treeAdvancements.sync(player);
+        items.removeHands(player);                  // hands are wiped by the mirror
         data.save(player.getUniqueId(), playerData);
     }
 
@@ -135,9 +147,11 @@ public final class RuinPlugin extends JavaPlugin {
     public SelectionGui gui() { return gui; }
     public BuildGui buildGui() { return buildGui; }
     public PickerGui pickerGui() { return pickerGui; }
-    public com.aurasmp.ruin.gui.SkillTreeGui skillTree() { return skillTreeGui; }
+    public com.aurasmp.ruin.gui.StatsGui statsGui() { return statsGui; }
+    public com.aurasmp.ruin.gui.ManifestGui manifestGui() { return manifestGui; }
+    public com.aurasmp.ruin.stat.StatManager stats() { return stats; }
+    public com.aurasmp.ruin.card.PassiveListener passives() { return passives; }
     public com.aurasmp.ruin.hud.LevelTag levelTag() { return levelTag; }
-    public com.aurasmp.ruin.skilltree.TreeAdvancements treeAdvancements() { return treeAdvancements; }
     public RuinItems items() { return items; }
     public XpBossBar xpBar() { return xpBar; }
 }

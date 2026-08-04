@@ -129,9 +129,12 @@ public final class CombatListener implements Listener {
 
             PlayerData data = plugin.data().get(aid);
             double damage = event.getDamage();
+            // Strength: armor penetration scaled by how armored the victim is.
+            damage *= 1 + plugin.stats().strengthBonus(attacker, victim);
             if (data.hasCard(Card.BERSERKER) && healthRatio(attacker) < 0.30) damage *= 1.07;
             if (data.hasCard(Card.EXECUTIONER) && healthRatio(victim) < 0.20) damage *= 1.30;
             if (projectile && data.hasCard(Card.SHARPSHOOTER)) damage *= 1.05;
+            if (projectile && data.hasCard(Card.CALCULATED)) damage *= 1.10;
             // Unyielding Inferno: bonus damage to burning targets.
             if (!projectile && data.hasCard(Card.UNYIELDING_INFERNO) && victim.getFireTicks() > 0) {
                 damage += 3.0;
@@ -152,10 +155,18 @@ public final class CombatListener implements Listener {
                 if (data.hasCard(Card.RAMPAGE)) {
                     damage *= 1 + 0.02 * rampageStacks(aid);
                 }
+                if (data.hasCard(Card.BLINDSIDE) && isBackstab(attacker, victim)) damage *= 1.25;
+                // Tactician: 3s window after any cast.
+                if (data.hasCard(Card.TACTICIAN) && plugin.abilities().hasTacticianBuff(aid)) {
+                    damage *= 1.10;
+                }
+                // Tempo: the rhythm's stored strike.
+                if (plugin.abilities().consumeTempo(aid)) damage += 3.0;
             }
             event.setDamage(damage);
 
             if (!projectile && data.hasCard(Card.LIFESTEAL)) heal(attacker, damage * 0.10);
+            if (!projectile && data.hasCard(Card.BLOOD_OATH)) heal(attacker, damage * 0.05);
 
             if (!projectile) {
                 if (data.hasCard(Card.IGNITE)) victim.setFireTicks(60);
@@ -364,6 +375,31 @@ public final class CombatListener implements Listener {
             event.setDamage(event.getDamage() * 1.15);
         }
 
+        // Fortitude: flat damage resistance (0.5% per point).
+        double fortResist = plugin.stats().fortitudeResist(player);
+        if (fortResist > 0) {
+            event.setDamage(event.getDamage() * (1 - fortResist));
+        }
+
+        // Reflect Ward / Seismic Guard: punish melee attackers on contact.
+        if (event instanceof EntityDamageByEntityEvent contact
+                && event.getCause() == EntityDamageEvent.DamageCause.ENTITY_ATTACK
+                && contact.getDamager() instanceof LivingEntity meleeAttacker
+                && meleeAttacker != player) {
+            if (plugin.abilities().hasReflectWard(player.getUniqueId())) {
+                double back = event.getDamage();
+                if (back > 0.1) meleeAttacker.damage(back, player);
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.8f, 0.7f);
+            }
+            if (plugin.abilities().hasSeismicGuard(player.getUniqueId())) {
+                org.bukkit.util.Vector away = meleeAttacker.getLocation().toVector()
+                        .subtract(player.getLocation().toVector()).setY(0);
+                if (away.lengthSquared() < 0.01) away = new org.bukkit.util.Vector(0, 0, 1);
+                meleeAttacker.setVelocity(away.normalize().multiply(1.6).setY(0.5));
+                player.getWorld().playSound(player.getLocation(), Sound.BLOCK_POINTED_DRIPSTONE_LAND, 1f, 0.6f);
+            }
+        }
+
         PlayerData data = plugin.data().get(player.getUniqueId());
 
         // Risky Moves: chance to fully negate an incoming hit.
@@ -415,6 +451,15 @@ public final class CombatListener implements Listener {
             }
         }
         // Undying: once per 60s, a killing blow leaves you at 1 HP instead.
+        // Second Soul: an armed pact catches the killing blow first.
+        if (event.getFinalDamage() >= player.getHealth()
+                && plugin.abilities().consumeSecondSoul(player.getUniqueId())) {
+            event.setCancelled(true);
+            player.setHealth(4.0);
+            player.getWorld().spawnParticle(Particle.SOUL, player.getLocation().add(0, 1, 0), 20, 0.4, 0.6, 0.4, 0.05);
+            player.getWorld().playSound(player.getLocation(), Sound.ITEM_TOTEM_USE, 0.7f, 1.6f);
+            return;
+        }
         if (data.hasCard(Card.UNDYING) && event.getFinalDamage() >= player.getHealth()) {
             long now = System.currentTimeMillis();
             Long until = undyingUntil.get(player.getUniqueId());
